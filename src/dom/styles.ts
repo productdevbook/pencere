@@ -45,9 +45,6 @@ export const PC_STYLES = `
   display: flex;
   animation: pc-root-out 180ms ease-in forwards;
 }
-.pc-root .pc-slot > * {
-  animation: pc-slide-in 220ms ease-out;
-}
 @keyframes pc-root-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -56,15 +53,10 @@ export const PC_STYLES = `
   from { opacity: 1; }
   to   { opacity: 0; }
 }
-@keyframes pc-slide-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
 @media (prefers-reduced-motion: reduce) {
   .pc-root[open],
   .pc-root.pc-root--open,
-  .pc-root.pc-root--closing,
-  .pc-root .pc-slot > * {
+  .pc-root.pc-root--closing {
     animation: none !important;
   }
 }

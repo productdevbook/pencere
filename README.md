@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+  <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
 </p>
 
 # pencere
@@ -104,18 +104,17 @@ const { open } = usePencere({
 
 ## Why pencere?
 
-| Library            | Size (gzip) | License      | Framework-agnostic | Zoom | Video  | Thumbs | TS-first | WCAG 2.2 AA | View Transitions |
-| ------------------ | ----------- | ------------ | ------------------ | ---- | ------ | ------ | -------- | ----------- | ---------------- |
-| **pencere**        | ~15 kB      | **MIT**      | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ✅               |
-| PhotoSwipe         | ~17 kB      | MIT          | ✅                 | ✅   | plugin | plugin | ~        | ~           | ❌               |
-| GLightbox          | ~11 kB      | MIT          | ✅                 | ~    | ✅     | ❌     | ❌       | ~           | ❌               |
-| Fancybox v5        | ~26 kB      | **GPL / ₺**  | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
-| yet-another-react… | ~14 kB      | MIT          | React only         | ~    | plugin | plugin | ✅       | ✅          | ❌               |
-| lightGallery       | ~25 kB      | **GPL / ₺**  | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
-| Lightbox2          | ~8 kB       | MIT + jQuery | ❌                 | ❌   | ❌     | ❌     | ❌       | ❌          | ❌               |
-| Spotlight.js       | ~7 kB       | Apache       | ✅                 | ~    | ✅     | ❌     | ~        | ❌          | ❌               |
-| basicLightbox      | ~2 kB       | MIT          | ✅                 | ❌   | ❌     | ❌     | ~        | ❌          | ❌               |
-| Swiper (lb mode)   | ~40 kB      | MIT          | ✅                 | ~    | ❌     | ✅     | ✅       | ~           | ❌               |
+| Library                     | License     | Framework-agnostic | Zoom | Video  | Thumbs | TS-first | WCAG 2.2 AA | View Transitions |
+| --------------------------- | ----------- | ------------------ | ---- | ------ | ------ | -------- | ----------- | ---------------- |
+| **pencere**                 | **MIT**     | ✅                 | ✅   | ✅     | ❌     | ✅       | ✅          | ✅               |
+| PhotoSwipe v5               | MIT         | ✅                 | ✅   | plugin | plugin | ~        | ~           | ❌               |
+| GLightbox                   | MIT         | ✅                 | ~    | ✅     | ❌     | ❌       | ~           | ❌               |
+| Fancybox v6 (@fancyapps/ui) | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
+| yet-another-react-lightbox  | MIT         | React only         | ~    | plugin | plugin | ✅       | ✅          | ❌               |
+| lightGallery                | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
+| basicLightbox               | MIT         | ✅                 | ❌   | ❌     | ❌     | ~        | ❌          | ❌               |
+| Spotlight.js                | Apache      | ✅                 | ~    | ✅     | ❌     | ~        | ❌          | ❌               |
+| Swiper (lightbox mode)      | MIT         | ✅                 | ~    | ❌     | ✅     | ✅       | ~           | ❌               |
 
 Key differentiators:
 
