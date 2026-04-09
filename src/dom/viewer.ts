@@ -335,12 +335,14 @@ export class PencereViewer<T extends Item = Item> {
     this.slot.style.setProperty("--pc-slot-ar", computeAspectRatio(imageItem))
 
     try {
-      const { element } = await loadImage(imageItem, this.loadAbort.signal, this.opts.image)
+      const { element, image } = await loadImage(imageItem, this.loadAbort.signal, this.opts.image)
       if (this.loadAbort.signal.aborted) return
-      element.classList.add("pc-img")
+      // The transform target is always the <img>, even when the
+      // loader wrapped it in a <picture> for AVIF/WebP fallback.
+      image.classList.add("pc-img")
       this.slot.textContent = ""
       this.slot.appendChild(element)
-      this.currentImg = element
+      this.currentImg = image
       this.writeImgTransform(this.gesture.current)
       this.core.events.emit("slideLoad", { index: this.core.state.index, item })
     } catch (err) {

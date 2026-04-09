@@ -342,6 +342,31 @@ every sibling `inert` at each level — even when mounted deep inside a
 custom container, the rest of the page becomes unreachable to keyboard
 and AT while the viewer is open.
 
+### Responsive images (AVIF / WebP / srcset)
+
+```ts
+new PencereViewer({
+  items: [
+    {
+      type: "image",
+      src: "/a-1600.jpg", // bare fallback for legacy UAs
+      alt: "Yosemite Valley",
+      width: 1600,
+      height: 1067,
+      // Per-item srcset/sizes are forwarded straight to the <img>.
+      srcset: "/a-800.jpg 800w, /a-1600.jpg 1600w, /a-2400.jpg 2400w",
+      sizes: "100vw",
+      // Declaring `sources` wraps the <img> in a <picture> so the UA
+      // can pick AVIF or WebP automatically — no user-agent sniffing.
+      sources: [
+        { type: "image/avif", srcset: "/a-800.avif 800w, /a-1600.avif 1600w", sizes: "100vw" },
+        { type: "image/webp", srcset: "/a-800.webp 800w, /a-1600.webp 1600w", sizes: "100vw" },
+      ],
+    },
+  ],
+})
+```
+
 ### Respond to events
 
 ```ts

@@ -3,6 +3,18 @@ export interface ImageItem {
   src: string
   srcset?: string
   sizes?: string
+  /**
+   * `<picture>` source list — each entry becomes a `<source>` element
+   * before the fallback `<img>`, so modern UAs can pick AVIF / WebP
+   * while older ones fall back to `src`. No UA sniffing: the browser
+   * does the picking via `type`/`media`/`srcset`.
+   */
+  sources?: Array<{
+    type?: string
+    srcset: string
+    sizes?: string
+    media?: string
+  }>
   alt?: string
   width?: number
   height?: number

@@ -2,7 +2,18 @@ import { safeUrl } from "../security"
 import type { ImageItem } from "../types"
 
 export interface ImageLoadResult {
-  element: HTMLImageElement
+  /**
+   * The element to mount into the viewer slot. A `<picture>` when the
+   * item declared `sources`, otherwise the bare `<img>` itself.
+   */
+  element: HTMLImageElement | HTMLPictureElement
+  /**
+   * The actual `<img>` that received the load. Always an
+   * HTMLImageElement — the viewer uses this to apply transforms
+   * and read natural dimensions regardless of whether the wrapper
+   * is a picture.
+   */
+  image: HTMLImageElement
   width: number
   height: number
 }
@@ -92,8 +103,29 @@ export async function loadImage(
     }
   }
 
+  // When the item declared responsive <source> descriptors, wrap the
+  // <img> in a <picture> so the UA can pick AVIF / WebP / media-
+  // matched variants. The img itself still carries the load, the
+  // srcset, and the transform target — the picture is just a
+  // structural wrapper. This keeps the rest of the viewer unchanged.
+  let element: HTMLImageElement | HTMLPictureElement = img
+  if (item.sources && item.sources.length > 0) {
+    const picture = img.ownerDocument.createElement("picture")
+    for (const s of item.sources) {
+      const src = img.ownerDocument.createElement("source")
+      src.srcset = s.srcset
+      if (s.type) src.type = s.type
+      if (s.sizes) src.sizes = s.sizes
+      if (s.media) src.media = s.media
+      picture.appendChild(src)
+    }
+    picture.appendChild(img)
+    element = picture
+  }
+
   return {
-    element: img,
+    element,
+    image: img,
     width: img.naturalWidth || item.width || 0,
     height: img.naturalHeight || item.height || 0,
   }
