@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { _resetScrollLock } from "../../src/dom/scroll-lock"
 import type { ImageItem } from "../../src/index"
 import { PencereViewer } from "../../src/index"
+
+const originalImage = globalThis.Image
 
 const items: ImageItem[] = [
   { type: "image", src: "https://example.com/1.jpg", alt: "one" },
@@ -30,6 +32,9 @@ describe("PencereHooks (Phase 2)", () => {
     _resetScrollLock()
     // @ts-expect-error — test stub
     globalThis.Image = StubImage
+  })
+  afterEach(() => {
+    globalThis.Image = originalImage
   })
 
   it("fires willOpen before didOpen with the right context", async () => {

@@ -1,8 +1,9 @@
 /**
  * Vue 3 adapter — a `usePencere` composable.
  *
- * Imports from `vue` are pure type imports at the adapter source level;
- * the runtime functions are resolved via Vue's peer dep at the call site.
+ * `vue` is a peer dependency: the runtime imports below resolve
+ * against the consumer's Vue install, and all viewer instantiation
+ * is deferred to `onMounted` so SSR renders stay DOM-free.
  */
 import { onBeforeUnmount, onMounted, ref } from "vue"
 import type { Ref } from "vue"

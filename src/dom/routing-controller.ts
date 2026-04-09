@@ -122,8 +122,15 @@ export class RoutingController {
    * again.
    */
   handleClose(): void {
-    if (this.routedOpen && !this.suppressPop) {
-      this.routedOpen = false
+    const wasRouted = this.routedOpen
+    // Always reset `routedOpen` so the NEXT open() call pushes a
+    // fresh history entry. Previously this was gated on
+    // `!suppressPop`, which meant popstate-driven closes (Back
+    // button) left `routedOpen = true` and the next open issued a
+    // `replaceState` instead of `pushState` — breaking the Back
+    // button on the second open in the same session.
+    this.routedOpen = false
+    if (wasRouted && !this.suppressPop) {
       try {
         window.history.back()
       } catch {

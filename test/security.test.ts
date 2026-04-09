@@ -11,8 +11,17 @@ describe("safeUrl()", () => {
     expect(safeUrl("http://example.com/a.jpg")).toBe("http://example.com/a.jpg")
   })
 
-  it("accepts data: URLs", () => {
+  it("accepts data: image URLs", () => {
     expect(safeUrl("data:image/png;base64,iVBORw0KGgo=")).toContain("data:image/png")
+    expect(safeUrl("data:image/jpeg;base64,/9j/4AAQ")).toContain("data:image/jpeg")
+    expect(safeUrl("data:image/svg+xml,<svg/>")).toContain("data:image/svg")
+  })
+
+  it("rejects data:text/html XSS payloads", () => {
+    expect(safeUrl("data:text/html,<script>alert(1)</script>")).toBeNull()
+    expect(safeUrl("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")).toBeNull()
+    expect(safeUrl("data:application/javascript,alert(1)")).toBeNull()
+    expect(safeUrl("data:text/plain,hello")).toBeNull()
   })
 
   it("accepts blob: URLs", () => {

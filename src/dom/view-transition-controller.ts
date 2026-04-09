@@ -61,14 +61,27 @@ export class ViewTransitionController {
       afterUpdate?.()
       return
     }
+    // Capture errors thrown by the update callback itself so they
+    // can be re-thrown after the UA finishes (or aborts) the
+    // transition. Without this the blanket `catch` on `vt.finished`
+    // swallows exceptions from `willRender` hooks and from
+    // `core.open()`, making the caller believe open() succeeded.
+    let callbackError: unknown
     const vt = this.doc.startViewTransition(async () => {
-      await update()
-      afterUpdate?.()
+      try {
+        await update()
+        afterUpdate?.()
+      } catch (err) {
+        callbackError = err
+        afterUpdate?.()
+        throw err
+      }
     })
     try {
       await vt.finished
     } catch {
-      /* ignore aborted transition */
+      /* ignore aborted transition — real errors surface via callbackError */
     }
+    if (callbackError !== undefined) throw callbackError
   }
 }

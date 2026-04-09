@@ -50,7 +50,9 @@ export const iframeRenderer: Renderer = {
   mount(item, ctx) {
     const frame = ctx.document.createElement("iframe")
     const typedItem = item as Extract<Item, { type: "iframe" }>
-    frame.src = typedItem.src
+    // Security attributes MUST be set before `src` — some engines
+    // begin navigation the instant `src` is assigned, and a later
+    // `sandbox` attribute may miss the initial load.
     frame.setAttribute("sandbox", typedItem.sandbox ?? "allow-scripts allow-same-origin")
     frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin")
     frame.setAttribute("loading", "eager")
@@ -59,6 +61,7 @@ export const iframeRenderer: Renderer = {
     frame.style.width = "100%"
     frame.style.height = "100%"
     frame.style.border = "0"
+    frame.src = typedItem.src
     return frame
   },
 }

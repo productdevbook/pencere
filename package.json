@@ -60,6 +60,14 @@
     "./element": {
       "types": "./dist/adapters/element.d.mts",
       "default": "./dist/adapters/element.mjs"
+    },
+    "./i18n": {
+      "types": "./dist/i18n.d.mts",
+      "default": "./dist/i18n.mjs"
+    },
+    "./i18n-bundles": {
+      "types": "./dist/i18n-bundles.d.mts",
+      "default": "./dist/i18n-bundles.mjs"
     }
   },
   "scripts": {

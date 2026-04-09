@@ -39,6 +39,25 @@ export const PC_STYLES = `
 .pc-root[open],
 .pc-root.pc-root--open {
   display: flex;
+  animation: pc-root-in 200ms ease-out;
+}
+.pc-root .pc-slot > * {
+  animation: pc-slide-in 220ms ease-out;
+}
+@keyframes pc-root-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pc-slide-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-root[open],
+  .pc-root.pc-root--open,
+  .pc-root .pc-slot > * {
+    animation: none !important;
+  }
 }
 /* iOS faux-fullscreen (#14). Overrides any parent transform so the
  * viewer covers the visual viewport, and bumps z-index above any

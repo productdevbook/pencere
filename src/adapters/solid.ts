@@ -20,7 +20,15 @@ export function createPencereViewer<T extends Item = Item>(
   options: PencereViewerOptions<T>,
 ): CreatePencereViewerReturn<T> {
   if (typeof window === "undefined") {
-    throw new Error("pencere/solid: createPencereViewer requires a browser environment")
+    // SSR: return a no-op stub so components that call this at
+    // render time don't crash the server. The client-side
+    // rehydration will run this primitive again inside the
+    // effectful scope where `window` is available.
+    return {
+      viewer: null as unknown as PencereViewer<T>,
+      open: () => {},
+      close: () => {},
+    }
   }
   const viewer = new PencereViewer<T>(options)
   onCleanup(() => viewer.destroy())

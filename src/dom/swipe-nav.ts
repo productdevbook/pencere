@@ -120,7 +120,12 @@ export class SwipeNavigator {
       }
     } else if (this.axis === "vertical") {
       const committed = Math.abs(this.dy) > viewportHeight * this.opts.verticalCommit
-      if (committed || (swipe && swipe.direction === "down")) {
+      // A fast fling in EITHER vertical direction dismisses. The old
+      // gate only matched `"down"`, so an upward fling below the
+      // distance threshold silently cancelled back to origin even
+      // when the user clearly intended to dismiss.
+      const fling = swipe && (swipe.direction === "down" || swipe.direction === "up")
+      if (committed || fling) {
         result.action = "dismiss"
         result.velocity = Math.abs(vy)
       }

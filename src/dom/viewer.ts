@@ -414,11 +414,15 @@ export class PencereViewer<T extends Item = Item> {
     // cleanup signal so `destroy()` cancels in-flight loads without
     // each subsystem having to listen on a second AbortController.
     const signal = anySignal([this.cleanup.signal, this.loadAbort.signal])
-    const renderCtx = {
+    const preCtx = {
       index: this.core.state.index,
       item: this.core.item,
     }
-    await runWillHook(this.opts.hooks?.willRender, renderCtx)
+    await runWillHook(this.opts.hooks?.willRender, preCtx)
+    // Re-snapshot after willRender awaits: if the user navigated
+    // while a slow hook was running, core.state has already moved
+    // on and didRender should report the slide that actually
+    // rendered, not the stale pre-hook target.
     await renderSlide({
       core: this.core,
       slot: this.slot,
@@ -444,7 +448,11 @@ export class PencereViewer<T extends Item = Item> {
       resetTransform: () => this.motion.reset(),
       applyCurrentTransform: (img) => this.motion.applyCurrentTransform(img),
     })
-    runDidHook(this.opts.hooks?.didRender, renderCtx, "didRender")
+    runDidHook(
+      this.opts.hooks?.didRender,
+      { index: this.core.state.index, item: this.core.item },
+      "didRender",
+    )
   }
 
   /**
@@ -607,16 +615,31 @@ function anySignal(signals: readonly AbortSignal[]): AbortSignal {
   const AnyFn = (AbortSignal as unknown as { any?: (s: readonly AbortSignal[]) => AbortSignal }).any
   if (typeof AnyFn === "function") return AnyFn(signals)
   const controller = new AbortController()
-  const onAbort = (s: AbortSignal): void => {
-    if (!controller.signal.aborted) controller.abort(s.reason)
+  // Keep references to each listener so we can proactively remove
+  // them from the SOURCE signals once the combined signal aborts —
+  // otherwise a long-lived viewer-lifetime signal (cleanup.signal)
+  // accumulates one dangling listener per slide change, since
+  // `once: true` only self-removes on fire.
+  const listeners: Array<{ src: AbortSignal; fn: () => void }> = []
+  const detach = (): void => {
+    for (const { src, fn } of listeners) src.removeEventListener("abort", fn)
+    listeners.length = 0
   }
   for (const s of signals) {
     if (s.aborted) {
       controller.abort(s.reason)
-      break
+      detach()
+      return controller.signal
     }
-    s.addEventListener("abort", () => onAbort(s), { once: true })
+    const fn = (): void => {
+      if (!controller.signal.aborted) controller.abort(s.reason)
+      detach()
+    }
+    s.addEventListener("abort", fn)
+    listeners.push({ src: s, fn })
   }
+  // Detach when the combined signal aborts from any other path too.
+  controller.signal.addEventListener("abort", detach, { once: true })
   return controller.signal
 }
 

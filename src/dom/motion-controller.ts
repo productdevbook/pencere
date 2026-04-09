@@ -294,6 +294,13 @@ export class MotionController {
     this.swipeActivePointer = null
     this.swipe.cancel()
     this.resetSwipeVisual()
+    // Snap the image back to the origin. Without this the image
+    // stays offset at wherever the last pointermove left it until
+    // the next slide change — stylus palm rejection, OS interrupts,
+    // and cancelled pointer captures all trigger this path.
+    if (this.opts.getCurrentImg()) {
+      this.writeImgTransformRaw("translate3d(0,0,0)")
+    }
   }
 
   private resetSwipeVisual(): void {

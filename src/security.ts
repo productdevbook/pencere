@@ -5,14 +5,21 @@
  * without a browser environment.
  */
 
-const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "data:", "blob:", "mailto:", "tel:"])
+const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "blob:", "mailto:", "tel:"])
+/**
+ * `data:` URIs with an image MIME type are the only form of data URI
+ * we permit. Everything else is rejected because `data:text/html,…`
+ * can smuggle script payloads into any renderer that treats the
+ * return value as an `<iframe src>` or anchor `href`.
+ */
+const SAFE_DATA_MIME = /^data:image\/(png|jpe?g|gif|webp|avif|svg\+xml)[;,]/i
 
 /**
  * Validate a URL against an allowlist of safe protocols.
  *
- * Rejects `javascript:`, `vbscript:`, `file:`, and any other
- * non-allowlisted scheme. Accepts absolute URLs and — when `base`
- * is provided — relative URLs resolved against `base`.
+ * Rejects `javascript:`, `vbscript:`, `file:`, non-image `data:`,
+ * and any other non-allowlisted scheme. Accepts absolute URLs and —
+ * when `base` is provided — relative URLs resolved against `base`.
  *
  * Returns the normalized href on success, or `null` if the URL is
  * unparseable or uses a forbidden protocol.
@@ -28,6 +35,12 @@ export function safeUrl(input: string, base?: string): string | null {
     url = base === undefined ? new URL(cleaned) : new URL(cleaned, base)
   } catch {
     return null
+  }
+  // `data:` is only allowed for image MIME types. `data:text/html,…`
+  // and friends are rejected — they would otherwise trivially smuggle
+  // script payloads into `<iframe src>` consumers.
+  if (url.protocol === "data:") {
+    return SAFE_DATA_MIME.test(cleaned) ? url.href : null
   }
   if (!SAFE_URL_PROTOCOLS.has(url.protocol)) return null
   return url.href

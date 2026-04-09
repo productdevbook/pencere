@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { _resetScrollLock } from "../../src/dom/scroll-lock"
 import { PencereViewer } from "../../src/dom/viewer"
 import type { ImageItem } from "../../src/index"
+
+const originalImage = globalThis.Image
 
 const items: ImageItem[] = [
   { type: "image", src: "https://example.com/a.jpg", alt: "A" },
@@ -33,6 +35,9 @@ describe("PencereViewer", () => {
     _resetScrollLock()
     // @ts-expect-error — test stub
     globalThis.Image = StubImage
+  })
+  afterEach(() => {
+    globalThis.Image = originalImage
   })
 
   function factory() {

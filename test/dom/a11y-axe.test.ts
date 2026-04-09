@@ -7,11 +7,13 @@
  * browser test matrix.
  */
 import axe from "axe-core"
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { _resetScrollLock } from "../../src/dom/scroll-lock"
 import { PencereViewer } from "../../src/dom/viewer"
 import type { ImageItem } from "../../src/index"
+
+const originalImage = globalThis.Image
 
 class StubImage {
   public src = ""
@@ -45,6 +47,9 @@ describe("axe-core smoke test", () => {
     _resetScrollLock()
     // @ts-expect-error — test stub
     globalThis.Image = StubImage
+  })
+  afterEach(() => {
+    globalThis.Image = originalImage
   })
 
   it("an opened PencereViewer has no serious axe violations", async () => {

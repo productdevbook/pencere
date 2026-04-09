@@ -38,7 +38,10 @@ export class LiveRegion {
       clearTimeout(this.timer)
       this.timer = null
     }
-    if (this.pending) this.node.textContent = this.pending
+    if (this.pending) {
+      this.node.textContent = this.pending
+      this.pending = ""
+    }
   }
 
   destroy(): void {
