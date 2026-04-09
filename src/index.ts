@@ -14,6 +14,7 @@ export { PencereError, PencereIndexError, PencereStateError } from "./errors";
 export { Emitter } from "./emitter";
 export { Pencere } from "./core";
 export type { PencereState } from "./core";
+export { escapeHtml, isSafeUrl, safeUrl } from "./security";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";
