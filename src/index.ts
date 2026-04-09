@@ -63,6 +63,20 @@ export { getStrings, strings as i18nBundles } from "./i18n-bundles"
 export type { PencereLocale } from "./i18n-bundles"
 export { PencereViewer } from "./dom/viewer"
 export type { PencereViewerOptions } from "./dom/viewer"
+export { RoutingController, resolveRouting } from "./dom/routing-controller"
+export type {
+  ResolvedRouting,
+  RoutingControllerOptions,
+  RoutingOptions,
+} from "./dom/routing-controller"
+export { FullscreenController } from "./dom/fullscreen-controller"
+export type { FullscreenControllerOptions } from "./dom/fullscreen-controller"
+export { ViewTransitionController } from "./dom/view-transition-controller"
+export type { ViewTransitionControllerOptions } from "./dom/view-transition-controller"
+export { MotionController } from "./dom/motion-controller"
+export type { MotionControllerOptions } from "./dom/motion-controller"
+export { renderSlide } from "./dom/render-pipeline"
+export type { ActiveRendererSlot, RenderSlideContext } from "./dom/render-pipeline"
 
 import { Pencere } from "./core"
 import type { ImageItem } from "./types"

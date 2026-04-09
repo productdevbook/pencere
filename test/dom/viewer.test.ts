@@ -185,7 +185,7 @@ describe("PencereViewer", () => {
     )
     // e^(300/300) ≈ 2.718 → clamped but scale should have grown.
     // @ts-expect-error reach into private for test
-    expect(v.gesture.current.scale).toBeGreaterThan(1.5)
+    expect(v.motion.gesture.current.scale).toBeGreaterThan(1.5)
     await v.close()
     v.destroy()
   })
@@ -235,7 +235,7 @@ describe("PencereViewer", () => {
     expect(v.core.state.index).toBe(1)
     // Swipe must NOT have been started by the button press.
     // @ts-expect-error reach into private
-    expect(v.swipe.isActive).toBe(false)
+    expect(v.motion.swipe.isActive).toBe(false)
     await v.close()
     v.destroy()
   })
@@ -246,7 +246,7 @@ describe("PencereViewer", () => {
     await new Promise((r) => setTimeout(r, 120))
     const prev = v.root.querySelector("button[aria-label='Previous image']") as HTMLButtonElement
     // @ts-expect-error reach into private
-    const gesture = v.gesture
+    const gesture = v.motion.gesture
     prev.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 3 }))
     // Gesture engine should not have registered any pointer.
     // @ts-expect-error reach into private
@@ -260,13 +260,13 @@ describe("PencereViewer", () => {
     await v.open()
     await new Promise((r) => setTimeout(r, 120))
     // @ts-expect-error reach into private for test
-    const gesture = v.gesture
+    const gesture = v.motion.gesture
     expect(gesture.current.scale).toBe(1)
     // @ts-expect-error reach into private for test
-    v.handleDoubleTap()
+    v.motion.handleDoubleTap()
     expect(gesture.current.scale).toBeGreaterThan(1)
     // @ts-expect-error reach into private for test
-    v.handleDoubleTap()
+    v.motion.handleDoubleTap()
     expect(gesture.current.scale).toBe(1)
     await v.close()
     v.destroy()
@@ -277,7 +277,7 @@ describe("PencereViewer", () => {
     await v.open()
     await new Promise((r) => setTimeout(r, 120))
     // @ts-expect-error reach into private
-    const gesture = v.gesture
+    const gesture = v.motion.gesture
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "+", cancelable: true }))
     expect(gesture.current.scale).toBeGreaterThan(1)
     const scaled = gesture.current.scale
@@ -296,11 +296,11 @@ describe("PencereViewer", () => {
     await v.open()
     await new Promise((r) => setTimeout(r, 120))
     // @ts-expect-error reach into private
-    v.zoomBy(0.5)
+    v.motion.zoomBy(0.5)
     // @ts-expect-error
-    expect(v.gesture.current.scale).toBe(1)
+    expect(v.motion.gesture.current.scale).toBe(1)
     // @ts-expect-error
-    expect(v.gesture.current.x).toBe(0)
+    expect(v.motion.gesture.current.x).toBe(0)
     await v.close()
     v.destroy()
   })
@@ -406,7 +406,7 @@ describe("PencereViewer", () => {
     const img = v.root.querySelector(".pc-img") as HTMLElement
     expect(img.style.willChange).toBe("")
     // @ts-expect-error reach into private
-    const gesture = v.gesture
+    const gesture = v.motion.gesture
     // Simulate a gesture cycle via the engine's public handlers.
     const down = new PointerEvent("pointerdown", { pointerId: 9, clientX: 10, clientY: 10 })
     Object.defineProperty(down, "target", { value: img })
@@ -423,9 +423,9 @@ describe("PencereViewer", () => {
     await v.open()
     await new Promise((r) => setTimeout(r, 120))
     // @ts-expect-error reach into private
-    const gesture = v.gesture
+    const gesture = v.motion.gesture
     // @ts-expect-error reach into private
-    v.zoomBy(2) // scale > 1 enables pan mode
+    v.motion.zoomBy(2) // scale > 1 enables pan mode
     expect(gesture.current.scale).toBeGreaterThan(1)
     const startX = gesture.current.x
     const startY = gesture.current.y
@@ -477,7 +477,7 @@ describe("PencereViewer", () => {
       await v.open()
       await new Promise((r) => setTimeout(r, 120))
       // @ts-expect-error reach into private
-      v.handleDoubleTap()
+      v.motion.handleDoubleTap()
       expect(vibrate).toHaveBeenCalledTimes(1)
       await v.close()
       v.destroy()

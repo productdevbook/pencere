@@ -1,24 +1,27 @@
 import { Pencere } from "../core"
 import { createTranslator } from "../i18n"
 import type { PencereStrings, Translator } from "../i18n"
-import type { CloseReason, ImageItem, Item, PencereOptions } from "../types"
+import type { CloseReason, Item, PencereOptions } from "../types"
 import { DialogController } from "./dialog"
 import type { DialogControllerOptions } from "./dialog"
-import { GestureEngine } from "./gesture"
+import { FullscreenController } from "./fullscreen-controller"
 import { Haptics } from "./haptics"
 import type { HapticsOptions } from "./haptics"
-import { computeAspectRatio, loadImage } from "./image-loader"
 import type { ImageLoaderOptions } from "./image-loader"
 import { resolveKeyAction } from "./keyboard"
 import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
-import { runMomentum } from "./momentum"
-import { pickRenderer } from "./renderers"
+import { MotionController } from "./motion-controller"
+import type { ActiveRendererSlot } from "./render-pipeline"
+import { renderSlide } from "./render-pipeline"
 import type { Renderer } from "./renderers"
+import { resolveRouting, RoutingController } from "./routing-controller"
+import type { ResolvedRouting, RoutingOptions } from "./routing-controller"
 import { injectStyles } from "./styles"
-import { SwipeNavigator } from "./swipe-nav"
-import { IDENTITY, toCss } from "./transform"
+import { ViewTransitionController } from "./view-transition-controller"
+
+export type { RoutingOptions } from "./routing-controller"
 
 /**
  * Approximate pixel height of the top and bottom gradient toolbar
@@ -103,18 +106,6 @@ export interface PencereViewerOptions<T extends Item = Item>
   renderers?: Renderer[]
 }
 
-/** See `PencereViewerOptions.routing`. */
-export interface RoutingOptions {
-  /** Build the fragment for a given slide index. Default: `#p{n+1}`. */
-  pattern?: (index: number) => string
-  /**
-   * Parse the current `location.hash` into a slide index, or return
-   * `null` when the URL does not identify a slide. Default matches
-   * the default pattern.
-   */
-  parse?: (hash: string) => number | null
-}
-
 /**
  * A high-level viewer that composes Pencere core, DialogController,
  * GestureEngine, LiveRegion, and loadImage into a working lightbox.
@@ -137,30 +128,22 @@ export class PencereViewer<T extends Item = Item> {
   private readonly nextButton: HTMLButtonElement
   private readonly liveRegion: LiveRegion
   private readonly dialog: DialogController
-  private readonly gesture: GestureEngine
-  private readonly swipe = new SwipeNavigator()
-  private swipeActivePointer: number | null = null
-  private momentumCancel: (() => void) | null = null
+  private readonly motion: MotionController
   private readonly reducedMotion: ReturnType<typeof prefersReducedMotion>
   private readonly t: Translator
   private readonly opts: PencereViewerOptions<T>
   private loadAbort: AbortController | null = null
   private currentImg: HTMLImageElement | null = null
   private renderPromise: Promise<void> | null = null
-  private currentRendererEl: {
-    renderer: Renderer
-    el: HTMLElement
-    item: Item
-  } | null = null
+  private currentRendererEl: ActiveRendererSlot | null = null
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
   private direction: "ltr" | "rtl"
   private readonly haptics: Haptics
-  private readonly routing: {
-    pattern: (i: number) => string
-    parse: (h: string) => number | null
-  } | null
-  private routedOpen = false
+  private readonly routing: ResolvedRouting | null
+  private readonly routingController: RoutingController
+  private readonly fullscreenController: FullscreenController
+  private readonly viewTransition: ViewTransitionController
 
   constructor(options: PencereViewerOptions<T>) {
     this.opts = options
@@ -246,27 +229,15 @@ export class PencereViewer<T extends Item = Item> {
         void this.close(reason)
       },
     })
-    this.gesture = new GestureEngine(stage, {
-      onUpdate: (snapshot) => {
-        if (snapshot.type === "tap" && !this.stage.matches(":hover")) return
-        if (snapshot.type === "doubleTap") {
-          this.handleDoubleTap()
-          return
-        }
-        // `will-change: transform` is promoted to a compositor layer by
-        // the browser but keeps that layer alive indefinitely, which
-        // is wasted memory outside of an active gesture. Promote on
-        // start, demote on end. #34.
-        if (snapshot.type === "start" && this.currentImg) {
-          this.currentImg.style.setProperty("will-change", "transform")
-        } else if (snapshot.type === "end" && this.currentImg) {
-          this.currentImg.style.removeProperty("will-change")
-        }
-        // While a scale=1 swipe is in flight, the swipe controller owns
-        // the visual transform — don't let gesture pan overwrite it.
-        if (this.swipe.isActive) return
-        this.writeImgTransform(snapshot.transform)
-      },
+    this.motion = new MotionController({
+      root,
+      stage,
+      getCurrentImg: () => this.currentImg,
+      getDirection: () => this.direction,
+      haptics: this.haptics,
+      onNext: () => void this.core.next(),
+      onPrev: () => void this.core.prev(),
+      onDismiss: () => void this.close("user"),
     })
     this.reducedMotion = prefersReducedMotion()
 
@@ -281,23 +252,9 @@ export class PencereViewer<T extends Item = Item> {
     this.onKeyDown = (e: KeyboardEvent): void => this.handleKeyDown(e)
     doc.addEventListener("keydown", this.onKeyDown, { signal: sig })
 
-    // Swipe navigation + drag-to-dismiss listeners. Registered in capture
-    // phase so they run before GestureEngine's bubble listeners and can
-    // short-circuit pan application while at scale=1.
-    stage.addEventListener("pointerdown", (e) => this.onSwipeDown(e), {
-      signal: sig,
-      capture: true,
-    })
-    stage.addEventListener("pointermove", (e) => this.onSwipeMove(e), {
-      signal: sig,
-      capture: true,
-    })
-    stage.addEventListener("pointerup", (e) => this.onSwipeUp(e), { signal: sig, capture: true })
-    stage.addEventListener("pointercancel", (e) => this.onSwipeCancel(e), {
-      signal: sig,
-      capture: true,
-    })
-    stage.addEventListener("wheel", (e) => this.onWheelZoom(e), { signal: sig, passive: false })
+    // MotionController owns pointerdown/move/up/cancel + wheel zoom
+    // as a single state machine; wire it to the same cleanup signal.
+    this.motion.attach(sig)
 
     // WCAG 2.4.11 Focus Not Obscured (Minimum) — when focus moves to
     // an element that happens to sit under one of the gradient toolbar
@@ -307,43 +264,42 @@ export class PencereViewer<T extends Item = Item> {
     // eventual thumbnail strip) has to be handled too.
     root.addEventListener("focusin", (e) => this.onFocusIn(e), { signal: sig })
 
+    this.routingController = new RoutingController({
+      routing: this.routing,
+      signal: sig,
+      isOpen: () => this.core.state.isOpen,
+      getIndex: () => this.core.state.index,
+      getItemCount: () => this.core.state.items.length,
+      onPopClose: (reason) => {
+        void this.close(reason)
+      },
+    })
+
+    this.fullscreenController = new FullscreenController({
+      element: this.root,
+      enabled: options.fullscreen === true,
+      signal: sig,
+    })
+
+    this.viewTransition = new ViewTransitionController({
+      document: doc,
+      enabled: options.viewTransition === true,
+    })
+
     this.core.events.on("open", () => {
       this.renderPromise = this.renderSlide()
     })
     this.core.events.on("change", () => {
       this.renderPromise = this.renderSlide()
-      this.syncRoutingFragment("replace")
+      this.routingController.replaceFragment()
     })
     this.core.events.on("close", () => {
       this.dialog.hide()
       this.root.classList.remove("pc-root--open")
-      this.gesture.detach()
-      this.gesture.reset()
-      // Unwind the routing entry only when the close came from inside
-      // pencere — popstate-driven closes must NOT call back() again
-      // or the user's real history would be stepped twice.
-      if (this.routedOpen && !this.suppressRoutingPop) {
-        this.routedOpen = false
-        try {
-          window.history.back()
-        } catch {
-          /* ignore */
-        }
-      }
-      this.suppressRoutingPop = false
+      this.motion.disengage()
+      this.routingController.handleClose()
     })
-
-    if (this.routing) {
-      const onPopState = (): void => {
-        if (!this.core.state.isOpen) return
-        this.suppressRoutingPop = true
-        void this.close("user")
-      }
-      window.addEventListener("popstate", onPopState, { signal: sig })
-    }
   }
-
-  private suppressRoutingPop = false
 
   async open(index?: number, trigger?: HTMLElement): Promise<void> {
     // Re-resolve direction on every open so consumers that toggle
@@ -368,36 +324,17 @@ export class PencereViewer<T extends Item = Item> {
       await this.core.open(index)
       this.root.classList.add("pc-root--open")
       this.dialog.show()
-      this.gesture.attach()
-      this.syncRoutingFragment("push")
+      this.motion.engage()
+      this.routingController.pushFragment()
       if (this.renderPromise) await this.renderPromise
     }
-    const doc = this.root.ownerDocument as Document & {
-      startViewTransition?: (cb: () => unknown | Promise<unknown>) => {
-        finished: Promise<void>
-        updateCallbackDone: Promise<void>
-      }
-    }
-    if (this.opts.viewTransition === true && typeof doc.startViewTransition === "function") {
+    if (this.viewTransition.supported) {
       if (trigger) {
         trigger.style.setProperty("view-transition-name", "pencere-hero")
       }
-      const vt = doc.startViewTransition(async () => {
-        await run()
+      await this.viewTransition.run(run, () => {
+        if (trigger) trigger.style.removeProperty("view-transition-name")
       })
-      try {
-        // Wait for the DOM callback to commit first, then the
-        // animation itself. Clearing the trigger's
-        // view-transition-name during `updateCallbackDone` means the
-        // old node stops competing with the lightbox image for the
-        // name before the UA starts animating.
-        await vt.updateCallbackDone
-        if (trigger) trigger.style.removeProperty("view-transition-name")
-        await vt.finished
-      } catch {
-        /* ignore aborted transition */
-        if (trigger) trigger.style.removeProperty("view-transition-name")
-      }
       return
     }
     await run()
@@ -410,29 +347,10 @@ export class PencereViewer<T extends Item = Item> {
    * match. Returns `true` iff the viewer was actually opened.
    */
   async openFromLocation(): Promise<boolean> {
-    if (!this.routing) return false
-    const hash = typeof location !== "undefined" ? location.hash : ""
-    const idx = this.routing.parse(hash)
-    if (idx === null || idx < 0 || idx >= this.core.state.items.length) return false
+    const idx = this.routingController.parseCurrentLocation()
+    if (idx === null) return false
     await this.open(idx)
     return true
-  }
-
-  private syncRoutingFragment(mode: "push" | "replace"): void {
-    if (!this.routing) return
-    if (typeof window === "undefined") return
-    const next = this.routing.pattern(this.core.state.index)
-    const url = location.pathname + location.search + next
-    try {
-      if (mode === "push" && !this.routedOpen) {
-        window.history.pushState({ pencere: true, i: this.core.state.index }, "", url)
-        this.routedOpen = true
-      } else {
-        window.history.replaceState({ pencere: true, i: this.core.state.index }, "", url)
-      }
-    } catch {
-      // Some sandboxed contexts throw on history mutation; ignore.
-    }
   }
 
   async close(reason: CloseReason = "api"): Promise<void> {
@@ -441,9 +359,9 @@ export class PencereViewer<T extends Item = Item> {
 
   destroy(): void {
     this.cleanup.abort()
-    this.momentumCancel?.()
+    this.motion.cancelMomentum()
     this.loadAbort?.abort()
-    this.gesture.detach()
+    this.motion.disengage()
     this.dialog.destroy()
     this.liveRegion.destroy()
     this.reducedMotion.dispose()
@@ -466,267 +384,34 @@ export class PencereViewer<T extends Item = Item> {
     return b
   }
 
-  private writeImgTransform(t: { x: number; y: number; scale: number }): void {
-    if (!this.currentImg) return
-    this.currentImg.style.setProperty("--pc-img-transform", toCss(t))
-  }
-
-  private writeImgTransformRaw(css: string): void {
-    if (!this.currentImg) return
-    this.currentImg.style.setProperty("--pc-img-transform", css)
-  }
-
   private async renderSlide(): Promise<void> {
-    const item = this.core.item
     this.loadAbort?.abort()
     this.loadAbort = new AbortController()
-    // Tear down the previous renderer-backed slide (video / iframe
-    // / custom) so autoplay videos pause, iframe src unloads, etc.
-    if (this.currentRendererEl) {
-      const { renderer, el, item: previous } = this.currentRendererEl
-      try {
-        renderer.unmount?.(el, previous as never)
-      } catch {
-        /* ignore renderer teardown errors */
-      }
-      this.currentRendererEl = null
-    }
-    // Reset gesture transform between slides.
-    this.gesture.reset()
-    // Update counter + live region unconditionally.
-    const total = this.core.state.items.length
-    const index = this.core.state.index + 1
-    this.counter.textContent = this.t("counter", { index, total })
-    this.liveRegion.announce(
-      `${this.t("counter", { index, total })}${item.alt ? `: ${item.alt}` : ""}`,
-    )
-    // Captions are textContent by default (issue #48).
-    this.caption.textContent =
-      "caption" in item && typeof item.caption === "string" ? item.caption : ""
-    // Propagate `lang` so AT switches voices + CJK / Arabic font
-    // stacks kick in via the `--pc-font-*` custom properties (#65).
-    const lang = "lang" in item ? (item as { lang?: string }).lang : undefined
-    if (lang) {
-      this.caption.setAttribute("lang", lang)
-      this.longDescription.setAttribute("lang", lang)
-    } else {
-      this.caption.removeAttribute("lang")
-      this.longDescription.removeAttribute("lang")
-    }
-    // Long description lives in a visually hidden, aria-described-by
-    // node so AT users get the full descriptor without crowding the
-    // visible caption line (#26).
-    this.longDescription.textContent =
-      "longDescription" in item &&
-      typeof (item as { longDescription?: string }).longDescription === "string"
-        ? (item as { longDescription: string }).longDescription
-        : ""
-    // Disable prev/next at ends when loop is off.
-    const loop = this.opts.loop ?? true
-    this.prevButton.disabled = !loop && this.core.state.index === 0
-    this.nextButton.disabled = !loop && this.core.state.index === total - 1
-
-    if (item.type !== "image") {
-      // Non-image slide types flow through the renderer registry
-      // (#8). User-supplied renderers run first; built-in video /
-      // iframe / html renderers ship as fallbacks.
-      this.slot.textContent = ""
-      const renderer = pickRenderer(item, this.opts.renderers)
-      if (!renderer) {
-        this.slot.textContent = `pencere: no renderer for item type "${item.type}"`
-        return
-      }
-      try {
-        const mounted = await renderer.mount(item, {
-          document: this.root.ownerDocument,
-          signal: this.loadAbort.signal,
-        })
-        if (this.loadAbort.signal.aborted) {
-          renderer.unmount?.(mounted, item as never)
-          return
-        }
-        this.slot.appendChild(mounted)
-        // Store the current renderer + mount for teardown on the
-        // next slide change or close.
-        this.currentRendererEl = { renderer, el: mounted, item }
-        this.currentImg = null
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          this.slot.textContent = `pencere: renderer failed (${(err as Error).message})`
-        }
-      }
-      return
-    }
-    const imageItem = item as ImageItem
-    this.slot.style.setProperty("--pc-slot-ar", computeAspectRatio(imageItem))
-    // ThumbHash / BlurHash style placeholder (#29). Paint the
-    // consumer-supplied low-res hint under the slot so the user
-    // sees a chromatic silhouette instantly instead of an empty
-    // void while the full-res image decodes.
-    if (imageItem.placeholder) {
-      this.slot.style.setProperty("--pc-slot-placeholder", imageItem.placeholder)
-      this.slot.classList.add("pc-slot--placeholder")
-    } else {
-      this.slot.style.removeProperty("--pc-slot-placeholder")
-      this.slot.classList.remove("pc-slot--placeholder")
-    }
-
-    try {
-      const { element, image } = await loadImage(imageItem, this.loadAbort.signal, this.opts.image)
-      if (this.loadAbort.signal.aborted) return
-      // The transform target is always the <img>, even when the
-      // loader wrapped it in a <picture> for AVIF/WebP fallback.
-      image.classList.add("pc-img")
-      if (this.opts.viewTransition === true) {
-        image.style.setProperty("view-transition-name", "pencere-hero")
-      }
-      this.slot.textContent = ""
-      this.slot.appendChild(element)
-      // Drop the placeholder once the decoded image is in the slot
-      // (#29). A small rAF gives the browser a frame to commit the
-      // image layer before we fade the hint out.
-      requestAnimationFrame(() => {
-        this.slot.classList.remove("pc-slot--placeholder")
-      })
-      this.currentImg = image
-      this.writeImgTransform(this.gesture.current)
-      this.core.events.emit("slideLoad", { index: this.core.state.index, item })
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return
-      this.slot.textContent = "Image failed to load"
-    }
-  }
-
-  private handleDoubleTap(): void {
-    if (!this.currentImg) return
-    // With transform-origin:center, a pure scale already pins center.
-    const current = this.gesture.current
-    const next = current.scale > 1 ? IDENTITY : { x: 0, y: 0, scale: 2 }
-    this.gesture.setTransform(next)
-    this.writeImgTransform(this.gesture.current)
-    this.haptics.fire("doubleTap")
-  }
-
-  private onWheelZoom(e: WheelEvent): void {
-    if (!this.currentImg) return
-    e.preventDefault()
-    // Exponential feel: each 300px of wheel delta ≈ e.
-    const factor = Math.exp(-e.deltaY / 300)
-    const current = this.gesture.current
-    const newScale = Math.max(1, Math.min(8, current.scale * factor))
-    const k = newScale / current.scale
-    // With transform-origin:center, we compute the vector from the
-    // image visual center to the cursor and adjust translation so the
-    // point under the cursor stays fixed.
-    const rect = this.currentImg.getBoundingClientRect()
-    const imgCx = rect.left + rect.width / 2
-    const imgCy = rect.top + rect.height / 2
-    const offsetX = e.clientX - imgCx
-    const offsetY = e.clientY - imgCy
-    const next = {
-      x: current.x + offsetX * (1 - k),
-      y: current.y + offsetY * (1 - k),
-      scale: newScale,
-    }
-    // Snap-back fully to identity when zooming below 1.
-    const snapped = next.scale <= 1 ? IDENTITY : next
-    if (snapped === IDENTITY && current.scale > 1) this.haptics.fire("snap")
-    this.gesture.setTransform(snapped)
-    this.writeImgTransform(this.gesture.current)
-  }
-
-  private isSwipeEligible(): boolean {
-    return this.gesture.current.scale === 1
-  }
-
-  private onSwipeDown(e: PointerEvent): void {
-    if (!this.isSwipeEligible()) return
-    if (this.swipeActivePointer !== null) return
-    // Don't start a swipe when the user taps an interactive control.
-    const target = e.target as Element | null
-    if (target?.closest("button, a, [data-pc-no-gesture]")) return
-    this.swipeActivePointer = e.pointerId
-    this.momentumCancel?.()
-    this.momentumCancel = null
-    this.swipe.begin(e.clientX, e.clientY, e.timeStamp || performance.now())
-  }
-
-  private onSwipeMove(e: PointerEvent): void {
-    if (this.swipeActivePointer !== e.pointerId) return
-    if (!this.isSwipeEligible()) {
-      this.swipe.cancel()
-      this.swipeActivePointer = null
-      this.resetSwipeVisual()
-      return
-    }
-    const { dx, dy, axis } = this.swipe.move(e.clientX, e.clientY, e.timeStamp || performance.now())
-    if (!axis || !this.currentImg) return
-    // Horizontal: translate follows finger 1:1; vertical: translate + fade.
-    if (axis === "horizontal") {
-      this.writeImgTransformRaw(`translate3d(${dx.toFixed(1)}px, 0, 0)`)
-      this.root.style.setProperty("--pc-root-opacity", "1")
-    } else {
-      this.writeImgTransformRaw(`translate3d(0, ${dy.toFixed(1)}px, 0)`)
-      const rect = this.stage.getBoundingClientRect()
-      const h = rect.height || 1
-      const fade = Math.max(0.3, 1 - Math.abs(dy) / h)
-      this.root.style.setProperty("--pc-root-opacity", String(fade))
-    }
-  }
-
-  private onSwipeUp(e: PointerEvent): void {
-    if (this.swipeActivePointer !== e.pointerId) return
-    this.swipeActivePointer = null
-    const rect = this.stage.getBoundingClientRect()
-    const W = rect.width || this.root.clientWidth || 0
-    const H = rect.height || this.root.clientHeight || 0
-    const result = this.swipe.release(W, H, this.direction)
-    this.resetSwipeVisual()
-
-    switch (result.action) {
-      case "next":
-        void this.core.next()
-        break
-      case "prev":
-        void this.core.prev()
-        break
-      case "dismiss":
-        this.haptics.fire("dismiss")
-        void this.close("user")
-        break
-      case "cancel": {
-        // Run a short momentum spring back to origin.
-        if (!this.currentImg) return
-        let x = result.dx
-        let y = result.dy
-        this.momentumCancel = runMomentum(
-          -x * 0.2,
-          -y * 0.2,
-          (vx, vy) => {
-            x += vx
-            y += vy
-            if (Math.hypot(x, y) < 0.5) {
-              this.writeImgTransformRaw("translate3d(0,0,0)")
-              return false
-            }
-            this.writeImgTransformRaw(`translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`)
-          },
-          { friction: 0.82 },
-        )
-        break
-      }
-    }
-  }
-
-  private onSwipeCancel(e: PointerEvent): void {
-    if (this.swipeActivePointer !== e.pointerId) return
-    this.swipeActivePointer = null
-    this.swipe.cancel()
-    this.resetSwipeVisual()
-  }
-
-  private resetSwipeVisual(): void {
-    this.root.style.removeProperty("--pc-root-opacity")
+    await renderSlide({
+      core: this.core,
+      slot: this.slot,
+      caption: this.caption,
+      longDescription: this.longDescription,
+      counter: this.counter,
+      prevButton: this.prevButton,
+      nextButton: this.nextButton,
+      liveRegion: this.liveRegion,
+      t: this.t,
+      renderers: this.opts.renderers,
+      image: this.opts.image,
+      loop: this.opts.loop,
+      viewTransition: this.opts.viewTransition === true,
+      activeRenderer: this.currentRendererEl,
+      setActiveRenderer: (slot) => {
+        this.currentRendererEl = slot
+      },
+      setCurrentImg: (img) => {
+        this.currentImg = img
+      },
+      signal: this.loadAbort.signal,
+      resetTransform: () => this.motion.reset(),
+      applyCurrentTransform: (img) => this.motion.applyCurrentTransform(img),
+    })
   }
 
   /**
@@ -775,27 +460,27 @@ export class PencereViewer<T extends Item = Item> {
     // same reach as a one-finger pan gesture. ArrowUp / ArrowDown are
     // otherwise unused by pencere, so we intercept them here before
     // `resolveKeyAction` gets a chance.
-    const zoomed = this.gesture.current.scale > 1
+    const zoomed = this.motion.scale > 1
     if (zoomed && !e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const step = 48
       if (e.key === "ArrowLeft") {
         e.preventDefault()
-        this.panBy(step, 0)
+        this.motion.panBy(step, 0)
         return
       }
       if (e.key === "ArrowRight") {
         e.preventDefault()
-        this.panBy(-step, 0)
+        this.motion.panBy(-step, 0)
         return
       }
       if (e.key === "ArrowUp") {
         e.preventDefault()
-        this.panBy(0, step)
+        this.motion.panBy(0, step)
         return
       }
       if (e.key === "ArrowDown") {
         e.preventDefault()
-        this.panBy(0, -step)
+        this.motion.panBy(0, -step)
         return
       }
     }
@@ -822,57 +507,17 @@ export class PencereViewer<T extends Item = Item> {
         void this.core.goTo(this.core.state.items.length - 1)
         break
       case "zoomIn":
-        this.zoomBy(1.25)
+        this.motion.zoomBy(1.25)
         break
       case "zoomOut":
-        this.zoomBy(1 / 1.25)
+        this.motion.zoomBy(1 / 1.25)
         break
       case "zoomReset":
-        this.zoomReset()
+        this.motion.zoomReset()
         break
       default:
         break
     }
-  }
-
-  /**
-   * Shift the pan translation by a pixel vector. Used by the keyboard
-   * pan alternative (#25 / WCAG 2.5.7) so users who cannot drag can
-   * still reach every corner of a zoomed image.
-   */
-  private panBy(dx: number, dy: number): void {
-    if (!this.currentImg) return
-    const current = this.gesture.current
-    if (current.scale <= 1) return
-    this.gesture.setTransform({
-      x: current.x + dx,
-      y: current.y + dy,
-      scale: current.scale,
-    })
-    this.writeImgTransform(this.gesture.current)
-  }
-
-  /** Zoom by a multiplicative factor around the image center. */
-  private zoomBy(factor: number): void {
-    if (!this.currentImg) return
-    const current = this.gesture.current
-    const newScale = Math.max(1, Math.min(8, current.scale * factor))
-    if (newScale === current.scale) return
-    const k = newScale / current.scale
-    const next = {
-      x: current.x * k,
-      y: current.y * k,
-      scale: newScale,
-    }
-    const snapped = next.scale <= 1 ? IDENTITY : next
-    this.gesture.setTransform(snapped)
-    this.writeImgTransform(this.gesture.current)
-  }
-
-  private zoomReset(): void {
-    if (!this.currentImg) return
-    this.gesture.setTransform(IDENTITY)
-    this.writeImgTransform(IDENTITY)
   }
 
   /** For tests: is the user in reduced-motion mode? */
@@ -894,61 +539,17 @@ export class PencereViewer<T extends Item = Item> {
    * `options.fullscreen` is not enabled.
    */
   async enterFullscreen(): Promise<void> {
-    if (this.opts.fullscreen !== true) return
-    const el = this.root as HTMLElement & {
-      requestFullscreen?: () => Promise<void>
-      webkitRequestFullscreen?: () => void
-    }
-    if (typeof el.requestFullscreen === "function") {
-      try {
-        await el.requestFullscreen()
-        return
-      } catch {
-        // Fall through to faux-fullscreen.
-      }
-    } else if (typeof el.webkitRequestFullscreen === "function") {
-      try {
-        el.webkitRequestFullscreen()
-        return
-      } catch {
-        /* ignore */
-      }
-    }
-    // iOS Safari / restricted environment — CSS faux-fullscreen. The
-    // class is styled in styles.ts to pin the root to the visual
-    // viewport with `position: fixed; inset: 0` (which .pc-root
-    // already is), plus a higher z-index to punch over any page chrome.
-    this.root.classList.add("pc-root--faux-fullscreen")
+    await this.fullscreenController.enter()
   }
 
   /** Exit fullscreen (real or faux). */
   async exitFullscreen(): Promise<void> {
-    const doc = this.root.ownerDocument as Document & {
-      webkitExitFullscreen?: () => void
-    }
-    if (doc.fullscreenElement === this.root) {
-      try {
-        await doc.exitFullscreen()
-      } catch {
-        /* ignore */
-      }
-    } else if (typeof doc.webkitExitFullscreen === "function") {
-      try {
-        doc.webkitExitFullscreen()
-      } catch {
-        /* ignore */
-      }
-    }
-    this.root.classList.remove("pc-root--faux-fullscreen")
+    await this.fullscreenController.exit()
   }
 
   /** Toggle between windowed and fullscreen. */
   async toggleFullscreen(): Promise<void> {
-    const active =
-      this.root.ownerDocument.fullscreenElement === this.root ||
-      this.root.classList.contains("pc-root--faux-fullscreen")
-    if (active) await this.exitFullscreen()
-    else await this.enterFullscreen()
+    await this.fullscreenController.toggle()
   }
 }
 
@@ -961,27 +562,6 @@ export class PencereViewer<T extends Item = Item> {
  * This keeps the viewer honest with whatever the surrounding app has
  * configured — including mixed LTR docs with an `<article dir="rtl">`.
  */
-/**
- * Normalize the `routing` option into a concrete pattern/parse pair,
- * or `null` when routing is disabled.
- */
-function resolveRouting(
-  option: boolean | RoutingOptions | undefined,
-): { pattern: (i: number) => string; parse: (h: string) => number | null } | null {
-  if (!option) return null
-  const o = option === true ? {} : option
-  const pattern = o.pattern ?? ((i: number) => `#p${i + 1}`)
-  const parse =
-    o.parse ??
-    ((hash: string): number | null => {
-      const m = /^#p(\d+)$/.exec(hash)
-      if (!m) return null
-      const n = Number.parseInt(m[1]!, 10)
-      return Number.isFinite(n) && n >= 1 ? n - 1 : null
-    })
-  return { pattern, parse }
-}
-
 function resolveDirection(
   explicit: "ltr" | "rtl" | "auto" | undefined,
   container: HTMLElement,
