@@ -247,7 +247,15 @@ See [`SECURITY.md`](./SECURITY.md) for the disclosure policy. Highlights:
 - `textContent` for captions by default.
 - `referrerpolicy="strict-origin-when-cross-origin"` on every generated
   `<img>`.
-- npm releases published with `--provenance` (SLSA attestation).
+- npm releases published with `--provenance` (SLSA attestation)
+  from a GitHub-hosted runner via OIDC. Verify locally with:
+
+  ```bash
+  npm audit signatures pencere
+  ```
+
+  The output should show a `verified registry signature` and a
+  `verified attestation` line for every published version.
 
 ## Theming
 
