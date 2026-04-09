@@ -1,0 +1,42 @@
+[
+  {
+    "name": "pencere (core)",
+    "path": "dist/index.mjs",
+    "limit": "12 kB",
+    "gzip": true
+  },
+  {
+    "name": "pencere/react",
+    "path": "dist/adapters/react.mjs",
+    "limit": "2 kB",
+    "gzip": true,
+    "ignore": ["react"]
+  },
+  {
+    "name": "pencere/vue",
+    "path": "dist/adapters/vue.mjs",
+    "limit": "2 kB",
+    "gzip": true,
+    "ignore": ["vue"]
+  },
+  {
+    "name": "pencere/svelte",
+    "path": "dist/adapters/svelte.mjs",
+    "limit": "2 kB",
+    "gzip": true,
+    "ignore": ["svelte"]
+  },
+  {
+    "name": "pencere/solid",
+    "path": "dist/adapters/solid.mjs",
+    "limit": "2 kB",
+    "gzip": true,
+    "ignore": ["solid-js"]
+  },
+  {
+    "name": "pencere/element",
+    "path": "dist/adapters/element.mjs",
+    "limit": "6 kB",
+    "gzip": true
+  }
+]
