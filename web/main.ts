@@ -1,5 +1,6 @@
 import { PencereViewer } from "../src"
-import type { ImageItem } from "../src"
+import type { ImageItem, Item } from "../src"
+import type { Renderer } from "../src/dom/renderers"
 
 const items: ImageItem[] = [
   {
@@ -103,3 +104,65 @@ viewer.core.events.on("change", ({ index }) => {
 viewer.core.events.on("close", ({ reason }) => {
   console.info("[pencere] closed via", reason)
 })
+
+// ─── Media & custom renderers ─────────────────────────────────────
+// Second viewer that mixes a public-domain video, a sandboxed
+// iframe, and a `custom:text` item driven by a user-supplied
+// renderer. Wired to the buttons in the "More features" section so
+// reviewers can click through each renderer path live.
+
+const textRenderer: Renderer = {
+  canHandle(item): item is Item {
+    return item.type === "custom:text"
+  },
+  mount(item, { document: doc }) {
+    const wrap = doc.createElement("article")
+    wrap.style.cssText = "max-width:60ch;padding:2rem;color:inherit;font:inherit;text-align:center;"
+    const data = (item as { data: { title: string; body: string } }).data
+    const h = doc.createElement("h2")
+    h.textContent = data.title
+    h.style.marginTop = "0"
+    const p = doc.createElement("p")
+    p.textContent = data.body
+    wrap.append(h, p)
+    return wrap
+  },
+}
+
+const mediaItems: Item[] = [
+  {
+    type: "video",
+    src: "https://cdn.jsdelivr.net/gh/mediaelement/mediaelement-files@master/big_buck_bunny.mp4",
+    poster: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=1200",
+    alt: "Big Buck Bunny (Blender open movie) — public domain clip",
+    caption: "Big Buck Bunny — open-movie project, public domain",
+  },
+  {
+    type: "iframe",
+    src: "https://en.wikipedia.org/wiki/Lightbox_(JavaScript)",
+    alt: "Wikipedia article: Lightbox (JavaScript)",
+    caption: "Embedded with sandbox + strict-origin referrer",
+  } as Item,
+  {
+    type: "custom:text",
+    data: {
+      title: "Custom renderers",
+      body: "This slide is not an image, video, or iframe — it is a plain <article> element produced by a user-supplied renderer passed to PencereViewer({ renderers: [...] }). Any HTMLElement works.",
+    },
+    alt: "Custom renderer demo",
+    caption: "custom:text rendered via user Renderer",
+  } as Item,
+]
+
+const mediaViewer = new PencereViewer<Item>({
+  items: mediaItems,
+  loop: true,
+  renderers: [textRenderer],
+})
+
+for (const id of ["open-video", "open-iframe", "open-custom"]) {
+  const index = { "open-video": 0, "open-iframe": 1, "open-custom": 2 }[id]!
+  document.getElementById(id)?.addEventListener("click", () => {
+    void mediaViewer.open(index)
+  })
+}

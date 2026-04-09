@@ -146,6 +146,7 @@ export class PencereViewer<T extends Item = Item> {
   private readonly opts: PencereViewerOptions<T>
   private loadAbort: AbortController | null = null
   private currentImg: HTMLImageElement | null = null
+  private renderPromise: Promise<void> | null = null
   private currentRendererEl: {
     renderer: Renderer
     el: HTMLElement
@@ -306,9 +307,11 @@ export class PencereViewer<T extends Item = Item> {
     // eventual thumbnail strip) has to be handled too.
     root.addEventListener("focusin", (e) => this.onFocusIn(e), { signal: sig })
 
-    this.core.events.on("open", () => void this.renderSlide())
+    this.core.events.on("open", () => {
+      this.renderPromise = this.renderSlide()
+    })
     this.core.events.on("change", () => {
-      void this.renderSlide()
+      this.renderPromise = this.renderSlide()
       this.syncRoutingFragment("replace")
     })
     this.core.events.on("close", () => {
@@ -356,27 +359,45 @@ export class PencereViewer<T extends Item = Item> {
     // tag the trigger thumbnail with a shared `view-transition-name`
     // and wrap the core open in `document.startViewTransition` so
     // the browser animates the thumbnail → lightbox image transform.
+    // The callback awaits both core.open AND the slide's async render
+    // pipeline (renderPromise) so the browser's "new state" snapshot
+    // is taken after the <img> has actually decoded and landed in
+    // the slot — otherwise the UA snapshots an empty dialog and the
+    // thumbnail just fades to nothing.
     const run = async (): Promise<void> => {
       await this.core.open(index)
       this.root.classList.add("pc-root--open")
       this.dialog.show()
       this.gesture.attach()
       this.syncRoutingFragment("push")
+      if (this.renderPromise) await this.renderPromise
     }
     const doc = this.root.ownerDocument as Document & {
-      startViewTransition?: (cb: () => unknown) => { finished: Promise<void> }
+      startViewTransition?: (cb: () => unknown | Promise<unknown>) => {
+        finished: Promise<void>
+        updateCallbackDone: Promise<void>
+      }
     }
     if (this.opts.viewTransition === true && typeof doc.startViewTransition === "function") {
       if (trigger) {
         trigger.style.setProperty("view-transition-name", "pencere-hero")
       }
-      const vt = doc.startViewTransition(() => run())
+      const vt = doc.startViewTransition(async () => {
+        await run()
+      })
       try {
+        // Wait for the DOM callback to commit first, then the
+        // animation itself. Clearing the trigger's
+        // view-transition-name during `updateCallbackDone` means the
+        // old node stops competing with the lightbox image for the
+        // name before the UA starts animating.
+        await vt.updateCallbackDone
+        if (trigger) trigger.style.removeProperty("view-transition-name")
         await vt.finished
       } catch {
         /* ignore aborted transition */
+        if (trigger) trigger.style.removeProperty("view-transition-name")
       }
-      if (trigger) trigger.style.removeProperty("view-transition-name")
       return
     }
     await run()

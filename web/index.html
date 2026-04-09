@@ -514,13 +514,19 @@ await viewer.toggleFullscreen()</code></pre>
   items: [
     { type: "video",  src: "/clip.mp4", poster: "/clip.jpg", autoplay: true },
     { type: "iframe", src: "https://example.com/embed" },
-    { type: "html",   html: () =&gt; buildRichSlide() },
+    { type: "custom:text", data: { title, body } },
   ],
+  renderers: [textRenderer], // user renderers run ahead of built-ins
 })</code></pre>
         <p>
           Built-in renderers cover <code>video</code>, <code>iframe</code>, and <code>html</code>.
           Plug in your own via <code>renderers: [...]</code>. User renderers always run ahead of the
-          built-ins so you can override any default.
+          built-ins so you can override any default. Click through each:
+        </p>
+        <p>
+          <button id="open-video" type="button" class="demo-btn">Play video</button>
+          <button id="open-iframe" type="button" class="demo-btn">Open iframe</button>
+          <button id="open-custom" type="button" class="demo-btn">Custom renderer</button>
         </p>
 
         <h3>Haptic feedback</h3>
