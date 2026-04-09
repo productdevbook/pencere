@@ -45,10 +45,15 @@ export class ViewTransitionController {
    * callback has committed AND the animation has finished. On
    * unsupported engines, just runs `update()` directly.
    *
-   * `afterUpdate` is invoked after the callback commits but before
-   * the animation starts — use it to clear shared
-   * `view-transition-name` properties from the origin element so
-   * the old node stops competing with the destination for the name.
+   * `afterUpdate` is invoked **inside** the startViewTransition
+   * callback, after `update()` resolves but before the callback
+   * returns. This is critical: the browser captures the new-state
+   * snapshot the moment the callback returns, so any shared
+   * `view-transition-name` on the origin element has to be cleared
+   * before that snapshot or the UA sees two elements sharing the
+   * same name and aborts the morph. #ref: regression from the
+   * pre-refactor implementation which cleared during
+   * updateCallbackDone (too late).
    */
   async run(update: () => void | Promise<void>, afterUpdate?: () => void): Promise<void> {
     if (!this.supported || !this.doc || typeof this.doc.startViewTransition !== "function") {
@@ -58,14 +63,12 @@ export class ViewTransitionController {
     }
     const vt = this.doc.startViewTransition(async () => {
       await update()
+      afterUpdate?.()
     })
     try {
-      await vt.updateCallbackDone
-      afterUpdate?.()
       await vt.finished
     } catch {
       /* ignore aborted transition */
-      afterUpdate?.()
     }
   }
 }

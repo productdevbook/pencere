@@ -647,11 +647,15 @@ describe("PencereViewer", () => {
 
   it("#12: wraps open in document.startViewTransition when supported", async () => {
     const spy = vi.fn((cb: () => unknown) => {
-      void cb()
+      // Await the update callback so `afterUpdate` (called inside
+      // the callback to clear the trigger's view-transition-name
+      // before the UA snapshot) has a chance to run before the
+      // controller observes vt.finished.
+      const done = Promise.resolve().then(() => cb())
       return {
-        finished: Promise.resolve(),
-        ready: Promise.resolve(),
-        updateCallbackDone: Promise.resolve(),
+        finished: done,
+        ready: done,
+        updateCallbackDone: done,
       }
     })
     ;(document as unknown as { startViewTransition?: unknown }).startViewTransition = spy
