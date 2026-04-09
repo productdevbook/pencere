@@ -1,67 +1,67 @@
 <p align="center">
+  <br>
   <a href="https://pencere.productdevbook.com">
-    <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.png" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+    <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.png" alt="pencere — Modern, accessible, framework-agnostic lightbox" width="100%">
   </a>
+  <br><br>
+  <b style="font-size: 2em;">pencere</b>
+  <br><br>
+  Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero runtime dependencies.
+  <br>
+  View Transitions API morph, WCAG 2.2 AA, plugins, controlled mode, tree-shakeable. Works everywhere.
+  <br><br>
+  <a href="https://pencere.productdevbook.com"><b>Live demo →</b></a>
+  <br><br>
+  <a href="https://npmjs.com/package/pencere"><img src="https://img.shields.io/npm/v/pencere?style=flat&colorA=18181B&colorB=F0DB4F" alt="npm version"></a>
+  <a href="https://npmjs.com/package/pencere"><img src="https://img.shields.io/npm/dm/pencere?style=flat&colorA=18181B&colorB=F0DB4F" alt="npm downloads"></a>
+  <a href="https://bundlephobia.com/result?p=pencere"><img src="https://img.shields.io/bundlephobia/minzip/pencere?style=flat&colorA=18181B&colorB=F0DB4F" alt="bundle size"></a>
+  <a href="https://github.com/productdevbook/pencere/blob/main/LICENSE"><img src="https://img.shields.io/github/license/productdevbook/pencere?style=flat&colorA=18181B&colorB=F0DB4F" alt="license"></a>
 </p>
-
-# pencere
-
-> Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero runtime dependencies, ESM, tree-shakeable.
-
-<p align="center">
-  <a href="https://pencere.productdevbook.com"><strong>Live demo →</strong></a>
-</p>
-
-[![npm version](https://img.shields.io/npm/v/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](https://npmjs.com/package/pencere)
-[![npm downloads](https://img.shields.io/npm/dm/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](https://npmjs.com/package/pencere)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](https://bundlephobia.com/result?p=pencere)
-[![license](https://img.shields.io/github/license/productdevbook/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](LICENSE)
 
 > [!IMPORTANT]
-> Early development. API is not stable yet. Feedback welcome on [GitHub Issues](https://github.com/productdevbook/pencere/issues).
+> **What's inside:** image / video / iframe / custom renderers, View Transitions API morph (#12), hash-based deep linking (#p1, #p2…), pinch + wheel zoom, drag-to-dismiss, Fullscreen API, lifecycle hooks (`willOpen`, `didRender`, `didNavigate`), plugin system with narrow `PencereContext` (#4), controlled mode for React / Vue router sync (#6), injectable `ImageLoader` DI (#9), automatic RTL, Trusted Types helper, IME-safe keyboard.
+>
+> **Adapters:** React, Vue, Svelte, Solid, Web Component, plus `bindPencere()` declarative DOM scanner for plain HTML.
+>
+> **Status:** Early development — public API is frozen in spirit but not in signature. Feedback on [GitHub Issues](https://github.com/productdevbook/pencere/issues) and PRs welcome.
 
-`pencere` is the lightbox library that's been missing from the
-ecosystem: MIT-licensed end-to-end, runs anywhere (vanilla, React,
-Vue, Svelte, Solid, Web Components), and built on web standards
-rather than layers of custom JS.
+## Quick Start
 
-## Install
-
-```bash
-pnpm add pencere
+```sh
+npm install pencere
 ```
-
-## Quick start
 
 ```ts
 import { PencereViewer } from "pencere"
 
 const viewer = new PencereViewer({
   items: [
-    {
-      type: "image",
-      src: "/a.jpg",
-      alt: "Mountain lake at sunrise",
-      caption: "Yosemite Valley",
-      width: 1600,
-      height: 1067,
-    },
-    {
-      type: "image",
-      src: "/b.jpg",
-      alt: "Bosphorus at dusk",
-      width: 1600,
-      height: 1067,
-    },
+    { type: "image", src: "/a.jpg", alt: "Mountain lake", caption: "Yosemite Valley" },
+    { type: "image", src: "/b.jpg", alt: "Bosphorus at dusk" },
   ],
   loop: true,
+  viewTransition: true,
+  routing: true,
 })
 
-document.querySelector("#open")?.addEventListener("click", () => viewer.open(0))
+// Pass the clicked thumbnail so the UA morphs thumb → lightbox natively.
+document
+  .querySelector<HTMLButtonElement>("#open")
+  ?.addEventListener("click", (e) => viewer.open(0, e.currentTarget))
 ```
 
-> [!TIP]
-> Live demo at [**pencere.productdevbook.com**](https://pencere.productdevbook.com) — every gesture, keyboard shortcut, hook, and plugin path wired up. Run `pnpm playground` for the same site locally at `http://localhost:5173`.
+## Declarative HTML
+
+```html
+<a href="/a.jpg" data-pencere data-gallery="trip" data-caption="Day 1">
+  <img src="/a-thumb.jpg" alt="Mountain lake" />
+</a>
+
+<script type="module">
+  import { bindPencere } from "pencere"
+  bindPencere("[data-pencere]")
+</script>
+```
 
 ### React
 

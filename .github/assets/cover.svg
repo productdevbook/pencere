@@ -5,236 +5,280 @@
       <feColorMatrix type="saturate" values="0"/>
       <feBlend in="SourceGraphic" mode="overlay" result="blend"/>
       <feComponentTransfer>
-        <feFuncA type="linear" slope="0.05"/>
+        <feFuncA type="linear" slope="0.06"/>
       </feComponentTransfer>
       <feBlend in="SourceGraphic" mode="normal"/>
     </filter>
 
-    <filter id="glow-warm" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#7dd3fc" flood-opacity="0.3"/>
+    <filter id="glow-sky" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feFlood flood-color="#38bdf8" flood-opacity="0.5"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <filter id="glow-sand" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#a78bfa" flood-opacity="0.28"/>
+      <feFlood flood-color="#06b6d4" flood-opacity="0.45"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <filter id="glow-linen" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="glow-purple" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#cbd5e1" flood-opacity="0.25"/>
+      <feFlood flood-color="#a78bfa" flood-opacity="0.4"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <filter id="glow-taupe" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="glow-emerald" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feFlood flood-color="#64748b" flood-opacity="0.22"/>
+      <feFlood flood-color="#34d399" flood-opacity="0.4"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <linearGradient id="cottonBg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0b1020"/>
-      <stop offset="30%" stop-color="#11182c"/>
-      <stop offset="60%" stop-color="#0f1830"/>
-      <stop offset="100%" stop-color="#070a18"/>
-    </linearGradient>
+    <filter id="glow-rose" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#fb7185" flood-opacity="0.35"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
 
-    <radialGradient id="warmCream" cx="0.1" cy="0.2" r="0.5">
-      <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="warmSand" cx="0.9" cy="0.15" r="0.45">
-      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="warmLinen" cx="0.85" cy="0.85" r="0.4">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.08"/>
+    <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#fbbf24" flood-opacity="0.35"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <radialGradient id="ambientSky" cx="0.05" cy="0.25" r="0.35">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.09"/>
       <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="warmButter" cx="0.1" cy="0.85" r="0.4">
-      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.09"/>
-      <stop offset="100%" stop-color="#c4b5fd" stop-opacity="0"/>
+    <radialGradient id="ambientCyan" cx="0.95" cy="0.15" r="0.35">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientPurple" cx="0.05" cy="0.85" r="0.35">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientEmerald" cx="0.95" cy="0.85" r="0.35">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
     </radialGradient>
 
-    <radialGradient id="centerBackdrop" cx="0.5" cy="0.5" r="0.45">
-      <stop offset="0%" stop-color="#070a18" stop-opacity="0.98"/>
-      <stop offset="45%" stop-color="#070a18" stop-opacity="0.95"/>
-      <stop offset="70%" stop-color="#070a18" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#070a18" stop-opacity="0"/>
+    <radialGradient id="centerBackdrop" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0%" stop-color="#06070b" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#06070b" stop-opacity="0.88"/>
+      <stop offset="80%" stop-color="#06070b" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#06070b" stop-opacity="0"/>
     </radialGradient>
 
-    <pattern id="dotGrid" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="15" cy="15" r="0.6" fill="#64748b" opacity="0.14"/>
+    <pattern id="dotGrid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="14" cy="14" r="0.6" fill="#334155" opacity="0.35"/>
     </pattern>
 
-    <radialGradient id="vignetteGrad" cx="0.5" cy="0.5" r="0.75">
+    <radialGradient id="vignetteGrad" cx="0.5" cy="0.5" r="0.7">
       <stop offset="0%" stop-color="transparent"/>
-      <stop offset="100%" stop-color="#04060f"/>
+      <stop offset="100%" stop-color="#06070b"/>
     </radialGradient>
+
+    <!-- Photo placeholders for the lightbox frames -->
+    <linearGradient id="photoA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="photoB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="50%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#a7f3d0"/>
+    </linearGradient>
+    <radialGradient id="photoC" cx="0.3" cy="0.2" r="0.9">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="photoD" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="60%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#e5e7eb"/>
+    </linearGradient>
+    <linearGradient id="photoE" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#fed7aa"/>
+    </linearGradient>
+    <linearGradient id="photoF" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#e9d5ff"/>
+    </linearGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="1200" height="628" fill="url(#cottonBg)"/>
-  <rect width="1200" height="628" fill="url(#warmCream)"/>
-  <rect width="1200" height="628" fill="url(#warmSand)"/>
-  <rect width="1200" height="628" fill="url(#warmLinen)"/>
-  <rect width="1200" height="628" fill="url(#warmButter)"/>
-  <rect width="1200" height="628" fill="url(#dotGrid)" opacity="0.5"/>
+  <rect width="1200" height="628" fill="#06070b"/>
+  <rect width="1200" height="628" fill="url(#ambientSky)"/>
+  <rect width="1200" height="628" fill="url(#ambientCyan)"/>
+  <rect width="1200" height="628" fill="url(#ambientPurple)"/>
+  <rect width="1200" height="628" fill="url(#ambientEmerald)"/>
+  <rect width="1200" height="628" fill="url(#dotGrid)" opacity="0.4"/>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- TOP-LEFT: Declarative HTML          -->
-  <!-- ═══════════════════════════════════ -->
-  <g transform="translate(20, 20)" filter="url(#glow-warm)" opacity="0.6">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="16" fill="#7dd3fc">
-      <tspan x="0" y="0">&lt;a href="/photo.jpg"</tspan>
-      <tspan x="16" y="22">data-pencere</tspan>
-      <tspan x="16" y="44">data-gallery="trip"</tspan>
-      <tspan x="16" y="66">data-caption="Day 1"&gt;</tspan>
-      <tspan x="16" y="88">&lt;img src="/thumb.jpg"/&gt;</tspan>
-      <tspan x="0" y="110">&lt;/a&gt;</tspan>
-      <tspan x="0" y="154" font-weight="bold">import</tspan>
-      <tspan x="64" y="154"> { bindPencere }</tspan>
-      <tspan x="16" y="176" font-weight="bold">from</tspan>
-      <tspan x="64" y="176"> "pencere"</tspan>
-      <tspan x="0" y="220">bindPencere(</tspan>
-      <tspan x="16" y="242">"[data-pencere]"</tspan>
-      <tspan x="0" y="264">)</tspan>
-    </text>
+  <!-- ════════════════════════════════════════ -->
+  <!-- TOP-LEFT: Lightbox dialog silhouette     -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(-40, -20) rotate(-6, 200, 160)" filter="url(#glow-sky)" opacity="0.85">
+    <rect x="0" y="0" width="420" height="280" rx="14" fill="#030712" stroke="#38bdf8" stroke-width="2.5"/>
+    <rect x="18" y="18" width="384" height="200" rx="8" fill="url(#photoA)"/>
+    <!-- caption bar -->
+    <rect x="18" y="234" width="260" height="8" rx="4" fill="#38bdf8" opacity="0.7"/>
+    <rect x="18" y="250" width="170" height="6" rx="3" fill="#38bdf8" opacity="0.35"/>
+    <!-- nav chevrons -->
+    <g fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M38 118 L26 108 L38 98"/>
+      <path d="M384 98 L396 108 L384 118"/>
+    </g>
+    <!-- close -->
+    <g stroke="#38bdf8" stroke-width="3" stroke-linecap="round">
+      <path d="M388 18 L402 32 M402 18 L388 32"/>
+    </g>
+    <text x="30" y="38" font-family="'SF Mono','Fira Code',monospace" font-size="12" fill="#38bdf8" opacity="0.8">1 / 4</text>
+    <text x="200" y="308" text-anchor="middle" fill="#38bdf8" opacity="0.6" font-family="'SF Mono','Fira Code',monospace" font-size="14" font-weight="bold" letter-spacing="5">LIGHTBOX</text>
   </g>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- TOP-RIGHT: Viewer API               -->
-  <!-- ═══════════════════════════════════ -->
-  <g transform="translate(850, 20)" filter="url(#glow-sand)" opacity="0.55">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#a78bfa">
-      <tspan x="0" y="0" font-weight="bold">const</tspan>
-      <tspan x="44" y="0"> v = new PencereViewer({</tspan>
-      <tspan x="0" y="24">  items,</tspan>
-      <tspan x="0" y="48">  viewTransition: </tspan>
-      <tspan x="0" y="72">  routing: </tspan>
-      <tspan x="0" y="96">  haptics: </tspan>
-      <tspan x="0" y="120">  hooks: { willOpen,</tspan>
-      <tspan x="0" y="144">           didRender },</tspan>
-      <tspan x="0" y="168">  plugins: [</tspan>
-      <tspan x="0" y="192">    slideshowPlugin()</tspan>
-      <tspan x="0" y="216">  ],</tspan>
-      <tspan x="0" y="240">})</tspan>
-      <tspan x="0" y="276" font-weight="bold">await</tspan>
-      <tspan x="50" y="276"> v.open(0, thumb)</tspan>
-    </text>
+  <!-- ════════════════════════════════════════ -->
+  <!-- TOP-RIGHT: Thumbnail grid 3x2            -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(900, -30) rotate(8, 150, 120)" filter="url(#glow-cyan)" opacity="0.78">
+    <g>
+      <rect x="0" y="0" width="90" height="64" rx="6" fill="url(#photoA)" stroke="#06b6d4" stroke-width="1.5"/>
+      <rect x="100" y="0" width="90" height="64" rx="6" fill="url(#photoB)" stroke="#06b6d4" stroke-width="1.5"/>
+      <rect x="200" y="0" width="90" height="64" rx="6" fill="url(#photoC)" stroke="#06b6d4" stroke-width="1.5"/>
+      <rect x="0" y="74" width="90" height="64" rx="6" fill="url(#photoD)" stroke="#06b6d4" stroke-width="1.5"/>
+      <rect x="100" y="74" width="90" height="64" rx="6" fill="url(#photoE)" stroke="#06b6d4" stroke-width="1.5"/>
+      <rect x="200" y="74" width="90" height="64" rx="6" fill="url(#photoF)" stroke="#06b6d4" stroke-width="1.5"/>
+    </g>
+    <text x="145" y="170" text-anchor="middle" fill="#06b6d4" opacity="0.6" font-family="'SF Mono','Fira Code',monospace" font-size="14" font-weight="bold" letter-spacing="5">GALLERY</text>
   </g>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- BOTTOM-LEFT: Plugin contract        -->
-  <!-- ═══════════════════════════════════ -->
-  <g transform="translate(20, 360)" filter="url(#glow-linen)" opacity="0.45">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="14" fill="#cbd5e1">
-      <tspan x="0" y="0">PencerePlugin {</tspan>
-      <tspan x="16" y="22">name: "slideshow"</tspan>
-      <tspan x="16" y="44">install(ctx) {</tspan>
-      <tspan x="32" y="66">ctx.registerHook(</tspan>
-      <tspan x="48" y="88">"didOpen", start</tspan>
-      <tspan x="32" y="110">)</tspan>
-      <tspan x="32" y="132">ctx.registerHook(</tspan>
-      <tspan x="48" y="154">"willClose", stop</tspan>
-      <tspan x="32" y="176">)</tspan>
-      <tspan x="16" y="198">}</tspan>
-      <tspan x="0" y="220">}</tspan>
-    </text>
+  <!-- ════════════════════════════════════════ -->
+  <!-- BOTTOM-LEFT: Pinch-zoom / magnifier      -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(10, 360) rotate(-8, 150, 120)" filter="url(#glow-purple)" opacity="0.7">
+    <!-- magnifier glass -->
+    <circle cx="110" cy="100" r="70" fill="none" stroke="#a78bfa" stroke-width="6"/>
+    <circle cx="110" cy="100" r="50" fill="url(#photoC)" opacity="0.7"/>
+    <line x1="164" y1="154" x2="210" y2="200" stroke="#a78bfa" stroke-width="9" stroke-linecap="round"/>
+    <!-- + inside -->
+    <g stroke="#a78bfa" stroke-width="4" stroke-linecap="round">
+      <line x1="90" y1="100" x2="130" y2="100"/>
+      <line x1="110" y1="80" x2="110" y2="120"/>
+    </g>
+    <!-- pinch dots -->
+    <circle cx="50" cy="40" r="7" fill="#a78bfa"/>
+    <circle cx="190" cy="40" r="7" fill="#a78bfa"/>
+    <path d="M55 45 L75 65" stroke="#a78bfa" stroke-width="2.5" stroke-dasharray="3 4" fill="none"/>
+    <path d="M185 45 L165 65" stroke="#a78bfa" stroke-width="2.5" stroke-dasharray="3 4" fill="none"/>
+    <text x="115" y="240" text-anchor="middle" fill="#a78bfa" opacity="0.55" font-family="'SF Mono','Fira Code',monospace" font-size="13" font-weight="bold" letter-spacing="4">PINCH-ZOOM</text>
   </g>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- BOTTOM-RIGHT: Adapters              -->
-  <!-- ═══════════════════════════════════ -->
-  <g transform="translate(920, 400)" filter="url(#glow-taupe)" opacity="0.45">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#94a3b8">
-      <tspan x="0" y="0" font-weight="bold">pencere/react</tspan>
-      <tspan x="16" y="24">useLightbox()</tspan>
-      <tspan x="0" y="56" font-weight="bold">pencere/vue</tspan>
-      <tspan x="16" y="80">usePencere()</tspan>
-      <tspan x="0" y="112" font-weight="bold">pencere/element</tspan>
-      <tspan x="16" y="136">&lt;pencere-lightbox&gt;</tspan>
-    </text>
+  <!-- ════════════════════════════════════════ -->
+  <!-- BOTTOM-RIGHT: Video play button          -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(910, 390) rotate(6, 140, 100)" filter="url(#glow-emerald)" opacity="0.72">
+    <rect x="0" y="0" width="280" height="168" rx="12" fill="url(#photoB)" stroke="#34d399" stroke-width="2"/>
+    <circle cx="140" cy="84" r="42" fill="#06070b" opacity="0.75"/>
+    <circle cx="140" cy="84" r="42" fill="none" stroke="#34d399" stroke-width="3"/>
+    <!-- play triangle -->
+    <path d="M128 62 L128 106 L164 84 Z" fill="#34d399"/>
+    <!-- progress bar -->
+    <rect x="14" y="148" width="252" height="4" rx="2" fill="#06070b" opacity="0.6"/>
+    <rect x="14" y="148" width="92" height="4" rx="2" fill="#34d399"/>
+    <text x="140" y="204" text-anchor="middle" fill="#34d399" opacity="0.55" font-family="'SF Mono','Fira Code',monospace" font-size="13" font-weight="bold" letter-spacing="4">VIDEO / IFRAME</text>
   </g>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- RIGHT-MID: Hooks                    -->
-  <!-- ═══════════════════════════════════ -->
-  <g transform="translate(1060, 360)" filter="url(#glow-taupe)" opacity="0.35">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#94a3b8">
-      <tspan x="0" y="0" font-weight="bold">hooks</tspan>
-      <tspan x="0" y="22">willOpen</tspan>
-      <tspan x="0" y="44">didOpen</tspan>
-      <tspan x="0" y="66">willRender</tspan>
-      <tspan x="0" y="88">didRender</tspan>
-      <tspan x="0" y="110">willClose</tspan>
-      <tspan x="0" y="132">didNavigate</tspan>
-    </text>
+  <!-- ════════════════════════════════════════ -->
+  <!-- LEFT-MID: Aspect-ratio frames stacked    -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(30, 245) rotate(-4, 40, 70)" filter="url(#glow-amber)" opacity="0.5">
+    <rect x="0" y="10" width="76" height="42" rx="3" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+    <rect x="6" y="56" width="64" height="48" rx="3" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+    <rect x="14" y="108" width="48" height="48" rx="3" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+    <text x="38" y="178" text-anchor="middle" fill="#fbbf24" opacity="0.5" font-family="'SF Mono','Fira Code',monospace" font-size="11" font-weight="bold" letter-spacing="3">ASPECT</text>
+  </g>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- RIGHT-EDGE: Swipe-down dismiss gesture   -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(1110, 210) rotate(12, 30, 80)" filter="url(#glow-rose)" opacity="0.55">
+    <!-- trail dots -->
+    <circle cx="30" cy="10" r="5" fill="#fb7185" opacity="0.3"/>
+    <circle cx="30" cy="30" r="5" fill="#fb7185" opacity="0.5"/>
+    <circle cx="30" cy="50" r="6" fill="#fb7185" opacity="0.75"/>
+    <!-- arrow -->
+    <path d="M30 70 L30 130 M14 114 L30 130 L46 114" fill="none" stroke="#fb7185" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="30" y="166" text-anchor="middle" fill="#fb7185" opacity="0.5" font-family="'SF Mono','Fira Code',monospace" font-size="11" font-weight="bold" letter-spacing="3">SWIPE</text>
   </g>
 
   <!-- CENTER BACKDROP -->
   <rect width="1200" height="628" fill="url(#centerBackdrop)"/>
 
-  <!-- ═══════════════════════════════════ -->
-  <!-- CENTER CONTENT                      -->
-  <!-- ═══════════════════════════════════ -->
+  <!-- ════════════════════════════════════════ -->
+  <!-- CENTER CONTENT                           -->
+  <!-- ════════════════════════════════════════ -->
 
   <!-- "pencere" wordmark -->
-  <text x="600" y="264" text-anchor="middle" fill="#f1f5fd" font-family="'Georgia','Playfair Display','Times New Roman',serif" font-size="152" font-weight="bold" letter-spacing="-4" opacity="0.97">pencere</text>
+  <text x="600" y="260" text-anchor="middle" fill="#f8fafc" font-family="'Georgia','Playfair Display','Times New Roman',serif" font-size="148" font-weight="bold" letter-spacing="-3" opacity="0.97">pencere</text>
 
-  <!-- Rule -->
-  <line x1="340" y1="290" x2="860" y2="290" stroke="#94a3b8" stroke-width="1.5" opacity="0.3"/>
+  <!-- Thin rule -->
+  <line x1="330" y1="286" x2="870" y2="286" stroke="#475569" stroke-width="1" opacity="0.5"/>
 
   <!-- Tagline -->
-  <text x="600" y="330" text-anchor="middle" fill="#7dd3fc" font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="19" letter-spacing="6">MODERN · ACCESSIBLE · LIGHTBOX</text>
+  <text x="600" y="326" text-anchor="middle" fill="#cbd5e1" font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="18" letter-spacing="5">MODERN · ACCESSIBLE · FRAMEWORK-AGNOSTIC · LIGHTBOX</text>
 
   <!-- Feature pills -->
   <g font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="14" letter-spacing="1.5">
-    <g transform="translate(128, 358)">
-      <rect x="0" y="0" width="164" height="38" rx="19" fill="#f1f5fd08" stroke="#7dd3fc" stroke-width="1" opacity="0.45"/>
-      <text x="82" y="25" text-anchor="middle" fill="#7dd3fc" opacity="0.85">0 DEPENDENCIES</text>
+    <g transform="translate(188, 358)">
+      <rect x="0" y="0" width="164" height="38" rx="19" fill="#38bdf810" stroke="#38bdf8" stroke-width="1.3" opacity="0.8"/>
+      <text x="82" y="25" text-anchor="middle" fill="#38bdf8" opacity="0.95">0 DEPENDENCIES</text>
     </g>
-    <g transform="translate(308, 358)">
-      <rect x="0" y="0" width="128" height="38" rx="19" fill="#f1f5fd08" stroke="#a78bfa" stroke-width="1" opacity="0.45"/>
-      <text x="64" y="25" text-anchor="middle" fill="#a78bfa" opacity="0.85">WCAG 2.2 AA</text>
+    <g transform="translate(368, 358)">
+      <rect x="0" y="0" width="128" height="38" rx="19" fill="#06b6d410" stroke="#06b6d4" stroke-width="1.3" opacity="0.8"/>
+      <text x="64" y="25" text-anchor="middle" fill="#06b6d4" opacity="0.95">WCAG 2.2 AA</text>
     </g>
-    <g transform="translate(452, 358)">
-      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f1f5fd08" stroke="#cbd5e1" stroke-width="1" opacity="0.45"/>
-      <text x="86" y="25" text-anchor="middle" fill="#cbd5e1" opacity="0.85">VIEW TRANSITIONS</text>
+    <g transform="translate(512, 358)">
+      <rect x="0" y="0" width="172" height="38" rx="19" fill="#a78bfa10" stroke="#a78bfa" stroke-width="1.3" opacity="0.8"/>
+      <text x="86" y="25" text-anchor="middle" fill="#a78bfa" opacity="0.95">VIEW TRANSITIONS</text>
     </g>
-    <g transform="translate(640, 358)">
-      <rect x="0" y="0" width="108" height="38" rx="19" fill="#f1f5fd08" stroke="#94a3b8" stroke-width="1" opacity="0.45"/>
-      <text x="54" y="25" text-anchor="middle" fill="#94a3b8" opacity="0.85">PLUGINS</text>
+    <g transform="translate(700, 358)">
+      <rect x="0" y="0" width="108" height="38" rx="19" fill="#34d39910" stroke="#34d399" stroke-width="1.3" opacity="0.8"/>
+      <text x="54" y="25" text-anchor="middle" fill="#34d399" opacity="0.95">PLUGINS</text>
     </g>
-    <g transform="translate(764, 358)">
-      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f1f5fd08" stroke="#f1f5fd" stroke-width="1" opacity="0.45"/>
-      <text x="86" y="25" text-anchor="middle" fill="#f1f5fd" opacity="0.85">TREE-SHAKEABLE</text>
+    <g transform="translate(824, 358)">
+      <rect x="0" y="0" width="188" height="38" rx="19" fill="#fb718510" stroke="#fb7185" stroke-width="1.3" opacity="0.8"/>
+      <text x="94" y="25" text-anchor="middle" fill="#fb7185" opacity="0.95">TREE-SHAKEABLE</text>
     </g>
   </g>
 
-  <!-- Feature list -->
-  <text x="600" y="434" text-anchor="middle" fill="#94a3b8" opacity="0.5" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="2.5">REACT · VUE · SVELTE · SOLID · WEB COMPONENT · VANILLA</text>
+  <!-- Framework list -->
+  <text x="600" y="432" text-anchor="middle" fill="#94a3b8" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="2.5">REACT · VUE · SVELTE · SOLID · WEB COMPONENT · VANILLA · BINDPENCERE</text>
 
   <!-- npm install badge -->
-  <g transform="translate(478, 460)">
-    <rect x="0" y="0" width="244" height="40" rx="8" fill="#070a1840" stroke="#94a3b830" stroke-width="1"/>
-    <text x="20" y="26" fill="#94a3b870" font-family="'SF Mono','Fira Code',monospace" font-size="16">$</text>
-    <text x="38" y="26" fill="#a78bfa" font-family="'SF Mono','Fira Code',monospace" font-size="16"> npm i </text>
-    <text x="120" y="26" fill="#f1f5fd" font-family="'SF Mono','Fira Code',monospace" font-size="16" font-weight="bold">pencere</text>
+  <g transform="translate(486, 460)">
+    <rect x="0" y="0" width="228" height="40" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1.2"/>
+    <text x="20" y="26" fill="#64748b" font-family="'SF Mono','Fira Code',monospace" font-size="16">$</text>
+    <text x="38" y="26" fill="#94a3b8" font-family="'SF Mono','Fira Code',monospace" font-size="16"> npm i </text>
+    <text x="118" y="26" fill="#f8fafc" font-family="'SF Mono','Fira Code',monospace" font-size="16" font-weight="bold">pencere</text>
   </g>
 
   <!-- GitHub link -->
-  <text x="600" y="554" text-anchor="middle" fill="#94a3b8" opacity="0.4" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="1.5">github.com/productdevbook/pencere</text>
+  <text x="600" y="556" text-anchor="middle" fill="#64748b" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="1.5">github.com/productdevbook/pencere</text>
 
-  <!-- Grain -->
-  <rect width="1200" height="628" filter="url(#grain)" opacity="0.18"/>
+  <!-- Grain overlay -->
+  <rect width="1200" height="628" filter="url(#grain)" opacity="0.2"/>
 
   <!-- Vignette -->
-  <rect width="1200" height="628" fill="url(#vignetteGrad)" opacity="0.3"/>
+  <rect width="1200" height="628" fill="url(#vignetteGrad)" opacity="0.45"/>
 </svg>
