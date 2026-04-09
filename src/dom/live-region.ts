@@ -46,6 +46,8 @@ export class LiveRegion {
 
   destroy(): void {
     if (this.timer) clearTimeout(this.timer)
+    this.timer = null
+    this.pending = ""
     this.node.remove()
   }
 

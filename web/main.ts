@@ -212,14 +212,29 @@ document.getElementById("open-fullscreen")?.addEventListener("click", async () =
 })
 
 // 5) Responsive picture with AVIF/WebP sources — dedicated viewer.
+// The `sources` array triggers the <picture> wrapper in
+// image-loader.ts so reviewers can inspect the real AVIF/WebP
+// fallback chain in devtools → Network / Elements.
 const responsiveViewer = new PencereViewer({
   items: [
     {
       type: "image",
-      src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600",
+      src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&fm=jpg",
       srcset:
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800 800w, https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600 1600w",
+        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&fm=jpg 800w, https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&fm=jpg 1600w",
       sizes: "100vw",
+      sources: [
+        {
+          type: "image/avif",
+          srcset:
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&fm=avif 800w, https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&fm=avif 1600w",
+        },
+        {
+          type: "image/webp",
+          srcset:
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&fm=webp 800w, https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&fm=webp 1600w",
+        },
+      ],
       alt: "Responsive Yosemite",
       caption: "Served via <picture> with AVIF / WebP fallbacks",
     } as ImageItem,

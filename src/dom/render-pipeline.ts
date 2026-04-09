@@ -170,8 +170,11 @@ async function loadAndDisplayImage<T extends Item>(
     ctx.slot.appendChild(element)
     // Drop the placeholder once the decoded image is in the slot
     // (#29). A small rAF gives the browser a frame to commit the
-    // image layer before we fade the hint out.
+    // image layer before we fade the hint out. Re-check the abort
+    // signal inside the rAF so a close() between image decode and
+    // next frame doesn't mutate a detached slot.
     requestAnimationFrame(() => {
+      if (ctx.signal.aborted) return
       ctx.slot.classList.remove("pc-slot--placeholder")
     })
     ctx.setCurrentImg(image)

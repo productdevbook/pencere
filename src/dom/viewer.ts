@@ -142,6 +142,7 @@ export class PencereViewer<T extends Item = Item> {
   private readonly t: Translator
   private readonly opts: PencereViewerOptions<T>
   private loadAbort: AbortController | null = null
+  private closePromise: Promise<void> | null = null
   private currentImg: HTMLImageElement | null = null
   private renderPromise: Promise<void> | null = null
   private currentRendererEl: ActiveRendererSlot | null = null
@@ -316,6 +317,17 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   async open(index?: number, trigger?: HTMLElement): Promise<void> {
+    // If a close is in flight awaiting a slow willClose hook, wait
+    // for it to commit before proceeding. Otherwise core.open would
+    // see `opened: true` and short-circuit, then the close would
+    // resolve and tear down the dialog the user just opened.
+    if (this.closePromise) {
+      try {
+        await this.closePromise
+      } catch {
+        /* close failed, still proceed with open */
+      }
+    }
     // Re-resolve direction on every open so consumers that toggle
     // `<html dir>` at runtime (docs pages, i18n switchers) pick up
     // the change without having to destroy + recreate the viewer.
@@ -341,6 +353,11 @@ export class PencereViewer<T extends Item = Item> {
     // thumbnail just fades to nothing.
     const run = async (): Promise<void> => {
       await this.core.open(index)
+      // destroy() may have been called while the view transition
+      // was warming up — the <dialog> is already detached and
+      // calling showModal() on it throws NotSupportedError. Bail
+      // cleanly so the caller sees a resolved promise.
+      if (this.cleanup.signal.aborted) return
       this.root.classList.add("pc-root--open")
       this.dialog.show()
       this.motion.engage()
@@ -374,7 +391,26 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   async close(reason: CloseReason = "api"): Promise<void> {
+    // If a close is already in flight, coalesce — every caller
+    // awaits the same shared promise instead of queuing another
+    // teardown cycle.
+    if (this.closePromise) return this.closePromise
+    this.closePromise = this.doClose(reason)
+    try {
+      await this.closePromise
+    } finally {
+      this.closePromise = null
+    }
+  }
+
+  private async doClose(reason: CloseReason): Promise<void> {
     const closeCtx = { reason }
+    // Abort any in-flight slide load NOW so the zombie render can't
+    // mutate the slot after the dialog is hidden. Without this, a
+    // user who closes before the image decodes sees the decoded
+    // <img> appended into a hidden dialog plus a stray `slideLoad`
+    // event firing into the emitter.
+    this.loadAbort?.abort()
     await runWillHook(this.opts.hooks?.willClose, closeCtx)
     // Symmetric view transition on close (#12). Without wrapping,
     // the hero image's `view-transition-name: pencere-hero` would

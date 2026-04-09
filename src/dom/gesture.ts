@@ -82,7 +82,14 @@ export class GestureEngine {
     this.el.style.touchAction = "none"
   }
 
+  private attached = false
+
   attach(): void {
+    // Idempotent: a second `attach()` without an intervening
+    // `detach()` is a no-op. Otherwise listeners would stack up on
+    // the stage element across repeated open() calls.
+    if (this.attached) return
+    this.attached = true
     this.el.addEventListener("pointerdown", this.onPointerDown)
     this.el.addEventListener("pointermove", this.onPointerMove)
     this.el.addEventListener("pointerup", this.onPointerUp)
@@ -91,6 +98,8 @@ export class GestureEngine {
   }
 
   detach(): void {
+    if (!this.attached) return
+    this.attached = false
     this.el.removeEventListener("pointerdown", this.onPointerDown)
     this.el.removeEventListener("pointermove", this.onPointerMove)
     this.el.removeEventListener("pointerup", this.onPointerUp)
