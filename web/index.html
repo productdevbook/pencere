@@ -208,6 +208,50 @@
         color: var(--muted);
         font-size: 0.875rem;
       }
+      .demo-label {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-top: 0.75rem;
+      }
+      .demo-strip {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin: 0.5rem 0 1rem;
+      }
+      .demo-strip a {
+        display: block;
+        width: 140px;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--border, #333);
+      }
+      .demo-strip a img {
+        display: block;
+        width: 100%;
+        height: 90px;
+        object-fit: cover;
+      }
+      .demo-morph {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 0.5rem 0 1rem;
+      }
+      .demo-morph img {
+        display: block;
+        width: 220px;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .demo-morph:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
     </style>
   </head>
   <body>
@@ -460,6 +504,8 @@ viewer.core.events.on("close",     ({ reason })    =&gt; {
   import { bindPencere } from "pencere"
   bindPencere("[data-pencere]")
 &lt;/script&gt;</code></pre>
+        <p class="demo-label">Live demo — the two thumbnails below are declarative markup:</p>
+        <div id="bind-demo" class="demo-strip"></div>
 
         <h3>Hash-based deep linking</h3>
         <pre><code>const viewer = new PencereViewer({ items, routing: true })
@@ -469,11 +515,26 @@ void viewer.openFromLocation()</code></pre>
           Browser <strong>Back</strong> and Safari / Firefox edge-swipe back gestures close the
           viewer natively via <code>popstate</code>.
         </p>
+        <p>
+          <button id="open-hash" type="button" class="demo-btn">
+            Set <code>#p3</code> and open
+          </button>
+        </p>
 
         <h3>Thumbnail → lightbox morph</h3>
         <pre><code>new PencereViewer({ items, viewTransition: true })
 // pass the clicked thumb as the trigger so the UA morphs natively:
 void viewer.open(index, thumbEl)</code></pre>
+        <p class="demo-label">
+          Live demo — click this thumbnail to watch the UA morph the image from its resting position
+          into the lightbox (Chrome / Edge / Safari Tech Preview):
+        </p>
+        <button id="open-morph" type="button" class="demo-morph">
+          <img
+            src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300"
+            alt="Yosemite Valley thumbnail"
+          />
+        </button>
 
         <h3>Fullscreen with iOS fallback</h3>
         <pre><code>const viewer = new PencereViewer({ items, fullscreen: true })
@@ -481,6 +542,9 @@ await viewer.toggleFullscreen()</code></pre>
         <p>
           Uses <code>requestFullscreen()</code> when available, falls back to a CSS class pinning
           the root with <code>position: fixed; inset: 0; height: 100dvh</code> on iOS Safari.
+        </p>
+        <p>
+          <button id="open-fullscreen" type="button" class="demo-btn">Open in fullscreen</button>
         </p>
 
         <h3>Responsive <code>&lt;picture&gt;</code> with AVIF / WebP</h3>
@@ -494,6 +558,9 @@ await viewer.toggleFullscreen()</code></pre>
     { type: "image/webp", srcset: "/a-800.webp 800w, /a-1600.webp 1600w" },
   ],
 }</code></pre>
+        <p>
+          <button id="open-responsive" type="button" class="demo-btn">Open responsive image</button>
+        </p>
 
         <h3>ThumbHash / BlurHash placeholder</h3>
         <pre><code>{
@@ -502,6 +569,11 @@ await viewer.toggleFullscreen()</code></pre>
   placeholder: "url(data:image/png;base64,…)",
   // or a CSS gradient / solid color — any background value works.
 }</code></pre>
+        <p>
+          <button id="open-placeholder" type="button" class="demo-btn">
+            Open with visible placeholder
+          </button>
+        </p>
 
         <h3>Arrow-key pan while zoomed (WCAG 2.5.7)</h3>
         <p>

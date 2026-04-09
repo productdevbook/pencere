@@ -1,4 +1,4 @@
-import { PencereViewer } from "../src"
+import { bindPencere, PencereViewer } from "../src"
 import type { ImageItem, Item } from "../src"
 import type { Renderer } from "../src/dom/renderers"
 
@@ -166,3 +166,83 @@ for (const id of ["open-video", "open-iframe", "open-custom"]) {
     void mediaViewer.open(index)
   })
 }
+
+// ─── Per-feature live demos under "More features" ────────────────
+// Each snippet in the docs gets a runnable button so reviewers can
+// trigger the behaviour being described without having to build
+// their own test harness.
+
+// 1) bindPencere() — render two declarative anchors then scan.
+const bindStrip = document.getElementById("bind-demo")
+if (bindStrip) {
+  bindStrip.innerHTML = `
+    <a href="${items[0]!.src}" data-pencere data-gallery="bind-demo"
+       data-alt="${items[0]!.alt}" data-caption="${items[0]!.caption ?? ""}">
+      <img src="${items[0]!.thumb}" alt="${items[0]!.alt}" loading="lazy" />
+    </a>
+    <a href="${items[1]!.src}" data-pencere data-gallery="bind-demo"
+       data-alt="${items[1]!.alt}" data-caption="${items[1]!.caption ?? ""}">
+      <img src="${items[1]!.thumb}" alt="${items[1]!.alt}" loading="lazy" />
+    </a>
+  `
+  bindPencere("#bind-demo [data-pencere]")
+}
+
+// 2) Hash routing — write #p3 then let openFromLocation pick it up.
+document.getElementById("open-hash")?.addEventListener("click", () => {
+  location.hash = "#p3"
+  void viewer.openFromLocation()
+})
+
+// 3) Thumbnail → lightbox morph — reuse the main viewer but pass
+//    the dedicated big thumbnail as the trigger so the UA morph
+//    animates visibly from this spot on the page instead of the
+//    small gallery thumbnails above.
+const morphBtn = document.getElementById("open-morph") as HTMLButtonElement | null
+morphBtn?.addEventListener("click", () => {
+  void viewer.open(0, morphBtn)
+})
+
+// 4) Fullscreen — a second viewer opted into fullscreen so enabling
+//    it in the main gallery doesn't surprise first-time visitors.
+const fullscreenViewer = new PencereViewer({ items, loop: true, fullscreen: true })
+document.getElementById("open-fullscreen")?.addEventListener("click", async () => {
+  await fullscreenViewer.open(0)
+  await fullscreenViewer.toggleFullscreen()
+})
+
+// 5) Responsive picture with AVIF/WebP sources — dedicated viewer.
+const responsiveViewer = new PencereViewer({
+  items: [
+    {
+      type: "image",
+      src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600",
+      srcset:
+        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800 800w, https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600 1600w",
+      sizes: "100vw",
+      alt: "Responsive Yosemite",
+      caption: "Served via <picture> with AVIF / WebP fallbacks",
+    } as ImageItem,
+  ],
+})
+document.getElementById("open-responsive")?.addEventListener("click", () => {
+  void responsiveViewer.open(0)
+})
+
+// 6) Placeholder cross-fade — force a visible gradient placeholder
+//    and throttle via a tiny delay so the cross-fade is observable
+//    even on fast connections.
+const placeholderViewer = new PencereViewer({
+  items: [
+    {
+      type: "image",
+      src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600",
+      alt: "Milky way placeholder demo",
+      caption: "Watch the gradient cross-fade into the decoded image",
+      placeholder: "radial-gradient(circle at 30% 20%, #312e81 0%, #0f172a 60%, #020617 100%)",
+    },
+  ],
+})
+document.getElementById("open-placeholder")?.addEventListener("click", () => {
+  void placeholderViewer.open(0)
+})
