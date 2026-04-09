@@ -45,6 +45,22 @@ export const PC_STYLES = `
   display: flex;
   animation: pc-root-out 180ms ease-in forwards;
 }
+/* Native <dialog>'s ::backdrop defaults to transparent, so the
+ * 0.92 root background would leak page content through. Force
+ * the ::backdrop fully opaque with the same custom property the
+ * root uses. iOS Safari ignores ::backdrop on <dialog> entirely
+ * but still honors the .pc-root background, so both paths stay
+ * consistent. */
+.pc-root::backdrop {
+  background: var(--pc-bg, rgba(0, 0, 0, 0.96));
+}
+.pc-root[open][open]::backdrop,
+.pc-root.pc-root--open::backdrop {
+  animation: pc-root-in 200ms ease-out;
+}
+.pc-root.pc-root--closing::backdrop {
+  animation: pc-root-out 180ms ease-in forwards;
+}
 @keyframes pc-root-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -204,12 +220,22 @@ export const PC_STYLES = `
 .pc-btn {
   min-width: 44px;
   min-height: 44px;
+  padding: 0;
   background: transparent;
   color: inherit;
   border: 0;
   cursor: pointer;
   font: inherit;
   pointer-events: auto;
+  /* Center the glyph — both horizontally and vertically. Without
+   * explicit flex centering the default button layout leaves the
+   * chevrons/× drifting left on tall line-heights and glyph-rich
+   * fonts. line-height:1 kills the extra baseline gap. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
   /*
    * WCAG 2.4.11 Focus Not Obscured — when the browser scrolls a
    * focused button into view, leave at least 80px of headroom under
@@ -266,6 +292,40 @@ export const PC_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .pc-img {
     transition: none !important;
+  }
+}
+@media (max-width: 640px) {
+  /*
+   * Narrow viewport tuning. Keeps the 44x44 hit targets for
+   * WCAG 2.5.5 while tightening padding so captions, counter,
+   * and nav chevrons don't steal image space on phones.
+   */
+  .pc-toolbar-top {
+    padding: 0.5rem 0.75rem;
+  }
+  .pc-toolbar-bottom {
+    padding: 0.75rem 1rem 1rem;
+  }
+  .pc-btn--nav {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+  }
+  .pc-btn--prev {
+    inset-inline-start: 0.4rem;
+  }
+  .pc-btn--next {
+    inset-inline-end: 0.4rem;
+  }
+  .pc-btn--close {
+    font-size: 1.5rem;
+  }
+  .pc-counter {
+    font-size: 0.8rem;
+  }
+  .pc-caption {
+    font-size: 0.85rem;
+    max-width: none;
   }
 }
 @media (forced-colors: active) {

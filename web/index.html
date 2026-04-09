@@ -131,8 +131,8 @@
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.6rem;
         margin: 1rem 0 0;
       }
       .grid button {
@@ -245,12 +245,62 @@
         display: block;
         width: 220px;
         height: 140px;
+        max-width: 100%;
         object-fit: cover;
         border-radius: 8px;
       }
       .demo-morph:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 3px;
+      }
+      @media (max-width: 640px) {
+        main {
+          padding: 1.75rem 1rem 4rem;
+        }
+        header.hero {
+          padding: 2rem 0 1.5rem;
+          margin-bottom: 2rem;
+        }
+        header.hero h1 {
+          font-size: 1.9rem;
+        }
+        header.hero p.tagline {
+          font-size: 1rem;
+        }
+        h2 {
+          font-size: 1.3rem;
+          margin: 2.25rem 0 0.5rem;
+        }
+        h3 {
+          font-size: 1rem;
+          margin: 1.5rem 0 0.4rem;
+        }
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.5rem;
+        }
+        .grid button {
+          aspect-ratio: 1 / 1;
+        }
+        pre {
+          font-size: 0.78rem;
+          padding: 0.75rem 0.9rem;
+        }
+        table {
+          font-size: 0.82rem;
+        }
+        th,
+        td {
+          padding: 0.4rem 0.55rem;
+        }
+        .demo-strip a {
+          width: calc(50% - 0.4rem);
+        }
+        .demo-morph img {
+          width: 100%;
+          height: auto;
+          aspect-ratio: 16 / 10;
+        }
       }
     </style>
   </head>
