@@ -205,6 +205,19 @@ Content-Security-Policy:
 - `trusted-types pencere` — enables the library's trusted-types policy
   (only relevant if you opt into HTML captions via DOMPurify).
 
+  ```ts
+  import DOMPurify from "dompurify"
+  import { createTrustedTypesPolicy } from "pencere"
+
+  const policy = createTrustedTypesPolicy({
+    sanitize: (html) => DOMPurify.sanitize(html),
+  })
+  // pencere itself writes nothing via innerHTML; the policy exists so
+  // consumers who need HTML captions can route sanitized strings
+  // through a `TrustedHTML` sink without tripping
+  // `require-trusted-types-for 'script'`.
+  ```
+
 ### Subresource Integrity (CDN)
 
 ```html

@@ -14,7 +14,8 @@ export { PencereError, PencereIndexError, PencereStateError } from "./errors"
 export { Emitter } from "./emitter"
 export { Pencere } from "./core"
 export type { PencereState } from "./core"
-export { escapeHtml, isSafeUrl, safeUrl } from "./security"
+export { createTrustedTypesPolicy, escapeHtml, isSafeUrl, safeUrl } from "./security"
+export type { PencereTrustedTypePolicy } from "./security"
 export {
   DialogController,
   FocusTrap,

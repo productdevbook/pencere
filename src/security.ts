@@ -55,3 +55,88 @@ export function escapeHtml(input: string): string {
 export function isSafeUrl(input: string, base?: string): boolean {
   return safeUrl(input, base) !== null
 }
+
+/**
+ * Minimal shape of a Trusted Types policy object — just enough for
+ * the HTML caption sink. We intentionally do not depend on
+ * `@types/trusted-types`; the real browser objects are structurally
+ * compatible with this interface.
+ */
+export interface PencereTrustedTypePolicy {
+  createHTML(input: string): string | TrustedHTML
+}
+
+interface TrustedTypePolicyFactory {
+  createPolicy(
+    name: string,
+    rules: { createHTML?: (input: string) => string },
+  ): PencereTrustedTypePolicy
+}
+interface TrustedTypesWindow {
+  trustedTypes?: TrustedTypePolicyFactory
+}
+
+let cachedPolicy: PencereTrustedTypePolicy | null = null
+
+/**
+ * Create (and memoize) the `pencere` Trusted Types policy.
+ *
+ * Callers who opt into HTML captions are expected to supply a
+ * sanitizer — typically `DOMPurify.sanitize` — that returns a string.
+ * Under `require-trusted-types-for 'script'`, every `innerHTML`-like
+ * sink in pencere (currently only HTML captions) is routed through
+ * this policy so the sanitized output carries a `TrustedHTML` stamp.
+ *
+ * When Trusted Types is not exposed on the current window (Firefox,
+ * older Safari), returns a no-op shim that passes the string through
+ * unchanged — the caller's sanitizer is still the source of truth.
+ *
+ * Repeated calls with compatible options reuse the same policy object
+ * to avoid the "Policy pencere already exists" CSP violation.
+ *
+ * @example
+ * ```ts
+ * import DOMPurify from "dompurify"
+ * import { createTrustedTypesPolicy } from "pencere"
+ *
+ * const policy = createTrustedTypesPolicy({
+ *   sanitize: (html) => DOMPurify.sanitize(html),
+ * })
+ * element.innerHTML = policy.createHTML(userHtml) as string
+ * ```
+ */
+export function createTrustedTypesPolicy(
+  options: {
+    /** User-supplied HTML sanitizer. Defaults to identity (unsafe!). */
+    sanitize?: (html: string) => string
+    /** Policy name. Defaults to `"pencere"` to match the CSP cookbook. */
+    name?: string
+  } = {},
+): PencereTrustedTypePolicy {
+  if (cachedPolicy) return cachedPolicy
+  const sanitize = options.sanitize ?? ((s) => s)
+  const name = options.name ?? "pencere"
+
+  const win = (typeof window !== "undefined" ? window : globalThis) as TrustedTypesWindow
+  const tt = win.trustedTypes
+  if (tt && typeof tt.createPolicy === "function") {
+    try {
+      cachedPolicy = tt.createPolicy(name, { createHTML: sanitize })
+      return cachedPolicy
+    } catch {
+      // Browser refused (e.g. policy of that name already exists and
+      // the allowlist disallows duplicates). Fall through to shim.
+    }
+  }
+  cachedPolicy = {
+    createHTML(input: string): string {
+      return sanitize(input)
+    },
+  }
+  return cachedPolicy
+}
+
+/** Visible for tests — reset the memoized policy between cases. */
+export function _resetTrustedTypesPolicy(): void {
+  cachedPolicy = null
+}
