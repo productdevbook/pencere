@@ -1,10 +1,16 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+  <a href="https://pencere.productdevbook.com">
+    <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+  </a>
 </p>
 
 # pencere
 
 > Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero runtime dependencies, ESM, tree-shakeable.
+
+<p align="center">
+  <a href="https://pencere.productdevbook.com"><strong>Live demo →</strong></a>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](https://npmjs.com/package/pencere)
 [![npm downloads](https://img.shields.io/npm/dm/pencere?style=flat&colorA=18181B&colorB=F0DB4F)](https://npmjs.com/package/pencere)
@@ -55,7 +61,7 @@ document.querySelector("#open")?.addEventListener("click", () => viewer.open(0))
 ```
 
 > [!TIP]
-> Run `pnpm playground` to see a live docs site at `http://localhost:5173` with every gesture and keyboard shortcut wired up.
+> Live demo at [**pencere.productdevbook.com**](https://pencere.productdevbook.com) — every gesture, keyboard shortcut, hook, and plugin path wired up. Run `pnpm playground` for the same site locally at `http://localhost:5173`.
 
 ### React
 
