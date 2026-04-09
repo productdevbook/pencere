@@ -7,12 +7,14 @@
 
 const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "blob:", "mailto:", "tel:"])
 /**
- * `data:` URIs with an image MIME type are the only form of data URI
- * we permit. Everything else is rejected because `data:text/html,…`
- * can smuggle script payloads into any renderer that treats the
- * return value as an `<iframe src>` or anchor `href`.
+ * `data:` URIs with a raster image MIME type are the only form of
+ * data URI we permit. `image/svg+xml` is deliberately excluded —
+ * SVG bodies can embed `<script>` and `onload=` handlers, and
+ * several browsers (older WebKit, any `<object>` / `<iframe>` sink)
+ * execute them. Consumers who truly need inline SVG should supply
+ * it as an `https:` URL served with a strict `Content-Type`.
  */
-const SAFE_DATA_MIME = /^data:image\/(png|jpe?g|gif|webp|avif|svg\+xml)[;,]/i
+const SAFE_DATA_MIME = /^data:image\/(png|jpe?g|gif|webp|avif)[;,]/i
 
 /**
  * Validate a URL against an allowlist of safe protocols.

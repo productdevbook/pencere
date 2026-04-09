@@ -655,8 +655,6 @@ function anySignal(signals: readonly AbortSignal[]): AbortSignal {
     s.addEventListener("abort", fn)
     listeners.push({ src: s, fn })
   }
-  // Detach when the combined signal aborts from any other path too.
-  controller.signal.addEventListener("abort", detach, { once: true })
   return controller.signal
 }
 

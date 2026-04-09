@@ -120,12 +120,15 @@ export class SwipeNavigator {
       }
     } else if (this.axis === "vertical") {
       const committed = Math.abs(this.dy) > viewportHeight * this.opts.verticalCommit
-      // A fast fling in EITHER vertical direction dismisses. The old
-      // gate only matched `"down"`, so an upward fling below the
-      // distance threshold silently cancelled back to origin even
-      // when the user clearly intended to dismiss.
-      const fling = swipe && (swipe.direction === "down" || swipe.direction === "up")
-      if (committed || fling) {
+      // Downward fling always dismisses (classic drag-down-to-close).
+      // Upward fling ONLY dismisses when the user also traveled a
+      // noticeable distance — otherwise a casual upward scroll
+      // gesture over a scrollable renderer (html / iframe content
+      // that the viewer delegates axis-lock through) would be
+      // mistaken for a dismiss. See #ref audit round 2.
+      const flingDown = swipe && swipe.direction === "down"
+      const flingUp = swipe && swipe.direction === "up" && Math.abs(this.dy) > viewportHeight * 0.1
+      if (committed || flingDown || flingUp) {
         result.action = "dismiss"
         result.velocity = Math.abs(vy)
       }

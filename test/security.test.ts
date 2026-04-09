@@ -11,13 +11,19 @@ describe("safeUrl()", () => {
     expect(safeUrl("http://example.com/a.jpg")).toBe("http://example.com/a.jpg")
   })
 
-  it("accepts data: image URLs", () => {
+  it("accepts data: raster image URLs", () => {
     expect(safeUrl("data:image/png;base64,iVBORw0KGgo=")).toContain("data:image/png")
     expect(safeUrl("data:image/jpeg;base64,/9j/4AAQ")).toContain("data:image/jpeg")
-    expect(safeUrl("data:image/svg+xml,<svg/>")).toContain("data:image/svg")
+    expect(safeUrl("data:image/webp;base64,UklGRg==")).toContain("data:image/webp")
+    expect(safeUrl("data:image/avif;base64,AAAA")).toContain("data:image/avif")
   })
 
-  it("rejects data:text/html XSS payloads", () => {
+  it("rejects data: SVG (may embed <script>)", () => {
+    expect(safeUrl("data:image/svg+xml,<svg onload=alert(1)>")).toBeNull()
+    expect(safeUrl("data:image/svg+xml;base64,PHN2Zy8+")).toBeNull()
+  })
+
+  it("rejects data:text/html and other script-bearing payloads", () => {
     expect(safeUrl("data:text/html,<script>alert(1)</script>")).toBeNull()
     expect(safeUrl("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")).toBeNull()
     expect(safeUrl("data:application/javascript,alert(1)")).toBeNull()

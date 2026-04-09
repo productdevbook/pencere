@@ -67,10 +67,14 @@ export function unlockScroll(doc: Document = document): void {
   e.saved = null
 }
 
-/** Visible for testing. Resets every document's counter. */
-export function _resetScrollLock(): void {
-  // WeakMap has no clear; reset the known document entry explicitly.
-  if (typeof document !== "undefined") {
-    registry.delete(document)
-  }
+/**
+ * Visible for testing. Resets the counter for the supplied document
+ * (defaults to the global `document`). Tests that lock a custom
+ * document (iframe, JSDOM alt-worker) must pass that same document
+ * here, otherwise the stale entry lives until the document itself
+ * is garbage collected.
+ */
+export function _resetScrollLock(doc?: Document): void {
+  const target = doc ?? (typeof document !== "undefined" ? document : null)
+  if (target) registry.delete(target)
 }
