@@ -4,9 +4,9 @@
  * is unavailable.
  */
 export interface MediaQueryHandle {
-  readonly matches: boolean;
-  subscribe(fn: (matches: boolean) => void): () => void;
-  dispose(): void;
+  readonly matches: boolean
+  subscribe(fn: (matches: boolean) => void): () => void
+  dispose(): void
 }
 
 export function createMediaQuery(query: string): MediaQueryHandle {
@@ -14,32 +14,32 @@ export function createMediaQuery(query: string): MediaQueryHandle {
     return {
       matches: false,
       subscribe() {
-        return () => {};
+        return () => {}
       },
       dispose() {},
-    };
+    }
   }
-  const mql = window.matchMedia(query);
-  const listeners = new Set<(matches: boolean) => void>();
+  const mql = window.matchMedia(query)
+  const listeners = new Set<(matches: boolean) => void>()
   const onChange = (e: MediaQueryListEvent): void => {
-    for (const fn of listeners) fn(e.matches);
-  };
-  mql.addEventListener("change", onChange);
+    for (const fn of listeners) fn(e.matches)
+  }
+  mql.addEventListener("change", onChange)
   return {
     get matches(): boolean {
-      return mql.matches;
+      return mql.matches
     },
     subscribe(fn) {
-      listeners.add(fn);
-      return () => listeners.delete(fn);
+      listeners.add(fn)
+      return () => listeners.delete(fn)
     },
     dispose() {
-      mql.removeEventListener("change", onChange);
-      listeners.clear();
+      mql.removeEventListener("change", onChange)
+      listeners.clear()
     },
-  };
+  }
 }
 
 export function prefersReducedMotion(): MediaQueryHandle {
-  return createMediaQuery("(prefers-reduced-motion: reduce)");
+  return createMediaQuery("(prefers-reduced-motion: reduce)")
 }

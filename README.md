@@ -24,40 +24,40 @@ pnpm add pencere
 ## Quick start
 
 ```ts
-import { PencereViewer } from "pencere";
+import { PencereViewer } from "pencere"
 
 const viewer = new PencereViewer({
   items: [
     { type: "image", src: "/a.jpg", alt: "Sunrise" },
     { type: "image", src: "/b.jpg", alt: "Bosphorus at dusk" },
   ],
-});
+})
 
-document.querySelector("#open")?.addEventListener("click", () => viewer.open(0));
+document.querySelector("#open")?.addEventListener("click", () => viewer.open(0))
 ```
 
 ### React
 
 ```tsx
-import { useLightbox } from "pencere/react";
+import { useLightbox } from "pencere/react"
 
 function Gallery() {
   const { open } = useLightbox({
     items: [{ type: "image", src: "/a.jpg", alt: "A" }],
     useNativeDialog: true,
-  });
-  return <button onClick={() => open(0)}>View</button>;
+  })
+  return <button onClick={() => open(0)}>View</button>
 }
 ```
 
 ### Vue 3
 
 ```ts
-import { usePencere } from "pencere/vue";
+import { usePencere } from "pencere/vue"
 
 const { open } = usePencere({
   items: [{ type: "image", src: "/a.jpg", alt: "A" }],
-});
+})
 ```
 
 ### Svelte
@@ -74,8 +74,8 @@ const { open } = usePencere({
 
 ```html
 <script type="module">
-  import { registerPencereElement } from "pencere/element";
-  registerPencereElement();
+  import { registerPencereElement } from "pencere/element"
+  registerPencereElement()
 </script>
 
 <pencere-lightbox items='[{"src":"/a.jpg","alt":"A"}]' start-index="0"> </pencere-lightbox>
@@ -176,23 +176,23 @@ See [`SECURITY.md`](./SECURITY.md) for the disclosure policy. Highlights:
 
 ```ts
 interface PencereViewerOptions<T extends Item = Item> {
-  items: T[];
-  startIndex?: number;
-  loop?: boolean;
-  container?: HTMLElement;
-  strings?: Partial<PencereStrings>;
-  i18n?: (key: keyof PencereStrings, vars?: Record<string, string | number>) => string;
+  items: T[]
+  startIndex?: number
+  loop?: boolean
+  container?: HTMLElement
+  strings?: Partial<PencereStrings>
+  i18n?: (key: keyof PencereStrings, vars?: Record<string, string | number>) => string
   keyboard?: {
-    overrides?: Partial<Record<KeyboardAction, string[]>>;
-    disable?: KeyboardAction[];
-  };
+    overrides?: Partial<Record<KeyboardAction, string[]>>
+    disable?: KeyboardAction[]
+  }
   image?: {
-    crossOrigin?: "anonymous" | "use-credentials" | null;
-    referrerPolicy?: ReferrerPolicy;
-  };
-  reducedMotion?: "auto" | "always" | "never";
-  useNativeDialog?: boolean;
-  lockScroll?: boolean;
+    crossOrigin?: "anonymous" | "use-credentials" | null
+    referrerPolicy?: ReferrerPolicy
+  }
+  reducedMotion?: "auto" | "always" | "never"
+  useNativeDialog?: boolean
+  lockScroll?: boolean
 }
 ```
 

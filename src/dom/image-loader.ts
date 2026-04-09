@@ -1,10 +1,10 @@
-import { safeUrl } from "../security";
-import type { ImageItem } from "../types";
+import { safeUrl } from "../security"
+import type { ImageItem } from "../types"
 
 export interface ImageLoadResult {
-  element: HTMLImageElement;
-  width: number;
-  height: number;
+  element: HTMLImageElement
+  width: number
+  height: number
 }
 
 export interface ImageLoaderOptions {
@@ -12,13 +12,13 @@ export interface ImageLoaderOptions {
    * CORS attribute applied to created <img> elements.
    * Default: null (no attribute) for maximum compatibility.
    */
-  crossOrigin?: "anonymous" | "use-credentials" | null;
+  crossOrigin?: "anonymous" | "use-credentials" | null
   /**
    * Referrer-policy applied to created <img> elements.
    * Default: "strict-origin-when-cross-origin" — safer than the
    * browser default which leaks the full URL cross-origin.
    */
-  referrerPolicy?: ReferrerPolicy;
+  referrerPolicy?: ReferrerPolicy
 }
 
 /**
@@ -35,58 +35,58 @@ export async function loadImage(
   signal: AbortSignal,
   opts: ImageLoaderOptions & { priority?: "high" | "low" | "auto" } = {},
 ): Promise<ImageLoadResult> {
-  const href = safeUrl(item.src, typeof location !== "undefined" ? location.href : undefined);
+  const href = safeUrl(item.src, typeof location !== "undefined" ? location.href : undefined)
   if (!href) {
-    throw new Error(`pencere: unsafe image src rejected (${String(item.src).slice(0, 80)})`);
+    throw new Error(`pencere: unsafe image src rejected (${String(item.src).slice(0, 80)})`)
   }
-  if (signal.aborted) throw abortError();
+  if (signal.aborted) throw abortError()
 
-  const img = new Image();
-  if (opts.crossOrigin != null) img.crossOrigin = opts.crossOrigin;
-  img.referrerPolicy = opts.referrerPolicy ?? "strict-origin-when-cross-origin";
-  if (item.width) img.width = item.width;
-  if (item.height) img.height = item.height;
-  if (item.alt !== undefined) img.alt = item.alt;
-  if (item.srcset) img.srcset = item.srcset;
-  if (item.sizes) img.sizes = item.sizes;
+  const img = new Image()
+  if (opts.crossOrigin != null) img.crossOrigin = opts.crossOrigin
+  img.referrerPolicy = opts.referrerPolicy ?? "strict-origin-when-cross-origin"
+  if (item.width) img.width = item.width
+  if (item.height) img.height = item.height
+  if (item.alt !== undefined) img.alt = item.alt
+  if (item.srcset) img.srcset = item.srcset
+  if (item.sizes) img.sizes = item.sizes
   // fetchpriority is still a new DOM property; assign via setAttribute
   // for maximum browser support.
-  img.setAttribute("fetchpriority", opts.priority ?? "auto");
-  img.decoding = "async";
-  img.src = href;
+  img.setAttribute("fetchpriority", opts.priority ?? "auto")
+  img.decoding = "async"
+  img.src = href
 
   await new Promise<void>((resolve, reject) => {
     const onAbort = (): void => {
-      cleanup();
-      reject(abortError());
-    };
+      cleanup()
+      reject(abortError())
+    }
     const onLoad = (): void => {
-      cleanup();
-      resolve();
-    };
+      cleanup()
+      resolve()
+    }
     const onError = (): void => {
-      cleanup();
-      reject(new Error(`pencere: image failed to load (${href})`));
-    };
+      cleanup()
+      reject(new Error(`pencere: image failed to load (${href})`))
+    }
     const cleanup = (): void => {
-      signal.removeEventListener("abort", onAbort);
-      img.removeEventListener("load", onLoad);
-      img.removeEventListener("error", onError);
-    };
-    signal.addEventListener("abort", onAbort);
-    img.addEventListener("load", onLoad);
-    img.addEventListener("error", onError);
+      signal.removeEventListener("abort", onAbort)
+      img.removeEventListener("load", onLoad)
+      img.removeEventListener("error", onError)
+    }
+    signal.addEventListener("abort", onAbort)
+    img.addEventListener("load", onLoad)
+    img.addEventListener("error", onError)
     // Short-circuit if already cached.
     if (img.complete && img.naturalWidth > 0) {
-      cleanup();
-      resolve();
+      cleanup()
+      resolve()
     }
-  });
+  })
 
   // Try to decode; ignore failures (some browsers reject on cached 0-sized).
   if (typeof img.decode === "function") {
     try {
-      await Promise.race([img.decode(), new Promise((resolve) => setTimeout(resolve, 100))]);
+      await Promise.race([img.decode(), new Promise((resolve) => setTimeout(resolve, 100))])
     } catch {
       // swallow — fallback to load event
     }
@@ -96,11 +96,11 @@ export async function loadImage(
     element: img,
     width: img.naturalWidth || item.width || 0,
     height: img.naturalHeight || item.height || 0,
-  };
+  }
 }
 
 function abortError(): DOMException {
-  return new DOMException("The operation was aborted.", "AbortError");
+  return new DOMException("The operation was aborted.", "AbortError")
 }
 
 /**
@@ -109,7 +109,7 @@ function abortError(): DOMException {
  */
 export function computeAspectRatio(item: { width?: number; height?: number }): string {
   if (item.width && item.height && item.width > 0 && item.height > 0) {
-    return `${item.width} / ${item.height}`;
+    return `${item.width} / ${item.height}`
   }
-  return "3 / 2";
+  return "3 / 2"
 }

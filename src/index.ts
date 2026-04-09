@@ -9,12 +9,12 @@ export type {
   PencereItem,
   PencereOptions,
   VideoItem,
-} from "./types";
-export { PencereError, PencereIndexError, PencereStateError } from "./errors";
-export { Emitter } from "./emitter";
-export { Pencere } from "./core";
-export type { PencereState } from "./core";
-export { escapeHtml, isSafeUrl, safeUrl } from "./security";
+} from "./types"
+export { PencereError, PencereIndexError, PencereStateError } from "./errors"
+export { Emitter } from "./emitter"
+export { Pencere } from "./core"
+export type { PencereState } from "./core"
+export { escapeHtml, isSafeUrl, safeUrl } from "./security"
 export {
   DialogController,
   FocusTrap,
@@ -25,17 +25,17 @@ export {
   lockScroll,
   resolveKeyAction,
   unlockScroll,
-} from "./dom";
+} from "./dom"
 export type {
   DialogControllerOptions,
   FocusTrapOptions,
   KeyboardAction,
   KeyboardMapOptions,
-} from "./dom";
-export { computeAspectRatio, loadImage } from "./dom/image-loader";
-export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader";
-export { GestureEngine } from "./dom/gesture";
-export type { GestureEngineOptions, GestureEventType, GestureSnapshot } from "./dom/gesture";
+} from "./dom"
+export { computeAspectRatio, loadImage } from "./dom/image-loader"
+export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader"
+export { GestureEngine } from "./dom/gesture"
+export type { GestureEngineOptions, GestureEventType, GestureSnapshot } from "./dom/gesture"
 export {
   clampScale,
   distance,
@@ -44,64 +44,64 @@ export {
   scaleAround,
   toCss as transformToCss,
   translate,
-} from "./dom/transform";
-export type { Transform2D } from "./dom/transform";
-export { classifySwipe, computeVelocity, runMomentum } from "./dom/momentum";
-export type { VelocitySample } from "./dom/momentum";
-export { LiveRegion } from "./dom/live-region";
-export { createMediaQuery, prefersReducedMotion } from "./dom/media-query";
-export type { MediaQueryHandle } from "./dom/media-query";
-export { createTranslator, DEFAULT_STRINGS } from "./i18n";
-export type { PencereStrings, Translator } from "./i18n";
-export { getStrings, strings as i18nBundles } from "./i18n-bundles";
-export type { PencereLocale } from "./i18n-bundles";
-export { PencereViewer } from "./dom/viewer";
-export type { PencereViewerOptions } from "./dom/viewer";
+} from "./dom/transform"
+export type { Transform2D } from "./dom/transform"
+export { classifySwipe, computeVelocity, runMomentum } from "./dom/momentum"
+export type { VelocitySample } from "./dom/momentum"
+export { LiveRegion } from "./dom/live-region"
+export { createMediaQuery, prefersReducedMotion } from "./dom/media-query"
+export type { MediaQueryHandle } from "./dom/media-query"
+export { createTranslator, DEFAULT_STRINGS } from "./i18n"
+export type { PencereStrings, Translator } from "./i18n"
+export { getStrings, strings as i18nBundles } from "./i18n-bundles"
+export type { PencereLocale } from "./i18n-bundles"
+export { PencereViewer } from "./dom/viewer"
+export type { PencereViewerOptions } from "./dom/viewer"
 
-import type { ImageItem } from "./types";
-import { Pencere } from "./core";
+import { Pencere } from "./core"
+import type { ImageItem } from "./types"
 
 /**
  * Lightweight factory for image-only galleries.
  * For full control use `new Pencere(options)` directly.
  */
 export function createPencere(options: {
-  items: Array<Omit<ImageItem, "type"> | ImageItem>;
-  startIndex?: number;
-  loop?: boolean;
+  items: Array<Omit<ImageItem, "type"> | ImageItem>
+  startIndex?: number
+  loop?: boolean
 }) {
   const items: ImageItem[] = options.items.map((it) =>
     "type" in it && it.type === "image" ? it : { type: "image", ...it },
-  );
+  )
   const instance = new Pencere<ImageItem>({
     items,
     startIndex: options.startIndex,
     loop: options.loop,
-  });
+  })
   // Open immediately for backward compatibility with initial scaffold.
-  void instance.open(options.startIndex);
+  void instance.open(options.startIndex)
   return {
     get index(): number {
-      return instance.state.index;
+      return instance.state.index
     },
     get item(): ImageItem {
-      return instance.item;
+      return instance.item
     },
     get length(): number {
-      return instance.state.items.length;
+      return instance.state.items.length
     },
     async next(): Promise<ImageItem> {
-      await instance.next();
-      return instance.item;
+      await instance.next()
+      return instance.item
     },
     async prev(): Promise<ImageItem> {
-      await instance.prev();
-      return instance.item;
+      await instance.prev()
+      return instance.item
     },
     async goTo(index: number): Promise<ImageItem> {
-      await instance.goTo(index);
-      return instance.item;
+      await instance.goTo(index)
+      return instance.item
     },
     pencere: instance,
-  };
+  }
 }

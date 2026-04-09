@@ -8,7 +8,7 @@
  *
  * Community PRs for additional locales are welcome.
  */
-import type { PencereStrings } from "./i18n";
+import type { PencereStrings } from "./i18n"
 
 const en: PencereStrings = {
   close: "Close",
@@ -20,7 +20,7 @@ const en: PencereStrings = {
   zoomOut: "Zoom out",
   zoomReset: "Reset zoom",
   dialogLabel: "Image gallery",
-};
+}
 
 const de: PencereStrings = {
   close: "Schließen",
@@ -32,7 +32,7 @@ const de: PencereStrings = {
   zoomOut: "Verkleinern",
   zoomReset: "Zoom zurücksetzen",
   dialogLabel: "Bildergalerie",
-};
+}
 
 const fr: PencereStrings = {
   close: "Fermer",
@@ -44,7 +44,7 @@ const fr: PencereStrings = {
   zoomOut: "Réduire",
   zoomReset: "Réinitialiser le zoom",
   dialogLabel: "Galerie d'images",
-};
+}
 
 const es: PencereStrings = {
   close: "Cerrar",
@@ -56,7 +56,7 @@ const es: PencereStrings = {
   zoomOut: "Alejar",
   zoomReset: "Restablecer zoom",
   dialogLabel: "Galería de imágenes",
-};
+}
 
 const it: PencereStrings = {
   close: "Chiudi",
@@ -68,7 +68,7 @@ const it: PencereStrings = {
   zoomOut: "Rimpicciolisci",
   zoomReset: "Reimposta zoom",
   dialogLabel: "Galleria di immagini",
-};
+}
 
 const ptBR: PencereStrings = {
   close: "Fechar",
@@ -80,7 +80,7 @@ const ptBR: PencereStrings = {
   zoomOut: "Diminuir zoom",
   zoomReset: "Redefinir zoom",
   dialogLabel: "Galeria de imagens",
-};
+}
 
 const ru: PencereStrings = {
   close: "Закрыть",
@@ -92,7 +92,7 @@ const ru: PencereStrings = {
   zoomOut: "Уменьшить",
   zoomReset: "Сбросить масштаб",
   dialogLabel: "Галерея изображений",
-};
+}
 
 const tr: PencereStrings = {
   close: "Kapat",
@@ -104,7 +104,7 @@ const tr: PencereStrings = {
   zoomOut: "Uzaklaştır",
   zoomReset: "Yakınlaştırmayı sıfırla",
   dialogLabel: "Resim galerisi",
-};
+}
 
 const ar: PencereStrings = {
   close: "إغلاق",
@@ -116,7 +116,7 @@ const ar: PencereStrings = {
   zoomOut: "تصغير",
   zoomReset: "إعادة ضبط التكبير",
   dialogLabel: "معرض الصور",
-};
+}
 
 const he: PencereStrings = {
   close: "סגור",
@@ -128,7 +128,7 @@ const he: PencereStrings = {
   zoomOut: "הקטן",
   zoomReset: "אפס זום",
   dialogLabel: "גלריית תמונות",
-};
+}
 
 const ja: PencereStrings = {
   close: "閉じる",
@@ -140,7 +140,7 @@ const ja: PencereStrings = {
   zoomOut: "縮小",
   zoomReset: "ズームをリセット",
   dialogLabel: "画像ギャラリー",
-};
+}
 
 const zhCN: PencereStrings = {
   close: "关闭",
@@ -152,7 +152,7 @@ const zhCN: PencereStrings = {
   zoomOut: "缩小",
   zoomReset: "重置缩放",
   dialogLabel: "图库",
-};
+}
 
 const zhTW: PencereStrings = {
   close: "關閉",
@@ -164,7 +164,7 @@ const zhTW: PencereStrings = {
   zoomOut: "縮小",
   zoomReset: "重設縮放",
   dialogLabel: "圖庫",
-};
+}
 
 const ko: PencereStrings = {
   close: "닫기",
@@ -176,7 +176,7 @@ const ko: PencereStrings = {
   zoomOut: "축소",
   zoomReset: "확대 초기화",
   dialogLabel: "이미지 갤러리",
-};
+}
 
 export const strings = {
   en,
@@ -193,14 +193,14 @@ export const strings = {
   "zh-CN": zhCN,
   "zh-TW": zhTW,
   ko,
-} as const satisfies Record<string, PencereStrings>;
+} as const satisfies Record<string, PencereStrings>
 
-export type PencereLocale = keyof typeof strings;
+export type PencereLocale = keyof typeof strings
 
 /** Pick a bundle with safe fallback to English. */
 export function getStrings(locale: string): PencereStrings {
-  if (locale in strings) return strings[locale as PencereLocale];
-  const short = locale.split("-")[0];
-  if (short && short in strings) return strings[short as PencereLocale];
-  return en;
+  if (locale in strings) return strings[locale as PencereLocale]
+  const short = locale.split("-")[0]
+  if (short && short in strings) return strings[short as PencereLocale]
+  return en
 }

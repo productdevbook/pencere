@@ -14,13 +14,13 @@ export type KeyboardAction =
   | "zoomIn"
   | "zoomOut"
   | "zoomReset"
-  | "toggleSlideshow";
+  | "toggleSlideshow"
 
 export interface KeyboardMapOptions {
   /** Override the default binding for a given action. */
-  overrides?: Partial<Record<KeyboardAction, string[]>>;
+  overrides?: Partial<Record<KeyboardAction, string[]>>
   /** Disable specific actions entirely. */
-  disable?: KeyboardAction[];
+  disable?: KeyboardAction[]
 }
 
 const DEFAULT_MAP: Record<KeyboardAction, string[]> = {
@@ -33,7 +33,7 @@ const DEFAULT_MAP: Record<KeyboardAction, string[]> = {
   zoomOut: ["-"],
   zoomReset: ["0"],
   toggleSlideshow: [" "],
-};
+}
 
 /**
  * Resolve a KeyboardEvent to an action, or `null` when no binding
@@ -47,31 +47,31 @@ export function resolveKeyAction(
   // IME composition safety (#60): Japanese/Chinese/Korean users confirm
   // conversion with Enter / Space and sometimes Escape. `isComposing` is
   // the spec-mandated flag; `keyCode === 229` is the legacy fallback.
-  if (event.isComposing || event.keyCode === 229) return null;
+  if (event.isComposing || event.keyCode === 229) return null
   // Never hijack keys while the user is typing in a field.
-  if (isEditableTarget(event.target)) return null;
+  if (isEditableTarget(event.target)) return null
   // Ignore shortcuts with modifiers to avoid clashing with browser shortcuts.
-  if (event.ctrlKey || event.metaKey || event.altKey) return null;
+  if (event.ctrlKey || event.metaKey || event.altKey) return null
 
-  const disabled = new Set(options.disable ?? []);
-  const map: Record<KeyboardAction, string[]> = { ...DEFAULT_MAP, ...options.overrides };
+  const disabled = new Set(options.disable ?? [])
+  const map: Record<KeyboardAction, string[]> = { ...DEFAULT_MAP, ...options.overrides }
 
   for (const action of Object.keys(map) as KeyboardAction[]) {
-    if (disabled.has(action)) continue;
-    if (map[action].includes(event.key)) return action;
+    if (disabled.has(action)) continue
+    if (map[action].includes(event.key)) return action
   }
-  return null;
+  return null
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof Element)) return false;
-  const tag = target.tagName;
+  if (!target || !(target instanceof Element)) return false
+  const tag = target.tagName
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
-    const input = target as HTMLInputElement;
-    return !input.disabled && !input.readOnly;
+    const input = target as HTMLInputElement
+    return !input.disabled && !input.readOnly
   }
-  if ((target as HTMLElement).isContentEditable) return true;
-  const ce = target.getAttribute("contenteditable");
-  if (ce !== null && ce !== "false") return true;
-  return false;
+  if ((target as HTMLElement).isContentEditable) return true
+  const ce = target.getAttribute("contenteditable")
+  if (ce !== null && ce !== "false") return true
+  return false
 }

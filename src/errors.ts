@@ -1,14 +1,14 @@
 export class PencereError extends Error {
-  override name = "PencereError";
+  override name = "PencereError"
 }
 
 export class PencereIndexError extends PencereError {
-  override name = "PencereIndexError";
+  override name = "PencereIndexError"
   constructor(index: number, length: number) {
-    super(`Index ${index} out of bounds (0..${length - 1})`);
+    super(`Index ${index} out of bounds (0..${length - 1})`)
   }
 }
 
 export class PencereStateError extends PencereError {
-  override name = "PencereStateError";
+  override name = "PencereStateError"
 }

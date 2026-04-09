@@ -6,28 +6,29 @@
  * is intentionally narrow — richer audits belong in a Playwright-based
  * browser test matrix.
  */
-import axe from "axe-core";
-import { beforeEach, describe, expect, it } from "vitest";
-import { _resetScrollLock } from "../../src/dom/scroll-lock";
-import { PencereViewer } from "../../src/dom/viewer";
-import type { ImageItem } from "../../src/index";
+import axe from "axe-core"
+import { beforeEach, describe, expect, it } from "vitest"
+
+import { _resetScrollLock } from "../../src/dom/scroll-lock"
+import { PencereViewer } from "../../src/dom/viewer"
+import type { ImageItem } from "../../src/index"
 
 class StubImage {
-  public src = "";
-  public srcset = "";
-  public sizes = "";
-  public alt = "";
-  public width = 0;
-  public height = 0;
-  public complete = true;
-  public naturalWidth = 100;
-  public naturalHeight = 100;
-  public decoding = "";
-  public crossOrigin: string | null = null;
-  public referrerPolicy = "";
-  public style: { cssText: string; transform: string } = { cssText: "", transform: "" };
+  public src = ""
+  public srcset = ""
+  public sizes = ""
+  public alt = ""
+  public width = 0
+  public height = 0
+  public complete = true
+  public naturalWidth = 100
+  public naturalHeight = 100
+  public decoding = ""
+  public crossOrigin: string | null = null
+  public referrerPolicy = ""
+  public style: { cssText: string; transform: string } = { cssText: "", transform: "" }
   addEventListener(_: string, fn: () => void): void {
-    queueMicrotask(fn);
+    queueMicrotask(fn)
   }
   removeEventListener(): void {}
   setAttribute(): void {}
@@ -36,25 +37,25 @@ class StubImage {
 const items: ImageItem[] = [
   { type: "image", src: "https://example.com/a.jpg", alt: "alpha" },
   { type: "image", src: "https://example.com/b.jpg", alt: "beta" },
-];
+]
 
 describe("axe-core smoke test", () => {
   beforeEach(() => {
-    document.body.innerHTML = "";
-    _resetScrollLock();
+    document.body.innerHTML = ""
+    _resetScrollLock()
     // @ts-expect-error — test stub
-    globalThis.Image = StubImage;
-  });
+    globalThis.Image = StubImage
+  })
 
   it("an opened PencereViewer has no serious axe violations", async () => {
     const v = new PencereViewer({
       items,
       lockScroll: false,
       useNativeDialog: false,
-    });
-    await v.open();
+    })
+    await v.open()
     // Let renderSlide complete.
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, 20))
 
     // axe-core's jsdom mode is limited but catches structural issues.
     const results = await axe.run(v.root, {
@@ -63,15 +64,15 @@ describe("axe-core smoke test", () => {
       rules: {
         "color-contrast": { enabled: false },
       },
-    });
+    })
     if (results.violations.length > 0) {
       // Emit a readable failure rather than a dump.
-      const summary = results.violations.map((v) => `${v.id}: ${v.description}`).join("\n");
-      throw new Error(`axe violations:\n${summary}`);
+      const summary = results.violations.map((v) => `${v.id}: ${v.description}`).join("\n")
+      throw new Error(`axe violations:\n${summary}`)
     }
-    expect(results.violations.length).toBe(0);
+    expect(results.violations.length).toBe(0)
 
-    await v.close();
-    v.destroy();
-  });
-});
+    await v.close()
+    v.destroy()
+  })
+})

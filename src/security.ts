@@ -5,7 +5,7 @@
  * without a browser environment.
  */
 
-const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "data:", "blob:", "mailto:", "tel:"]);
+const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "data:", "blob:", "mailto:", "tel:"])
 
 /**
  * Validate a URL against an allowlist of safe protocols.
@@ -18,19 +18,19 @@ const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "data:", "blob:", "mailto
  * unparseable or uses a forbidden protocol.
  */
 export function safeUrl(input: string, base?: string): string | null {
-  if (typeof input !== "string" || input.length === 0) return null;
+  if (typeof input !== "string" || input.length === 0) return null
   // Trim leading/trailing control chars per WHATWG URL parser rules;
   // attackers often use \t\n\r to hide javascript: schemes.
-  const cleaned = input.replace(/[\t\n\r]/g, "").trim();
-  if (cleaned.length === 0) return null;
-  let url: URL;
+  const cleaned = input.replace(/[\t\n\r]/g, "").trim()
+  if (cleaned.length === 0) return null
+  let url: URL
   try {
-    url = base === undefined ? new URL(cleaned) : new URL(cleaned, base);
+    url = base === undefined ? new URL(cleaned) : new URL(cleaned, base)
   } catch {
-    return null;
+    return null
   }
-  if (!SAFE_URL_PROTOCOLS.has(url.protocol)) return null;
-  return url.href;
+  if (!SAFE_URL_PROTOCOLS.has(url.protocol)) return null
+  return url.href
 }
 
 /**
@@ -45,7 +45,7 @@ export function escapeHtml(input: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/'/g, "&#39;")
 }
 
 /**
@@ -53,5 +53,5 @@ export function escapeHtml(input: string): string {
  * when used as a user-visible link target. Returns `true` when safe.
  */
 export function isSafeUrl(input: string, base?: string): boolean {
-  return safeUrl(input, base) !== null;
+  return safeUrl(input, base) !== null
 }

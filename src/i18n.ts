@@ -7,17 +7,17 @@
  */
 
 export interface PencereStrings {
-  close: string;
-  previous: string;
-  next: string;
+  close: string
+  previous: string
+  next: string
   /** Template: `Image {index} of {total}` */
-  counter: string;
-  loading: string;
-  zoomIn: string;
-  zoomOut: string;
-  zoomReset: string;
+  counter: string
+  loading: string
+  zoomIn: string
+  zoomOut: string
+  zoomReset: string
   /** Default accessible name for the dialog element. */
-  dialogLabel: string;
+  dialogLabel: string
 }
 
 export const DEFAULT_STRINGS: PencereStrings = {
@@ -30,21 +30,19 @@ export const DEFAULT_STRINGS: PencereStrings = {
   zoomOut: "Zoom out",
   zoomReset: "Reset zoom",
   dialogLabel: "Image gallery",
-};
+}
 
 export type Translator = (
   key: keyof PencereStrings,
   vars?: Record<string, string | number>,
-) => string;
+) => string
 
 /** Create a translator that merges user overrides with DEFAULT_STRINGS. */
 export function createTranslator(overrides?: Partial<PencereStrings>): Translator {
-  const table: PencereStrings = { ...DEFAULT_STRINGS, ...overrides };
+  const table: PencereStrings = { ...DEFAULT_STRINGS, ...overrides }
   return (key, vars) => {
-    const template = table[key];
-    if (!vars) return template;
-    return template.replaceAll(/\{(\w+)\}/g, (_, name: string) =>
-      String(vars[name] ?? `{${name}}`),
-    );
-  };
+    const template = table[key]
+    if (!vars) return template
+    return template.replaceAll(/\{(\w+)\}/g, (_, name: string) => String(vars[name] ?? `{${name}}`))
+  }
 }
