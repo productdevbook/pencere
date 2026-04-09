@@ -77,6 +77,7 @@ export { MotionController } from "./dom/motion-controller"
 export type { MotionControllerOptions } from "./dom/motion-controller"
 export { renderSlide } from "./dom/render-pipeline"
 export type { ActiveRendererSlot, RenderSlideContext } from "./dom/render-pipeline"
+export type { Renderer, RendererContext } from "./dom/renderers"
 export type {
   CloseHookContext,
   NavigateHookContext,

@@ -1,0 +1,14 @@
+{
+  "extends": ["nitro/tsconfig"],
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./*"],
+      "pencere": ["../src/index.ts"],
+      "pencere/react": ["../src/adapters/react.ts"],
+      "pencere/vue": ["../src/adapters/vue.ts"],
+      "pencere/svelte": ["../src/adapters/svelte.ts"],
+      "pencere/solid": ["../src/adapters/solid.ts"],
+      "pencere/element": ["../src/adapters/element.ts"]
+    }
+  }
+}

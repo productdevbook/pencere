@@ -73,7 +73,7 @@
   "scripts": {
     "build": "obuild",
     "dev": "vitest",
-    "playground": "vite web",
+    "playground": "pnpm --filter pencere-web dev",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
     "fmt": "oxfmt .",
