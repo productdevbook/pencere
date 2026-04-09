@@ -10,26 +10,21 @@ const items: ImageItem[] = [
   { type: "image", src: "https://example.com/c.jpg", alt: "C" },
 ]
 
-// Stub Image so loadImage resolves without network.
-class StubImage {
-  public src = ""
-  public srcset = ""
-  public sizes = ""
-  public alt = ""
-  public width = 0
-  public height = 0
-  public complete = true
-  public naturalWidth = 800
-  public naturalHeight = 600
-  public decoding = ""
-  public crossOrigin: string | null = null
-  public referrerPolicy = ""
-  public style: { cssText: string; transform: string } = { cssText: "", transform: "" }
-  addEventListener(_: string, fn: () => void): void {
-    queueMicrotask(fn)
+// Stub Image so loadImage resolves without network but returns a real
+// DOM node so appendChild works inside renderSlide.
+function StubImage(): HTMLImageElement {
+  const el = document.createElement("img") as HTMLImageElement & {
+    _naturalWidth: number
+    _naturalHeight: number
   }
-  removeEventListener(): void {}
-  setAttribute(): void {}
+  el._naturalWidth = 800
+  el._naturalHeight = 600
+  Object.defineProperty(el, "complete", { get: () => true })
+  Object.defineProperty(el, "naturalWidth", { get: () => el._naturalWidth })
+  Object.defineProperty(el, "naturalHeight", { get: () => el._naturalHeight })
+  // Fire load immediately so loadImage's Promise resolves on its own.
+  queueMicrotask(() => el.dispatchEvent(new Event("load")))
+  return el
 }
 
 describe("PencereViewer", () => {
@@ -164,6 +159,55 @@ describe("PencereViewer", () => {
     expect(v.root.style.display).toBe("flex")
     await v.close()
     expect(v.root.style.display).toBe("none")
+    v.destroy()
+  })
+
+  it("wheel event zooms the image around the cursor", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const stage = v.root.querySelector("[role='group']") as HTMLElement
+    stage.dispatchEvent(
+      new WheelEvent("wheel", { deltaY: -300, clientX: 100, clientY: 100, cancelable: true }),
+    )
+    // e^(300/300) ≈ 2.718 → clamped but scale should have grown.
+    // @ts-expect-error reach into private for test
+    expect(v.gesture.current.scale).toBeGreaterThan(1.5)
+    await v.close()
+    v.destroy()
+  })
+
+  it("wheel zoom preventDefault stops page scroll", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const stage = v.root.querySelector("[role='group']") as HTMLElement
+    const evt = new WheelEvent("wheel", {
+      deltaY: -100,
+      clientX: 50,
+      clientY: 50,
+      cancelable: true,
+    })
+    stage.dispatchEvent(evt)
+    expect(evt.defaultPrevented).toBe(true)
+    await v.close()
+    v.destroy()
+  })
+
+  it("double-tap toggles between 1x and 2x zoom", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    // @ts-expect-error reach into private for test
+    const gesture = v.gesture
+    expect(gesture.current.scale).toBe(1)
+    // @ts-expect-error reach into private for test
+    v.handleDoubleTap()
+    expect(gesture.current.scale).toBeGreaterThan(1)
+    // @ts-expect-error reach into private for test
+    v.handleDoubleTap()
+    expect(gesture.current.scale).toBe(1)
+    await v.close()
     v.destroy()
   })
 

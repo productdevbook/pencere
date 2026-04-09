@@ -65,7 +65,7 @@
   "scripts": {
     "build": "obuild",
     "dev": "vitest",
-    "playground": "vite playground",
+    "playground": "vite web",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
     "fmt": "oxfmt .",

@@ -13,7 +13,7 @@ import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
 import { runMomentum } from "./momentum"
 import { SwipeNavigator } from "./swipe-nav"
-import { toCss } from "./transform"
+import { clampScale, IDENTITY, scaleAround, toCss } from "./transform"
 
 export interface PencereViewerOptions<T extends Item = Item>
   extends PencereOptions<T>, Pick<DialogControllerOptions, "useNativeDialog" | "lockScroll"> {
@@ -223,6 +223,10 @@ export class PencereViewer<T extends Item = Item> {
     this.gesture = new GestureEngine(stage, {
       onUpdate: (snapshot) => {
         if (snapshot.type === "tap" && !this.stage.matches(":hover")) return
+        if (snapshot.type === "doubleTap") {
+          this.handleDoubleTap()
+          return
+        }
         // While a scale=1 swipe is in flight, the swipe controller owns
         // the visual transform — don't let gesture pan overwrite it.
         if (this.swipe.isActive) return
@@ -258,6 +262,7 @@ export class PencereViewer<T extends Item = Item> {
       signal: sig,
       capture: true,
     })
+    stage.addEventListener("wheel", (e) => this.onWheelZoom(e), { signal: sig, passive: false })
 
     this.core.events.on("open", () => void this.renderSlide())
     this.core.events.on("change", () => void this.renderSlide())
@@ -351,6 +356,35 @@ export class PencereViewer<T extends Item = Item> {
       if ((err as Error).name === "AbortError") return
       this.slot.textContent = "Image failed to load"
     }
+  }
+
+  private handleDoubleTap(): void {
+    if (!this.currentImg) return
+    // Double-tap toggles between fit (scale=1) and 2x zoom around the
+    // image center. Anchor at the stage centroid for predictability.
+    const rect = this.stage.getBoundingClientRect()
+    const cx = rect.width / 2
+    const cy = rect.height / 2
+    const current = this.gesture.current
+    const next = current.scale > 1 ? IDENTITY : clampScale(scaleAround(IDENTITY, 2, cx, cy), 1, 8)
+    this.gesture.setTransform(next)
+    this.currentImg.style.transform = toCss(next)
+  }
+
+  private onWheelZoom(e: WheelEvent): void {
+    // Ctrl+wheel is the trackpad pinch on macOS / Chrome; plain wheel
+    // also zooms while the lightbox is open so desktop users can zoom
+    // without a keyboard shortcut. preventDefault stops page scroll.
+    if (!this.currentImg) return
+    e.preventDefault()
+    // Exponential feel: each 100px of wheel delta ≈ 1.1x.
+    const factor = Math.exp(-e.deltaY / 300)
+    const rect = this.stage.getBoundingClientRect()
+    const ax = e.clientX - rect.left
+    const ay = e.clientY - rect.top
+    const next = scaleAround(this.gesture.current, factor, ax, ay)
+    this.gesture.setTransform(next)
+    this.currentImg.style.transform = toCss(this.gesture.current)
   }
 
   private isSwipeEligible(): boolean {

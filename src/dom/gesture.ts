@@ -102,6 +102,16 @@ export class GestureEngine {
     return this.transform
   }
 
+  /**
+   * Programmatically set the transform (used by wheel zoom, double-tap
+   * zoom, and other non-pointer sources). Emits a synthetic pinch event
+   * so the viewer can repaint.
+   */
+  setTransform(t: Transform2D): void {
+    this.transform = clampScale(t, this.opts.minScale, this.opts.maxScale)
+    this.emit("pinch")
+  }
+
   /** Public for tests: inject synthetic pointer events. */
   handleDown(e: PointerEvent): void {
     try {
