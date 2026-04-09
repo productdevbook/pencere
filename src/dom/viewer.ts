@@ -14,6 +14,8 @@ import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
 import { runMomentum } from "./momentum"
+import { pickRenderer } from "./renderers"
+import type { Renderer } from "./renderers"
 import { injectStyles } from "./styles"
 import { SwipeNavigator } from "./swipe-nav"
 import { IDENTITY, toCss } from "./transform"
@@ -91,6 +93,14 @@ export interface PencereViewerOptions<T extends Item = Item>
    * degrades to an instant open on unsupporting engines.
    */
   viewTransition?: boolean
+  /**
+   * Custom renderer registry (#8). Each entry claims a subset of
+   * item types and mounts them into the viewer slot. User renderers
+   * are consulted before the built-ins, so you can override the
+   * defaults for video / iframe / html. The image renderer is
+   * hard-wired in the viewer and cannot be replaced.
+   */
+  renderers?: Renderer[]
 }
 
 /** See `PencereViewerOptions.routing`. */
@@ -136,6 +146,11 @@ export class PencereViewer<T extends Item = Item> {
   private readonly opts: PencereViewerOptions<T>
   private loadAbort: AbortController | null = null
   private currentImg: HTMLImageElement | null = null
+  private currentRendererEl: {
+    renderer: Renderer
+    el: HTMLElement
+    item: Item
+  } | null = null
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
   private direction: "ltr" | "rtl"
@@ -444,6 +459,17 @@ export class PencereViewer<T extends Item = Item> {
     const item = this.core.item
     this.loadAbort?.abort()
     this.loadAbort = new AbortController()
+    // Tear down the previous renderer-backed slide (video / iframe
+    // / custom) so autoplay videos pause, iframe src unloads, etc.
+    if (this.currentRendererEl) {
+      const { renderer, el, item: previous } = this.currentRendererEl
+      try {
+        renderer.unmount?.(el, previous as never)
+      } catch {
+        /* ignore renderer teardown errors */
+      }
+      this.currentRendererEl = null
+    }
     // Reset gesture transform between slides.
     this.gesture.reset()
     // Update counter + live region unconditionally.
@@ -480,8 +506,34 @@ export class PencereViewer<T extends Item = Item> {
     this.nextButton.disabled = !loop && this.core.state.index === total - 1
 
     if (item.type !== "image") {
-      // Non-image slide types are handled via future renderer plugins.
+      // Non-image slide types flow through the renderer registry
+      // (#8). User-supplied renderers run first; built-in video /
+      // iframe / html renderers ship as fallbacks.
       this.slot.textContent = ""
+      const renderer = pickRenderer(item, this.opts.renderers)
+      if (!renderer) {
+        this.slot.textContent = `pencere: no renderer for item type "${item.type}"`
+        return
+      }
+      try {
+        const mounted = await renderer.mount(item, {
+          document: this.root.ownerDocument,
+          signal: this.loadAbort.signal,
+        })
+        if (this.loadAbort.signal.aborted) {
+          renderer.unmount?.(mounted, item as never)
+          return
+        }
+        this.slot.appendChild(mounted)
+        // Store the current renderer + mount for teardown on the
+        // next slide change or close.
+        this.currentRendererEl = { renderer, el: mounted, item }
+        this.currentImg = null
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          this.slot.textContent = `pencere: renderer failed (${(err as Error).message})`
+        }
+      }
       return
     }
     const imageItem = item as ImageItem
