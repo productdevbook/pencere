@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+</p>
+
 # pencere
 
 > Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero runtime dependencies, ESM, tree-shakeable.

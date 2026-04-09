@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="pencere — modern, accessible, framework-agnostic lightbox">
+  <title>pencere</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0f19"/>
+      <stop offset="0.55" stop-color="#111827"/>
+      <stop offset="1" stop-color="#0b0f19"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="thumbA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="0.5" stop-color="#64748b"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="thumbB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="0.4" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#a7f3d0"/>
+    </linearGradient>
+    <radialGradient id="thumbC" cx="0.3" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#312e81"/>
+      <stop offset="0.6" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="thumbD" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f2937"/>
+      <stop offset="0.6" stop-color="#475569"/>
+      <stop offset="1" stop-color="#e5e7eb"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#1f2937" stroke-width="1" opacity="0.35">
+    <path d="M0 160 H1280 M0 320 H1280 M0 480 H1280"/>
+    <path d="M256 0 V640 M512 0 V640 M768 0 V640 M1024 0 V640"/>
+  </g>
+
+  <!-- hero lightbox frame -->
+  <g transform="translate(80 120)">
+    <rect x="0" y="0" width="720" height="400" rx="16" fill="#030712" stroke="url(#accent)" stroke-width="2"/>
+    <!-- inner slot with gradient "image" -->
+    <rect x="24" y="24" width="672" height="300" rx="10" fill="url(#thumbA)"/>
+    <!-- caption bar -->
+    <g transform="translate(24 348)">
+      <rect width="520" height="10" rx="5" fill="#e2e8f0" opacity="0.9"/>
+      <rect y="22" width="340" height="8" rx="4" fill="#94a3b8" opacity="0.7"/>
+    </g>
+    <!-- nav arrows -->
+    <g fill="none" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+      <path d="M50 184 L36 174 L50 164" transform="translate(0 0)"/>
+      <path d="M670 164 L684 174 L670 184"/>
+    </g>
+    <!-- close -->
+    <g stroke="#e2e8f0" stroke-width="3" stroke-linecap="round" opacity="0.9">
+      <path d="M676 24 L692 40 M692 24 L676 40"/>
+    </g>
+    <!-- counter -->
+    <text x="36" y="40" font-family="ui-monospace, monospace" font-size="14" fill="#94a3b8">1 / 4</text>
+  </g>
+
+  <!-- thumbnail strip connected by dashed guide -->
+  <g transform="translate(840 160)">
+    <rect x="0" y="0" width="120" height="80" rx="8" fill="url(#thumbA)" opacity="0.95"/>
+    <rect x="0" y="96" width="120" height="80" rx="8" fill="url(#thumbB)" opacity="0.95"/>
+    <rect x="0" y="192" width="120" height="80" rx="8" fill="url(#thumbC)" opacity="0.95"/>
+    <rect x="0" y="288" width="120" height="80" rx="8" fill="url(#thumbD)" opacity="0.95"/>
+  </g>
+
+  <!-- morph guide (dashed line from first thumb into hero) -->
+  <path d="M840 200 C760 200 720 260 800 280" fill="none" stroke="url(#accent)" stroke-width="2" stroke-dasharray="6 6" opacity="0.7"/>
+
+  <!-- wordmark -->
+  <g transform="translate(980 420)">
+    <text font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="72" font-weight="800" fill="#f8fafc" filter="url(#glow)">pencere</text>
+    <text y="36" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="500" fill="url(#accent)">modern. accessible. zero-dep.</text>
+  </g>
+
+  <!-- feature badges -->
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#cbd5e1">
+    <g transform="translate(80 560)">
+      <rect width="140" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="70" y="21" text-anchor="middle">View Transitions</text>
+    </g>
+    <g transform="translate(232 560)">
+      <rect width="108" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="54" y="21" text-anchor="middle">WCAG 2.2 AA</text>
+    </g>
+    <g transform="translate(352 560)">
+      <rect width="96" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="48" y="21" text-anchor="middle">Plugins</text>
+    </g>
+    <g transform="translate(460 560)">
+      <rect width="152" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="76" y="21" text-anchor="middle">React · Vue · Svelte</text>
+    </g>
+    <g transform="translate(624 560)">
+      <rect width="108" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="54" y="21" text-anchor="middle">Pure ESM</text>
+    </g>
+    <g transform="translate(744 560)">
+      <rect width="104" height="32" rx="16" fill="#1e293b" stroke="#334155"/>
+      <text x="52" y="21" text-anchor="middle">0 runtime deps</text>
+    </g>
+  </g>
+</svg>
