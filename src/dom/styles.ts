@@ -96,6 +96,49 @@ export const PC_STYLES = `
   line-height: 1.4;
   font-size: 0.95rem;
 }
+/*
+ * Script-specific font stacks (#65). Consumers override these custom
+ * properties in their host CSS to plug in "Noto Sans JP", "Noto Naskh
+ * Arabic", etc. without patching pencere's stylesheet.
+ */
+.pc-caption[lang="ja"],
+.pc-caption[lang^="ja-"],
+.pc-longdesc[lang="ja"],
+.pc-longdesc[lang^="ja-"] {
+  font-family: var(--pc-font-cjk-ja, var(--pc-font, inherit));
+}
+.pc-caption[lang="ko"],
+.pc-caption[lang^="ko-"],
+.pc-longdesc[lang="ko"],
+.pc-longdesc[lang^="ko-"] {
+  font-family: var(--pc-font-cjk-ko, var(--pc-font, inherit));
+}
+.pc-caption[lang="zh-Hans"],
+.pc-caption[lang="zh-CN"],
+.pc-caption[lang="zh-SG"],
+.pc-longdesc[lang="zh-Hans"],
+.pc-longdesc[lang="zh-CN"],
+.pc-longdesc[lang="zh-SG"] {
+  font-family: var(--pc-font-cjk-zh-hans, var(--pc-font, inherit));
+}
+.pc-caption[lang="zh-Hant"],
+.pc-caption[lang="zh-TW"],
+.pc-caption[lang="zh-HK"],
+.pc-longdesc[lang="zh-Hant"],
+.pc-longdesc[lang="zh-TW"],
+.pc-longdesc[lang="zh-HK"] {
+  font-family: var(--pc-font-cjk-zh-hant, var(--pc-font, inherit));
+}
+.pc-caption[lang="ar"],
+.pc-caption[lang^="ar-"],
+.pc-caption[lang="he"],
+.pc-caption[lang^="he-"],
+.pc-longdesc[lang="ar"],
+.pc-longdesc[lang^="ar-"],
+.pc-longdesc[lang="he"],
+.pc-longdesc[lang^="he-"] {
+  font-family: var(--pc-font-arabic, var(--pc-font, inherit));
+}
 .pc-counter {
   font-size: 0.85rem;
   opacity: 0.85;

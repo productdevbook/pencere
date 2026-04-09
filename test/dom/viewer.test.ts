@@ -515,6 +515,38 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#65: propagates per-slide lang onto caption + longdesc", async () => {
+    const v = new PencereViewer({
+      items: [
+        {
+          type: "image",
+          src: "https://example.com/a.jpg",
+          alt: "A",
+          caption: "日本語キャプション",
+          lang: "ja",
+        },
+        {
+          type: "image",
+          src: "https://example.com/b.jpg",
+          alt: "B",
+          caption: "Plain English",
+        },
+      ],
+      lockScroll: false,
+      useNativeDialog: false,
+    })
+    await v.open()
+    await new Promise((r) => setTimeout(r, 10))
+    const caption = v.root.querySelector("figcaption") as HTMLElement
+    expect(caption.getAttribute("lang")).toBe("ja")
+    await v.core.next()
+    await new Promise((r) => setTimeout(r, 10))
+    // Second slide has no lang → attribute must be removed.
+    expect(caption.hasAttribute("lang")).toBe(false)
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

@@ -331,6 +331,16 @@ export class PencereViewer<T extends Item = Item> {
     // Captions are textContent by default (issue #48).
     this.caption.textContent =
       "caption" in item && typeof item.caption === "string" ? item.caption : ""
+    // Propagate `lang` so AT switches voices + CJK / Arabic font
+    // stacks kick in via the `--pc-font-*` custom properties (#65).
+    const lang = "lang" in item ? (item as { lang?: string }).lang : undefined
+    if (lang) {
+      this.caption.setAttribute("lang", lang)
+      this.longDescription.setAttribute("lang", lang)
+    } else {
+      this.caption.removeAttribute("lang")
+      this.longDescription.removeAttribute("lang")
+    }
     // Long description lives in a visually hidden, aria-described-by
     // node so AT users get the full descriptor without crowding the
     // visible caption line (#26).

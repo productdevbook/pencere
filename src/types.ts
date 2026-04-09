@@ -20,6 +20,13 @@ export interface ImageItem {
   height?: number
   caption?: string
   longDescription?: string
+  /**
+   * BCP 47 language tag propagated onto the caption and long
+   * description elements. Lets AT switch voices, lets per-script
+   * fonts kick in via the `--pc-font-cjk-*` / `--pc-font-arabic`
+   * custom properties.
+   */
+  lang?: string
 }
 
 export interface VideoItem {
