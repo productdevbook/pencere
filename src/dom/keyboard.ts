@@ -46,6 +46,14 @@ const DEFAULT_MAP: Record<KeyboardAction, string[]> = {
  * Resolve a KeyboardEvent to an action, or `null` when no binding
  * matches or the event should be ignored (IME composition, modifier
  * keys, focus on a form field).
+ *
+ * NOTE on RTL + partial overrides: when `direction: "rtl"`, the
+ * base map is flipped so that ArrowLeft → next and ArrowRight →
+ * prev. User `overrides` are applied on top of this flipped base.
+ * If you override only one of the pair (e.g. just `{ next: ["j"] }`)
+ * in RTL mode, the OTHER action stays on the flipped default —
+ * so `prev` remains `["ArrowRight", ...]`. Override both together
+ * if you need to replace the whole navigation scheme in RTL.
  */
 export function resolveKeyAction(
   event: KeyboardEvent,

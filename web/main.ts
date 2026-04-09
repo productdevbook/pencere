@@ -246,3 +246,12 @@ const placeholderViewer = new PencereViewer({
 document.getElementById("open-placeholder")?.addEventListener("click", () => {
   void placeholderViewer.open(0)
 })
+
+// Tear every viewer down on page unload so HMR and Back-forward
+// cache transitions don't leak listeners or constructable
+// stylesheets attached to the host document.
+window.addEventListener("beforeunload", () => {
+  for (const v of [viewer, mediaViewer, fullscreenViewer, responsiveViewer, placeholderViewer]) {
+    v.destroy()
+  }
+})

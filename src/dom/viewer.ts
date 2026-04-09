@@ -376,7 +376,24 @@ export class PencereViewer<T extends Item = Item> {
   async close(reason: CloseReason = "api"): Promise<void> {
     const closeCtx = { reason }
     await runWillHook(this.opts.hooks?.willClose, closeCtx)
-    await this.core.close(reason)
+    // Symmetric view transition on close (#12). Without wrapping,
+    // the hero image's `view-transition-name: pencere-hero` would
+    // still be present when the dialog disappears, and the UA would
+    // paint a jarring default cross-fade to nothing. Clearing the
+    // name BEFORE the close callback means the old-state snapshot
+    // has no hero element to animate, so the UA picks a clean root
+    // cross-fade instead. Matches the open() sequence exactly.
+    const run = async (): Promise<void> => {
+      if (this.currentImg) {
+        this.currentImg.style.removeProperty("view-transition-name")
+      }
+      await this.core.close(reason)
+    }
+    if (this.viewTransition.supported) {
+      await this.viewTransition.run(run)
+    } else {
+      await run()
+    }
     runDidHook(this.opts.hooks?.didClose, closeCtx, "didClose")
   }
 

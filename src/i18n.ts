@@ -37,7 +37,15 @@ export type Translator = (
   vars?: Record<string, string | number>,
 ) => string
 
-/** Create a translator that merges user overrides with DEFAULT_STRINGS. */
+/**
+ * Create a translator that merges user overrides with DEFAULT_STRINGS.
+ *
+ * SECURITY: the returned strings are NOT HTML-escaped. pencere's
+ * internal consumers (caption, counter, live region, button labels)
+ * all write via `textContent` so untrusted values are safe in the
+ * default pipeline. If you route the output into `innerHTML` or a
+ * `srcdoc` sink, sanitize it yourself or use Trusted Types.
+ */
 export function createTranslator(overrides?: Partial<PencereStrings>): Translator {
   const table: PencereStrings = { ...DEFAULT_STRINGS, ...overrides }
   return (key, vars) => {

@@ -82,6 +82,13 @@ export class Pencere<T extends Item = Item> {
     this.events.emit("change", { from, to: index, item: this.item })
   }
 
+  /**
+   * Advance to the next slide. At the last index with `loop: false`,
+   * resolves as a silent no-op — no `change` event is emitted and
+   * no error is thrown. Consumers that need to detect the boundary
+   * should check `state.index === state.items.length - 1` first, or
+   * disable their Next button at the edge (as the DOM viewer does).
+   */
   async next(): Promise<void> {
     const n = this.items.length
     const target = this.currentIndex + 1
@@ -93,6 +100,10 @@ export class Pencere<T extends Item = Item> {
     await this.goTo(target)
   }
 
+  /**
+   * Step to the previous slide. At index 0 with `loop: false`,
+   * resolves as a silent no-op — same contract as `next()`.
+   */
   async prev(): Promise<void> {
     const target = this.currentIndex - 1
     if (target < 0) {
