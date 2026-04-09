@@ -15,6 +15,8 @@ import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
 import { MotionController } from "./motion-controller"
+import { HookRegistry } from "./plugin"
+import type { PencereContext, PencerePlugin } from "./plugin"
 import type { ActiveRendererSlot } from "./render-pipeline"
 import { renderSlide } from "./render-pipeline"
 import type { Renderer } from "./renderers"
@@ -113,6 +115,13 @@ export interface PencereViewerOptions<T extends Item = Item>
    * subclassing the viewer. See `PencereHooks` for details.
    */
   hooks?: PencereHooks<T>
+  /**
+   * Plugin list (#4). Each plugin receives a narrow
+   * `PencereContext` at construction time and may register hooks,
+   * renderers, or DOM decorations. `destroy()` invokes every
+   * plugin's uninstall callback in reverse order.
+   */
+  plugins?: PencerePlugin<T>[]
 }
 
 /**
@@ -146,6 +155,42 @@ export class PencereViewer<T extends Item = Item> {
   private currentImg: HTMLImageElement | null = null
   private renderPromise: Promise<void> | null = null
   private currentRendererEl: ActiveRendererSlot | null = null
+  // Plugin hooks run BEFORE the user's own hooks so consumers can
+  // observe / override plugin effects. will-hooks run in install
+  // order and abort on the first throw.
+  private async runAllWill<K extends keyof PencereHooks<T>>(key: K, ctx: unknown): Promise<void> {
+    for (const fn of this.pluginHooks.get(key)) {
+      await fn(ctx)
+    }
+    await runWillHook(
+      this.opts.hooks?.[key] as ((c: unknown) => void | Promise<void>) | undefined,
+      ctx,
+    )
+  }
+
+  private runAllDid<K extends keyof PencereHooks<T>>(key: K, ctx: unknown, label: string): void {
+    for (const fn of this.pluginHooks.get(key)) {
+      try {
+        const r = fn(ctx)
+        if (r && typeof (r as Promise<void>).catch === "function") {
+          ;(r as Promise<void>).catch((err) => {
+            console.warn(`pencere: plugin ${label} hook threw`, err)
+          })
+        }
+      } catch (err) {
+        console.warn(`pencere: plugin ${label} hook threw`, err)
+      }
+    }
+    runDidHook(
+      this.opts.hooks?.[key] as ((c: unknown) => void | Promise<void>) | undefined,
+      ctx,
+      label,
+    )
+  }
+
+  private readonly pluginHooks = new HookRegistry<T>()
+  private readonly pluginUninstalls: Array<() => void> = []
+  private readonly runtimeRenderers: Renderer[] = []
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
   private direction: "ltr" | "rtl"
@@ -302,8 +347,8 @@ export class PencereViewer<T extends Item = Item> {
     this.core.events.on("change", (payload) => {
       this.renderPromise = this.renderSlide()
       this.routingController.replaceFragment()
-      runDidHook(
-        this.opts.hooks?.didNavigate,
+      this.runAllDid(
+        "didNavigate",
         { from: payload.from, to: payload.to, item: payload.item },
         "didNavigate",
       )
@@ -314,6 +359,32 @@ export class PencereViewer<T extends Item = Item> {
       this.motion.disengage()
       this.routingController.handleClose()
     })
+
+    // Plugin install. Each plugin receives a narrow context and
+    // returns an uninstall callback. Plugins are installed in
+    // order and torn down in reverse order during destroy().
+    if (options.plugins && options.plugins.length > 0) {
+      const ctx: PencereContext<T> = {
+        core: this.core,
+        events: this.core.events,
+        dom: { root: this.root, stage: this.stage, slot: this.slot },
+        registerHook: (key, hook) => this.pluginHooks.add(key, hook),
+        registerRenderer: (renderer) => {
+          this.runtimeRenderers.push(renderer)
+          return () => {
+            const i = this.runtimeRenderers.indexOf(renderer)
+            if (i >= 0) this.runtimeRenderers.splice(i, 1)
+          }
+        },
+      }
+      for (const plugin of options.plugins) {
+        try {
+          this.pluginUninstalls.push(plugin.install(ctx))
+        } catch (err) {
+          console.warn(`pencere: plugin "${plugin.name}" install failed`, err)
+        }
+      }
+    }
   }
 
   async open(index?: number, trigger?: HTMLElement): Promise<void> {
@@ -340,7 +411,7 @@ export class PencereViewer<T extends Item = Item> {
     // Lifecycle: willOpen runs before anything observable changes
     // so plugins can still gate the transition (throw to abort).
     const openCtx = { index, trigger, items: this.core.state.items }
-    await runWillHook(this.opts.hooks?.willOpen, openCtx)
+    await this.runAllWill("willOpen", openCtx)
 
     // View Transitions API morph (#12). When opted in and supported,
     // tag the trigger thumbnail with a shared `view-transition-name`
@@ -374,7 +445,7 @@ export class PencereViewer<T extends Item = Item> {
     } else {
       await run()
     }
-    runDidHook(this.opts.hooks?.didOpen, openCtx, "didOpen")
+    this.runAllDid("didOpen", openCtx, "didOpen")
   }
 
   /**
@@ -411,7 +482,7 @@ export class PencereViewer<T extends Item = Item> {
     // <img> appended into a hidden dialog plus a stray `slideLoad`
     // event firing into the emitter.
     this.loadAbort?.abort()
-    await runWillHook(this.opts.hooks?.willClose, closeCtx)
+    await this.runAllWill("willClose", closeCtx)
     // Symmetric view transition on close (#12). Without wrapping,
     // the hero image's `view-transition-name: pencere-hero` would
     // still be present when the dialog disappears, and the UA would
@@ -430,10 +501,22 @@ export class PencereViewer<T extends Item = Item> {
     } else {
       await run()
     }
-    runDidHook(this.opts.hooks?.didClose, closeCtx, "didClose")
+    this.runAllDid("didClose", closeCtx, "didClose")
   }
 
   destroy(): void {
+    // Uninstall plugins in reverse install order so teardown
+    // mirrors a LIFO stack — later plugins that depend on earlier
+    // ones get cleaned up first.
+    for (let i = this.pluginUninstalls.length - 1; i >= 0; i--) {
+      try {
+        this.pluginUninstalls[i]?.()
+      } catch (err) {
+        console.warn("pencere: plugin uninstall failed", err)
+      }
+    }
+    this.pluginUninstalls.length = 0
+    this.pluginHooks.clear()
     this.cleanup.abort()
     this.motion.cancelMomentum()
     this.loadAbort?.abort()
@@ -471,7 +554,7 @@ export class PencereViewer<T extends Item = Item> {
       index: this.core.state.index,
       item: this.core.item,
     }
-    await runWillHook(this.opts.hooks?.willRender, preCtx)
+    await this.runAllWill("willRender", preCtx)
     // Re-snapshot after willRender awaits: if the user navigated
     // while a slow hook was running, core.state has already moved
     // on and didRender should report the slide that actually
@@ -486,7 +569,7 @@ export class PencereViewer<T extends Item = Item> {
       nextButton: this.nextButton,
       liveRegion: this.liveRegion,
       t: this.t,
-      renderers: this.opts.renderers,
+      renderers: [...(this.opts.renderers ?? []), ...this.runtimeRenderers],
       image: this.opts.image,
       loop: this.opts.loop,
       viewTransition: this.opts.viewTransition === true,
@@ -501,11 +584,7 @@ export class PencereViewer<T extends Item = Item> {
       resetTransform: () => this.motion.reset(),
       applyCurrentTransform: (img) => this.motion.applyCurrentTransform(img),
     })
-    runDidHook(
-      this.opts.hooks?.didRender,
-      { index: this.core.state.index, item: this.core.item },
-      "didRender",
-    )
+    this.runAllDid("didRender", { index: this.core.state.index, item: this.core.item }, "didRender")
   }
 
   /**

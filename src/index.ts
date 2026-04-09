@@ -84,6 +84,9 @@ export type {
   PencereHooks,
   RenderHookContext,
 } from "./dom/hooks"
+export type { PencereContext, PencerePlugin } from "./dom/plugin"
+export { slideshowPlugin } from "./dom/plugins/slideshow"
+export type { SlideshowPluginOptions } from "./dom/plugins/slideshow"
 
 import { Pencere } from "./core"
 import type { ImageItem } from "./types"
