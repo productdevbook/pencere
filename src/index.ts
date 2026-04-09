@@ -1,44 +1,64 @@
-export type { PencereItem, PencereOptions } from "./types.ts";
-export { PencereError, PencereIndexError } from "./errors.ts";
+export type {
+  CloseReason,
+  CustomItem,
+  HtmlItem,
+  IframeItem,
+  ImageItem,
+  Item,
+  PencereEvents,
+  PencereItem,
+  PencereOptions,
+  VideoItem,
+} from "./types";
+export { PencereError, PencereIndexError, PencereStateError } from "./errors";
+export { Emitter } from "./emitter";
+export { Pencere } from "./core";
+export type { PencereState } from "./core";
 
-import { PencereIndexError } from "./errors.ts";
-import type { PencereItem, PencereOptions } from "./types.ts";
+import type { ImageItem } from "./types";
+import { Pencere } from "./core";
 
-export function createPencere(options: PencereOptions) {
-  const items = options.items;
-  let current = options.startIndex ?? 0;
-
-  if (items.length === 0) {
-    throw new PencereIndexError(0, 0);
-  }
-  if (current < 0 || current >= items.length) {
-    throw new PencereIndexError(current, items.length);
-  }
-
+/**
+ * Lightweight factory for image-only galleries.
+ * For full control use `new Pencere(options)` directly.
+ */
+export function createPencere(options: {
+  items: Array<Omit<ImageItem, "type"> | ImageItem>;
+  startIndex?: number;
+  loop?: boolean;
+}) {
+  const items: ImageItem[] = options.items.map((it) =>
+    "type" in it && it.type === "image" ? it : { type: "image", ...it },
+  );
+  const instance = new Pencere<ImageItem>({
+    items,
+    startIndex: options.startIndex,
+    loop: options.loop,
+  });
+  // Open immediately for backward compatibility with initial scaffold.
+  void instance.open(options.startIndex);
   return {
     get index(): number {
-      return current;
+      return instance.state.index;
     },
-    get item(): PencereItem {
-      return items[current]!;
+    get item(): ImageItem {
+      return instance.item;
     },
     get length(): number {
-      return items.length;
+      return instance.state.items.length;
     },
-    next(): PencereItem {
-      current = (current + 1) % items.length;
-      return items[current]!;
+    async next(): Promise<ImageItem> {
+      await instance.next();
+      return instance.item;
     },
-    prev(): PencereItem {
-      current = (current - 1 + items.length) % items.length;
-      return items[current]!;
+    async prev(): Promise<ImageItem> {
+      await instance.prev();
+      return instance.item;
     },
-    goTo(index: number): PencereItem {
-      if (index < 0 || index >= items.length) {
-        throw new PencereIndexError(index, items.length);
-      }
-      current = index;
-      return items[current]!;
+    async goTo(index: number): Promise<ImageItem> {
+      await instance.goTo(index);
+      return instance.item;
     },
+    pencere: instance,
   };
 }

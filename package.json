@@ -3,20 +3,20 @@
   "version": "0.0.1",
   "description": "Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero dependencies, ESM, tree-shakeable.",
   "keywords": [
-    "lightbox",
-    "image-viewer",
-    "gallery",
-    "modal",
-    "dialog",
-    "zoom",
-    "photo",
-    "pencere",
-    "accessible",
     "a11y",
+    "accessible",
+    "dialog",
     "esm",
-    "typescript",
+    "gallery",
+    "image-viewer",
+    "lightbox",
+    "modal",
+    "pencere",
+    "photo",
     "tree-shakeable",
-    "zero-dependency"
+    "typescript",
+    "zero-dependency",
+    "zoom"
   ],
   "homepage": "https://github.com/productdevbook/pencere",
   "bugs": {
@@ -33,9 +33,9 @@
     "dist"
   ],
   "type": "module",
+  "sideEffects": false,
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
-  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",

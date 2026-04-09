@@ -8,3 +8,7 @@ export class PencereIndexError extends PencereError {
     super(`Index ${index} out of bounds (0..${length - 1})`);
   }
 }
+
+export class PencereStateError extends PencereError {
+  override name = "PencereStateError";
+}
