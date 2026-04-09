@@ -179,10 +179,14 @@ Content-Security-Policy:
   require-trusted-types-for 'script';
 ```
 
-- `style-src 'nonce-...'` — stamp the same nonce on any `<style>` your
-  app creates. `pencere` itself does not inject `<style>` elements;
-  all dynamic values are set via `style.setProperty('--pc-*', ...)`
-  which is subject to `style-src-attr`.
+- `style-src 'nonce-...'` — pass the same nonce to the viewer via
+  `new PencereViewer({ ..., nonce: "RANDOM" })`. On modern engines
+  pencere attaches its stylesheet through `adoptedStyleSheets`, which
+  bypasses `style-src` entirely; the nonce is only used as a fallback
+  for older browsers where a `<style nonce="...">` element is created.
+  All runtime values (transform, opacity, aspect ratio) are written
+  via `style.setProperty('--pc-*', ...)` so no inline `style=""`
+  attribute is ever generated.
 - `img-src` — `data:` and `blob:` are needed if you use LQIP or
   `URL.createObjectURL()` placeholders.
 - `trusted-types pencere` — enables the library's trusted-types policy
@@ -233,6 +237,8 @@ interface PencereViewerOptions<T extends Item = Item> {
   reducedMotion?: "auto" | "always" | "never"
   useNativeDialog?: boolean
   lockScroll?: boolean
+  /** CSP nonce for the fallback <style> element. */
+  nonce?: string
 }
 ```
 

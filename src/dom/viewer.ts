@@ -12,6 +12,7 @@ import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
 import { runMomentum } from "./momentum"
+import { injectStyles } from "./styles"
 import { SwipeNavigator } from "./swipe-nav"
 import { IDENTITY, toCss } from "./transform"
 
@@ -31,102 +32,27 @@ export interface PencereViewerOptions<T extends Item = Item>
    * `"auto"` (default) honors `prefers-reduced-motion`.
    */
   reducedMotion?: "auto" | "always" | "never"
+  /**
+   * CSP nonce. When set, the stylesheet fallback `<style>` element
+   * receives `nonce="…"` so it satisfies `style-src 'nonce-…'`. When
+   * constructable stylesheets are available (modern browsers), the
+   * nonce is irrelevant because no inline style element is created.
+   */
+  nonce?: string
 }
-
-const ROOT_STYLE = [
-  "position:fixed",
-  "inset:0",
-  "z-index:99999",
-  "display:flex",
-  "flex-direction:column",
-  "align-items:center",
-  "justify-content:center",
-  "background:var(--pc-bg, rgba(0,0,0,0.92))",
-  "color:var(--pc-fg, #fff)",
-  "font-family:var(--pc-font, system-ui, sans-serif)",
-  "margin:0",
-  "padding:0",
-  "border:0",
-  "max-width:none",
-  "max-height:none",
-  "width:100%",
-  "height:100%",
-].join(";")
-
-const STAGE_STYLE = [
-  "position:relative",
-  "flex:1 1 auto",
-  "width:100%",
-  "display:flex",
-  "align-items:center",
-  "justify-content:center",
-  "overflow:hidden",
-  "touch-action:none",
-].join(";")
-
-const CAPTION_STYLE = [
-  "margin:0 auto",
-  "max-width:90ch",
-  "text-align:center",
-  "line-height:1.4",
-  "font-size:0.95rem",
-].join(";")
-
-const COUNTER_STYLE = ["font-size:0.85rem", "opacity:0.85", "letter-spacing:0.02em"].join(";")
-
-const TOP_BAR_STYLE = [
-  "position:absolute",
-  "top:0",
-  "inset-inline:0",
-  "display:flex",
-  "align-items:center",
-  "justify-content:space-between",
-  "padding:0.75rem 1rem",
-  "gap:1rem",
-  "background:linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0))",
-  "pointer-events:none",
-  "z-index:2",
-].join(";")
-
-const BOTTOM_BAR_STYLE = [
-  "position:absolute",
-  "bottom:0",
-  "inset-inline:0",
-  "padding:1rem 1.5rem 1.25rem",
-  "background:linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))",
-  "pointer-events:none",
-  "z-index:2",
-].join(";")
-
-const NAV_BUTTON_STYLE = [
-  "background:rgba(0,0,0,0.45)",
-  "backdrop-filter:blur(8px)",
-  "-webkit-backdrop-filter:blur(8px)",
-  "border-radius:999px",
-  "width:48px",
-  "height:48px",
-].join(";")
-
-const IMG_STYLE = [
-  "max-width:100%",
-  "max-height:100%",
-  "user-select:none",
-  "-webkit-user-drag:none",
-  "transform-origin:center center",
-  "will-change:transform",
-].join(";")
 
 /**
  * A high-level viewer that composes Pencere core, DialogController,
  * GestureEngine, LiveRegion, and loadImage into a working lightbox.
  *
- * The visual design is intentionally minimal. Theming lives in CSS
- * custom properties (`--pc-bg`, `--pc-fg`, `--pc-font`) so callers
- * can rebrand without a build step.
+ * Visual styling lives in a single stylesheet injected by `styles.ts`.
+ * Runtime values (transform, opacity, aspect ratio) are written as CSS
+ * custom properties via `setProperty`, which keeps the viewer fully
+ * compatible with strict CSP (`style-src 'nonce-…'`, no `unsafe-inline`).
  */
 export class PencereViewer<T extends Item = Item> {
   readonly core: Pencere<T>
-  readonly root: HTMLElement
+  readonly root: HTMLDialogElement
   private readonly stage: HTMLElement
   private readonly slot: HTMLElement
   private readonly caption: HTMLElement
@@ -155,47 +81,40 @@ export class PencereViewer<T extends Item = Item> {
 
     const container = options.container ?? document.body
     const doc = container.ownerDocument
+    injectStyles(doc, options.nonce)
 
     // Prefer the native <dialog> element for top-layer, inertness, ESC.
     const root = doc.createElement("dialog")
-    root.style.cssText = ROOT_STYLE
-    // Inline display:flex would otherwise defeat the UA's
-    // `dialog:not([open]) { display: none }` rule — hide until shown.
-    root.style.display = "none"
+    root.classList.add("pc-root")
     root.setAttribute("aria-label", this.t("dialogLabel"))
     root.setAttribute("aria-roledescription", "carousel")
 
     const stage = doc.createElement("div")
-    stage.style.cssText = STAGE_STYLE
+    stage.classList.add("pc-stage")
     stage.setAttribute("role", "group")
     stage.setAttribute("aria-roledescription", "slide")
 
     const slot = doc.createElement("div")
-    slot.style.cssText = "position:relative;display:flex;align-items:center;justify-content:center"
+    slot.classList.add("pc-slot")
 
     const caption = doc.createElement("figcaption")
-    caption.style.cssText = CAPTION_STYLE
+    caption.classList.add("pc-caption")
     caption.id = `pencere-caption-${Math.random().toString(36).slice(2, 10)}`
 
     const counter = doc.createElement("div")
-    counter.style.cssText = COUNTER_STYLE
+    counter.classList.add("pc-counter")
 
     const topBar = doc.createElement("div")
-    topBar.style.cssText = TOP_BAR_STYLE
+    topBar.classList.add("pc-toolbar-top")
     topBar.setAttribute("data-pc-part", "toolbar-top")
 
     const bottomBar = doc.createElement("div")
-    bottomBar.style.cssText = BOTTOM_BAR_STYLE
+    bottomBar.classList.add("pc-toolbar-bottom")
     bottomBar.setAttribute("data-pc-part", "toolbar-bottom")
 
-    const closeButton = this.makeButton(doc, "close", "×")
-    closeButton.style.cssText += ";font-size:1.75rem;pointer-events:auto"
-
-    const prevButton = this.makeButton(doc, "previous", "‹")
-    prevButton.style.cssText += `;position:absolute;inset-inline-start:0.75rem;top:50%;transform:translateY(-50%);font-size:2rem;${NAV_BUTTON_STYLE}`
-
-    const nextButton = this.makeButton(doc, "next", "›")
-    nextButton.style.cssText += `;position:absolute;inset-inline-end:0.75rem;top:50%;transform:translateY(-50%);font-size:2rem;${NAV_BUTTON_STYLE}`
+    const closeButton = this.makeButton(doc, "close", "×", ["pc-btn--close"])
+    const prevButton = this.makeButton(doc, "previous", "‹", ["pc-btn--nav", "pc-btn--prev"])
+    const nextButton = this.makeButton(doc, "next", "›", ["pc-btn--nav", "pc-btn--next"])
 
     topBar.append(closeButton, counter)
     bottomBar.append(caption)
@@ -230,7 +149,7 @@ export class PencereViewer<T extends Item = Item> {
         // While a scale=1 swipe is in flight, the swipe controller owns
         // the visual transform — don't let gesture pan overwrite it.
         if (this.swipe.isActive) return
-        if (this.currentImg) this.currentImg.style.transform = toCss(snapshot.transform)
+        this.writeImgTransform(snapshot.transform)
       },
     })
     this.reducedMotion = prefersReducedMotion()
@@ -268,7 +187,7 @@ export class PencereViewer<T extends Item = Item> {
     this.core.events.on("change", () => void this.renderSlide())
     this.core.events.on("close", () => {
       this.dialog.hide()
-      this.root.style.display = "none"
+      this.root.classList.remove("pc-root--open")
       this.gesture.detach()
       this.gesture.reset()
     })
@@ -276,7 +195,7 @@ export class PencereViewer<T extends Item = Item> {
 
   async open(index?: number): Promise<void> {
     await this.core.open(index)
-    this.root.style.display = "flex"
+    this.root.classList.add("pc-root--open")
     this.dialog.show()
     this.gesture.attach()
   }
@@ -297,22 +216,29 @@ export class PencereViewer<T extends Item = Item> {
     this.root.remove()
   }
 
-  private makeButton(doc: Document, key: keyof PencereStrings, label: string): HTMLButtonElement {
+  private makeButton(
+    doc: Document,
+    key: keyof PencereStrings,
+    label: string,
+    extraClasses: string[] = [],
+  ): HTMLButtonElement {
     const b = doc.createElement("button")
     b.type = "button"
     b.setAttribute("aria-label", this.t(key))
+    b.classList.add("pc-btn", ...extraClasses)
     // textContent keeps the visible glyph safe from XSS.
     b.textContent = label
-    b.style.cssText = [
-      "min-width:44px",
-      "min-height:44px",
-      "background:transparent",
-      "color:inherit",
-      "border:0",
-      "cursor:pointer",
-      "font:inherit",
-    ].join(";")
     return b
+  }
+
+  private writeImgTransform(t: { x: number; y: number; scale: number }): void {
+    if (!this.currentImg) return
+    this.currentImg.style.setProperty("--pc-img-transform", toCss(t))
+  }
+
+  private writeImgTransformRaw(css: string): void {
+    if (!this.currentImg) return
+    this.currentImg.style.setProperty("--pc-img-transform", css)
   }
 
   private async renderSlide(): Promise<void> {
@@ -342,15 +268,16 @@ export class PencereViewer<T extends Item = Item> {
       return
     }
     const imageItem = item as ImageItem
-    this.slot.style.aspectRatio = computeAspectRatio(imageItem)
+    this.slot.style.setProperty("--pc-slot-ar", computeAspectRatio(imageItem))
 
     try {
       const { element } = await loadImage(imageItem, this.loadAbort.signal, this.opts.image)
       if (this.loadAbort.signal.aborted) return
-      element.style.cssText = IMG_STYLE
+      element.classList.add("pc-img")
       this.slot.textContent = ""
       this.slot.appendChild(element)
       this.currentImg = element
+      this.writeImgTransform(this.gesture.current)
       this.core.events.emit("slideLoad", { index: this.core.state.index, item })
     } catch (err) {
       if ((err as Error).name === "AbortError") return
@@ -364,7 +291,7 @@ export class PencereViewer<T extends Item = Item> {
     const current = this.gesture.current
     const next = current.scale > 1 ? IDENTITY : { x: 0, y: 0, scale: 2 }
     this.gesture.setTransform(next)
-    this.currentImg.style.transform = toCss(this.gesture.current)
+    this.writeImgTransform(this.gesture.current)
   }
 
   private onWheelZoom(e: WheelEvent): void {
@@ -391,7 +318,7 @@ export class PencereViewer<T extends Item = Item> {
     // Snap-back fully to identity when zooming below 1.
     const snapped = next.scale <= 1 ? IDENTITY : next
     this.gesture.setTransform(snapped)
-    this.currentImg.style.transform = toCss(this.gesture.current)
+    this.writeImgTransform(this.gesture.current)
   }
 
   private isSwipeEligible(): boolean {
@@ -422,14 +349,14 @@ export class PencereViewer<T extends Item = Item> {
     if (!axis || !this.currentImg) return
     // Horizontal: translate follows finger 1:1; vertical: translate + fade.
     if (axis === "horizontal") {
-      this.currentImg.style.transform = `translate3d(${dx.toFixed(1)}px, 0, 0)`
-      this.root.style.opacity = "1"
+      this.writeImgTransformRaw(`translate3d(${dx.toFixed(1)}px, 0, 0)`)
+      this.root.style.setProperty("--pc-root-opacity", "1")
     } else {
-      this.currentImg.style.transform = `translate3d(0, ${dy.toFixed(1)}px, 0)`
+      this.writeImgTransformRaw(`translate3d(0, ${dy.toFixed(1)}px, 0)`)
       const rect = this.stage.getBoundingClientRect()
       const h = rect.height || 1
       const fade = Math.max(0.3, 1 - Math.abs(dy) / h)
-      this.root.style.opacity = String(fade)
+      this.root.style.setProperty("--pc-root-opacity", String(fade))
     }
   }
 
@@ -455,7 +382,6 @@ export class PencereViewer<T extends Item = Item> {
       case "cancel": {
         // Run a short momentum spring back to origin.
         if (!this.currentImg) return
-        const img = this.currentImg
         let x = result.dx
         let y = result.dy
         this.momentumCancel = runMomentum(
@@ -465,10 +391,10 @@ export class PencereViewer<T extends Item = Item> {
             x += vx
             y += vy
             if (Math.hypot(x, y) < 0.5) {
-              img.style.transform = "translate3d(0,0,0)"
+              this.writeImgTransformRaw("translate3d(0,0,0)")
               return false
             }
-            img.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+            this.writeImgTransformRaw(`translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`)
           },
           { friction: 0.82 },
         )
@@ -485,7 +411,7 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   private resetSwipeVisual(): void {
-    this.root.style.opacity = ""
+    this.root.style.removeProperty("--pc-root-opacity")
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -538,13 +464,13 @@ export class PencereViewer<T extends Item = Item> {
     }
     const snapped = next.scale <= 1 ? IDENTITY : next
     this.gesture.setTransform(snapped)
-    this.currentImg.style.transform = toCss(this.gesture.current)
+    this.writeImgTransform(this.gesture.current)
   }
 
   private zoomReset(): void {
     if (!this.currentImg) return
     this.gesture.setTransform(IDENTITY)
-    this.currentImg.style.transform = toCss(IDENTITY)
+    this.writeImgTransform(IDENTITY)
   }
 
   /** For tests: is the user in reduced-motion mode? */

@@ -18,17 +18,8 @@ export class LiveRegion {
     this.node.setAttribute("aria-live", "polite")
     this.node.setAttribute("aria-atomic", "true")
     // Visually hidden per APG. Avoid display:none which hides from SR.
-    this.node.style.cssText = [
-      "position:absolute",
-      "width:1px",
-      "height:1px",
-      "margin:-1px",
-      "padding:0",
-      "overflow:hidden",
-      "clip:rect(0 0 0 0)",
-      "white-space:nowrap",
-      "border:0",
-    ].join(";")
+    // Styles live in the injected `.pc-live` rule (see styles.ts).
+    this.node.classList.add("pc-live")
     owner.appendChild(this.node)
   }
 

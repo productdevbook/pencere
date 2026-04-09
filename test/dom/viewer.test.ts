@@ -126,7 +126,7 @@ describe("PencereViewer", () => {
     expect(document.body.querySelector("dialog")).toBeNull()
   })
 
-  it("mounts top and bottom toolbars with gradient backdrops", () => {
+  it("mounts top and bottom toolbars with the expected CSS hooks", () => {
     const v = factory()
     const top = v.root.querySelector("[data-pc-part='toolbar-top']") as HTMLElement
     const bottom = v.root.querySelector("[data-pc-part='toolbar-bottom']") as HTMLElement
@@ -135,30 +135,30 @@ describe("PencereViewer", () => {
     // Close button + counter live in the top bar, caption in the bottom bar.
     expect(top.querySelector("button[aria-label]")).not.toBeNull()
     expect(bottom.querySelector("figcaption")).not.toBeNull()
-    // Gradient backdrops so controls stay legible over any image.
-    expect(top.style.background).toContain("linear-gradient")
-    expect(bottom.style.background).toContain("linear-gradient")
-    // Bars themselves are pointer-transparent; only the button reclaims clicks.
-    expect(top.style.pointerEvents).toBe("none")
-    expect(bottom.style.pointerEvents).toBe("none")
+    // Styles come from the injected stylesheet; we just assert the
+    // CSP-friendly class hooks are present.
+    expect(top.classList.contains("pc-toolbar-top")).toBe(true)
+    expect(bottom.classList.contains("pc-toolbar-bottom")).toBe(true)
     v.destroy()
   })
 
-  it("nav buttons have circular backdrop for contrast on light images", () => {
+  it("nav buttons carry the pc-btn--nav hook for circular styling", () => {
     const v = factory()
     const prev = v.root.querySelector("button[aria-label='Previous image']") as HTMLElement
-    expect(prev.style.borderRadius).toBe("999px")
-    expect(prev.style.background).toContain("rgba")
+    const next = v.root.querySelector("button[aria-label='Next image']") as HTMLElement
+    expect(prev.classList.contains("pc-btn--nav")).toBe(true)
+    expect(prev.classList.contains("pc-btn--prev")).toBe(true)
+    expect(next.classList.contains("pc-btn--next")).toBe(true)
     v.destroy()
   })
 
-  it("hidden by default, shown on open, hidden again on close", async () => {
+  it("hidden by default via CSS, marks --open class on open/close", async () => {
     const v = factory()
-    expect(v.root.style.display).toBe("none")
+    expect(v.root.classList.contains("pc-root--open")).toBe(false)
     await v.open()
-    expect(v.root.style.display).toBe("flex")
+    expect(v.root.classList.contains("pc-root--open")).toBe(true)
     await v.close()
-    expect(v.root.style.display).toBe("none")
+    expect(v.root.classList.contains("pc-root--open")).toBe(false)
     v.destroy()
   })
 
