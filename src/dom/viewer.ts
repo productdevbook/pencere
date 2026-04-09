@@ -16,6 +16,14 @@ import { injectStyles } from "./styles"
 import { SwipeNavigator } from "./swipe-nav"
 import { IDENTITY, toCss } from "./transform"
 
+/**
+ * Approximate pixel height of the top and bottom gradient toolbar
+ * bands. Kept as a constant rather than measured each focus-in so
+ * the focus guard does not trigger layout thrash. Matches the
+ * `.pc-toolbar-top / .pc-toolbar-bottom` paddings in styles.ts.
+ */
+const TOOLBAR_BAND_PX = 80
+
 export interface PencereViewerOptions<T extends Item = Item>
   extends PencereOptions<T>, Pick<DialogControllerOptions, "useNativeDialog" | "lockScroll"> {
   /** Container to attach the viewer root into. Defaults to document.body. */
@@ -197,6 +205,14 @@ export class PencereViewer<T extends Item = Item> {
       capture: true,
     })
     stage.addEventListener("wheel", (e) => this.onWheelZoom(e), { signal: sig, passive: false })
+
+    // WCAG 2.4.11 Focus Not Obscured (Minimum) — when focus moves to
+    // an element that happens to sit under one of the gradient toolbar
+    // bands, nudge it into view. pencere's own buttons live inside
+    // the toolbars themselves so they are never occluded, but consumer
+    // content (rich captions with links, future video controls, the
+    // eventual thumbnail strip) has to be handled too.
+    root.addEventListener("focusin", (e) => this.onFocusIn(e), { signal: sig })
 
     this.core.events.on("open", () => void this.renderSlide())
     this.core.events.on("change", () => void this.renderSlide())
@@ -427,6 +443,43 @@ export class PencereViewer<T extends Item = Item> {
 
   private resetSwipeVisual(): void {
     this.root.style.removeProperty("--pc-root-opacity")
+  }
+
+  /**
+   * WCAG 2.4.11 — make sure a freshly focused element is not hidden
+   * underneath the top or bottom toolbar band. We short-circuit for
+   * elements that live inside the toolbars themselves (their focus
+   * ring is always painted above the gradient since outlines are not
+   * clipped by their parent's background).
+   */
+  private onFocusIn(e: FocusEvent): void {
+    const target = e.target as Element | null
+    if (!target || !(target instanceof HTMLElement)) return
+    // Controls that live inside either toolbar are safe by construction.
+    if (target.closest("[data-pc-part='toolbar-top']")) return
+    if (target.closest("[data-pc-part='toolbar-bottom']")) return
+
+    const rootRect = this.root.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const topBand = rootRect.top + TOOLBAR_BAND_PX
+    const bottomBand = rootRect.bottom - TOOLBAR_BAND_PX
+
+    const obscuredTop = targetRect.top < topBand && targetRect.bottom > rootRect.top
+    const obscuredBottom = targetRect.bottom > bottomBand && targetRect.top < rootRect.bottom
+
+    if (!obscuredTop && !obscuredBottom) return
+
+    // `scrollIntoView({ block: "nearest" })` with scroll-margin hooks
+    // on .pc-btn (see styles.ts) lets the browser reveal the element
+    // without any layout math. If the ancestor chain has no scrollable
+    // box this is a cheap no-op, which is exactly what we want for
+    // the default image slot.
+    try {
+      target.scrollIntoView({ block: "nearest", inline: "nearest" })
+    } catch {
+      // Some jsdom versions throw on scrollIntoView; WCAG is a
+      // browser runtime concern so swallowing here is fine.
+    }
   }
 
   private handleKeyDown(e: KeyboardEvent): void {

@@ -109,6 +109,13 @@ export const PC_STYLES = `
   cursor: pointer;
   font: inherit;
   pointer-events: auto;
+  /*
+   * WCAG 2.4.11 Focus Not Obscured — when the browser scrolls a
+   * focused button into view, leave at least 80px of headroom under
+   * the top toolbar band and above the bottom caption band so the
+   * focus ring never tucks behind a gradient edge.
+   */
+  scroll-margin-block: 80px;
 }
 .pc-btn:focus-visible {
   outline: 2px solid var(--pc-focus, #7dd3fc);

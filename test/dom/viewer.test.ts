@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { _resetScrollLock } from "../../src/dom/scroll-lock"
 import { PencereViewer } from "../../src/dom/viewer"
@@ -336,6 +336,67 @@ describe("PencereViewer", () => {
     expect(v.dir).toBe("rtl")
     expect(v.root.getAttribute("dir")).toBe("rtl")
     v.destroy()
+  })
+
+  it("#23: focus guard no-ops for controls inside the toolbars", async () => {
+    const v = factory()
+    await v.open()
+    const close = v.root.querySelector("button[aria-label='Close']") as HTMLButtonElement
+    const spy = vi.fn()
+    close.scrollIntoView = spy as unknown as HTMLElement["scrollIntoView"]
+    close.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+    expect(spy).not.toHaveBeenCalled()
+    await v.close()
+    v.destroy()
+  })
+
+  it("#23: focus guard reveals an obscured element outside the toolbars", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    // Inject a custom focusable element into the slot at the very top
+    // of the viewer (simulating a link inside a rich caption that the
+    // consumer mounted into the viewer's DOM).
+    const slot = v.root.querySelector(".pc-slot") as HTMLElement
+    const link = document.createElement("a")
+    link.href = "#"
+    link.textContent = "learn more"
+    slot.appendChild(link)
+    // Pretend the link sits at the very top of the root rect so the
+    // focus guard considers it obscured by the top toolbar band.
+    v.root.getBoundingClientRect = () =>
+      ({
+        top: 0,
+        left: 0,
+        right: 1024,
+        bottom: 768,
+        width: 1024,
+        height: 768,
+        x: 0,
+        y: 0,
+      }) as DOMRect
+    link.getBoundingClientRect = () =>
+      ({
+        top: 10,
+        left: 100,
+        right: 200,
+        bottom: 30,
+        width: 100,
+        height: 20,
+        x: 100,
+        y: 10,
+      }) as DOMRect
+    const spy = vi.fn()
+    link.scrollIntoView = spy as unknown as HTMLElement["scrollIntoView"]
+    link.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+    expect(spy).toHaveBeenCalledTimes(1)
+    await v.close()
+    v.destroy()
+  })
+
+  it("#23: .pc-btn carries scroll-margin-block so tab-scroll respects toolbar bands", async () => {
+    const { PC_STYLES } = await import("../../src/dom/styles")
+    expect(PC_STYLES).toMatch(/\.pc-btn\s*\{[^}]*scroll-margin-block:\s*80px/)
   })
 
   it("reduced-motion override is honored", () => {
