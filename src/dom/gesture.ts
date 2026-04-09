@@ -267,6 +267,18 @@ export class GestureEngine {
       }
     }
     if (this.pointers.size < 2) this.lastPinchDistance = 0
+    // Re-grip support (#45): when a user lifts one of two fingers
+    // mid-pinch, the remaining pointer would otherwise start panning
+    // from its last-seen position with a stale `movementX/Y`, which
+    // looks like a jump. Re-anchor every surviving pointer to its
+    // current location so the next handleMove computes a delta of
+    // zero until the finger actually moves.
+    if (this.pointers.size >= 1) {
+      for (const survivor of this.pointers.values()) {
+        survivor.startX = survivor.x
+        survivor.startY = survivor.y
+      }
+    }
     if (this.pointers.size === 0) this.emit("end")
   }
 

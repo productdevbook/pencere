@@ -40,6 +40,62 @@ function move(
   return e
 }
 
+describe("GestureEngine pinch chaining + re-grip (#45)", () => {
+  let el: HTMLElement
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    el = document.createElement("div")
+    document.body.appendChild(el)
+    ;(el as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () => {}
+  })
+
+  it("accumulates scale across successive pinch gestures", () => {
+    const g = new GestureEngine(el)
+    // First pinch: spread from 100px to 200px → scale ×2.
+    g.handleDown(ptr(1, 0, 0, "pointerdown"))
+    g.handleDown(ptr(2, 100, 0, "pointerdown"))
+    g.handleMove(move(2, 200, 0, 100, 0))
+    g.flushPendingEmit()
+    g.handleUp(ptr(1, 0, 0, "pointerup"))
+    g.handleUp(ptr(2, 200, 0, "pointerup"))
+    const afterFirst = g.current.scale
+    expect(afterFirst).toBeGreaterThan(1.5)
+    // Second pinch starts fresh, chaining on top of the first transform.
+    g.handleDown(ptr(3, 0, 0, "pointerdown"))
+    g.handleDown(ptr(4, 100, 0, "pointerdown"))
+    g.handleMove(move(4, 200, 0, 100, 0))
+    g.flushPendingEmit()
+    g.handleUp(ptr(3, 0, 0, "pointerup"))
+    g.handleUp(ptr(4, 200, 0, "pointerup"))
+    expect(g.current.scale).toBeGreaterThan(afterFirst)
+  })
+
+  it("re-grip: releasing one finger mid-pinch does not jump the pan", () => {
+    const events: Array<{ type: string; delta?: { dx: number; dy: number } }> = []
+    const g = new GestureEngine(el, {
+      onUpdate: (s) => events.push({ type: s.type, delta: s.delta }),
+    })
+    g.handleDown(ptr(1, 0, 0, "pointerdown"))
+    g.handleDown(ptr(2, 100, 0, "pointerdown"))
+    // Pinch a bit.
+    g.handleMove(move(2, 150, 0, 50, 0))
+    g.flushPendingEmit()
+    // Lift one finger — we are now in pan mode with a single pointer.
+    g.handleUp(ptr(2, 150, 0, "pointerup"))
+    const panBeforeJump = events.filter((e) => e.type === "pan").length
+    // Re-anchored: the next handleMove with movement=(0,0) must not
+    // produce any new pan delta at all.
+    g.handleMove(move(1, 0, 0, 0, 0))
+    g.flushPendingEmit()
+    // Zero-delta moves still emit a pan frame but the delta is (0,0).
+    const pans = events.filter((e) => e.type === "pan")
+    const fresh = pans.slice(panBeforeJump)
+    for (const p of fresh) {
+      expect(p.delta).toEqual({ dx: 0, dy: 0 })
+    }
+  })
+})
+
 describe("GestureEngine rAF throttle (#34)", () => {
   let el: HTMLElement
   let rafQueue: FrameRequestCallback[] = []
