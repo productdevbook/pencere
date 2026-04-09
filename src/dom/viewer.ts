@@ -75,6 +75,13 @@ export interface PencereViewerOptions<T extends Item = Item>
    * viewer naturally. Pass an object to customize the pattern.
    */
   routing?: boolean | RoutingOptions
+  /**
+   * Fullscreen API (#14). When `true`, expose `enterFullscreen()` /
+   * `exitFullscreen()` / `toggleFullscreen()` and fall back to a CSS
+   * faux-fullscreen class on iOS Safari (which only grants real
+   * fullscreen to `<video>`). Defaults to `false`.
+   */
+  fullscreen?: boolean
 }
 
 /** See `PencereViewerOptions.routing`. */
@@ -752,6 +759,70 @@ export class PencereViewer<T extends Item = Item> {
   /** For tests + integrations: resolved writing direction. */
   get dir(): "ltr" | "rtl" {
     return this.direction
+  }
+
+  /**
+   * Request real fullscreen on the viewer root. Falls back to a
+   * `pc-root--faux-fullscreen` CSS class on iOS Safari (which only
+   * grants Fullscreen API to `<video>`). No-op when
+   * `options.fullscreen` is not enabled.
+   */
+  async enterFullscreen(): Promise<void> {
+    if (this.opts.fullscreen !== true) return
+    const el = this.root as HTMLElement & {
+      requestFullscreen?: () => Promise<void>
+      webkitRequestFullscreen?: () => void
+    }
+    if (typeof el.requestFullscreen === "function") {
+      try {
+        await el.requestFullscreen()
+        return
+      } catch {
+        // Fall through to faux-fullscreen.
+      }
+    } else if (typeof el.webkitRequestFullscreen === "function") {
+      try {
+        el.webkitRequestFullscreen()
+        return
+      } catch {
+        /* ignore */
+      }
+    }
+    // iOS Safari / restricted environment — CSS faux-fullscreen. The
+    // class is styled in styles.ts to pin the root to the visual
+    // viewport with `position: fixed; inset: 0` (which .pc-root
+    // already is), plus a higher z-index to punch over any page chrome.
+    this.root.classList.add("pc-root--faux-fullscreen")
+  }
+
+  /** Exit fullscreen (real or faux). */
+  async exitFullscreen(): Promise<void> {
+    const doc = this.root.ownerDocument as Document & {
+      webkitExitFullscreen?: () => void
+    }
+    if (doc.fullscreenElement === this.root) {
+      try {
+        await doc.exitFullscreen()
+      } catch {
+        /* ignore */
+      }
+    } else if (typeof doc.webkitExitFullscreen === "function") {
+      try {
+        doc.webkitExitFullscreen()
+      } catch {
+        /* ignore */
+      }
+    }
+    this.root.classList.remove("pc-root--faux-fullscreen")
+  }
+
+  /** Toggle between windowed and fullscreen. */
+  async toggleFullscreen(): Promise<void> {
+    const active =
+      this.root.ownerDocument.fullscreenElement === this.root ||
+      this.root.classList.contains("pc-root--faux-fullscreen")
+    if (active) await this.exitFullscreen()
+    else await this.enterFullscreen()
   }
 }
 

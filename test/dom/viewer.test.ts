@@ -599,6 +599,52 @@ describe("PencereViewer", () => {
     history.replaceState(null, "", "/")
   })
 
+  it("#14: enterFullscreen() calls the Fullscreen API on the root", async () => {
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      fullscreen: true,
+    })
+    const spy = vi.fn(async () => {})
+    ;(v.root as unknown as { requestFullscreen: () => Promise<void> }).requestFullscreen = spy
+    await v.enterFullscreen()
+    expect(spy).toHaveBeenCalledTimes(1)
+    v.destroy()
+  })
+
+  it("#14: falls back to faux-fullscreen class when no Fullscreen API", async () => {
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      fullscreen: true,
+    })
+    // Strip both API entry points so the fallback path runs.
+    const anyRoot = v.root as unknown as {
+      requestFullscreen?: unknown
+      webkitRequestFullscreen?: unknown
+    }
+    anyRoot.requestFullscreen = undefined
+    anyRoot.webkitRequestFullscreen = undefined
+    await v.enterFullscreen()
+    expect(v.root.classList.contains("pc-root--faux-fullscreen")).toBe(true)
+    await v.exitFullscreen()
+    expect(v.root.classList.contains("pc-root--faux-fullscreen")).toBe(false)
+    v.destroy()
+  })
+
+  it("#14: enterFullscreen() is a no-op when the option is off", async () => {
+    const v = factory()
+    const spy = vi.fn()
+    ;(v.root as unknown as { requestFullscreen: () => Promise<void> }).requestFullscreen =
+      spy as unknown as () => Promise<void>
+    await v.enterFullscreen()
+    expect(spy).not.toHaveBeenCalled()
+    expect(v.root.classList.contains("pc-root--faux-fullscreen")).toBe(false)
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

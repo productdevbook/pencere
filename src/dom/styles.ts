@@ -40,6 +40,17 @@ export const PC_STYLES = `
 .pc-root.pc-root--open {
   display: flex;
 }
+/* iOS faux-fullscreen (#14). Overrides any parent transform so the
+ * viewer covers the visual viewport, and bumps z-index above any
+ * page chrome or sticky headers. */
+.pc-root.pc-root--faux-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 2147483647;
+  transform: none !important;
+}
 .pc-stage {
   position: relative;
   flex: 1 1 auto;
