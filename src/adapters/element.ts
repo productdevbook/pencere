@@ -27,7 +27,7 @@ function parseItems(raw: string | null): ImageItem[] {
 }
 
 export class PencereElement extends HTMLElement {
-  static observedAttributes = ["items", "open", "start-index"]
+  static observedAttributes: string[] = ["items", "open", "start-index"]
   private viewer: PencereViewer<ImageItem> | null = null
 
   connectedCallback(): void {

@@ -67,6 +67,16 @@ export type { PencereViewerOptions } from "./dom/viewer"
 import { Pencere } from "./core"
 import type { ImageItem } from "./types"
 
+export interface CreatePencereResult {
+  readonly index: number
+  readonly item: ImageItem
+  readonly length: number
+  next(): Promise<ImageItem>
+  prev(): Promise<ImageItem>
+  goTo(index: number): Promise<ImageItem>
+  pencere: Pencere<ImageItem>
+}
+
 /**
  * Lightweight factory for image-only galleries.
  * For full control use `new Pencere(options)` directly.
@@ -75,7 +85,7 @@ export function createPencere(options: {
   items: Array<Omit<ImageItem, "type"> | ImageItem>
   startIndex?: number
   loop?: boolean
-}) {
+}): CreatePencereResult {
   const items: ImageItem[] = options.items.map((it) =>
     "type" in it && it.type === "image" ? it : { type: "image", ...it },
   )

@@ -178,7 +178,23 @@ const ko: PencereStrings = {
   dialogLabel: "이미지 갤러리",
 }
 
-export const strings = {
+export type PencereLocale =
+  | "en"
+  | "de"
+  | "fr"
+  | "es"
+  | "it"
+  | "pt-BR"
+  | "ru"
+  | "tr"
+  | "ar"
+  | "he"
+  | "ja"
+  | "zh-CN"
+  | "zh-TW"
+  | "ko"
+
+export const strings: Record<PencereLocale, PencereStrings> = {
   en,
   de,
   fr,
@@ -193,9 +209,7 @@ export const strings = {
   "zh-CN": zhCN,
   "zh-TW": zhTW,
   ko,
-} as const satisfies Record<string, PencereStrings>
-
-export type PencereLocale = keyof typeof strings
+}
 
 /** Pick a bundle with safe fallback to English. */
 export function getStrings(locale: string): PencereStrings {

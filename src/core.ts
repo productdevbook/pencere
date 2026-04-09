@@ -9,7 +9,7 @@ export interface PencereState<T extends Item = Item> {
 }
 
 export class Pencere<T extends Item = Item> {
-  readonly events = new Emitter<PencereEvents<T>>()
+  readonly events: Emitter<PencereEvents<T>> = new Emitter<PencereEvents<T>>()
   private items: T[]
   private loop: boolean
   private currentIndex: number

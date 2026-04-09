@@ -102,7 +102,7 @@ const { open } = usePencere({
 
 | Library            | Size (gzip) | License      | Framework-agnostic | Zoom | Video  | Thumbs | TS-first | WCAG 2.2 AA | View Transitions |
 | ------------------ | ----------- | ------------ | ------------------ | ---- | ------ | ------ | -------- | ----------- | ---------------- |
-| **pencere**        | ~12 kB      | **MIT**      | ✅                 | ✅   | 🚧     | 🚧     | ✅       | ✅          | 🚧               |
+| **pencere**        | ~15 kB      | **MIT**      | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ✅               |
 | PhotoSwipe         | ~17 kB      | MIT          | ✅                 | ✅   | plugin | plugin | ~        | ~           | ❌               |
 | GLightbox          | ~11 kB      | MIT          | ✅                 | ~    | ✅     | ❌     | ❌       | ~           | ❌               |
 | Fancybox v5        | ~26 kB      | **GPL / ₺**  | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
