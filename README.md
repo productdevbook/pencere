@@ -384,6 +384,171 @@ gestures) close the viewer naturally because pencere listens for
 `popstate`. Customize the fragment with
 `routing: { pattern: (i) => \`#photo/\${i + 1}\`, parse: (h) => … }`.
 
+### Declarative HTML (no JS wiring)
+
+```html
+<a href="/a.jpg" data-pencere data-gallery="trip" data-caption="Day 1">
+  <img src="/a-thumb.jpg" alt="Mountain lake" />
+</a>
+<a href="/b.jpg" data-pencere data-gallery="trip" data-caption="Day 2">
+  <img src="/b-thumb.jpg" alt="River valley" />
+</a>
+
+<script type="module">
+  import { bindPencere } from "pencere"
+  bindPencere("[data-pencere]")
+</script>
+```
+
+`bindPencere` registers a delegated click handler, scans `data-*`
+attributes (`data-src`, `data-alt`, `data-caption`, `data-longdesc`,
+`data-width`, `data-height`, `data-srcset`, `data-sizes`,
+`data-placeholder`, `data-lang`), groups links by `data-gallery`,
+and lazy-constructs a viewer on first click. Modifier clicks
+(Cmd/Ctrl+click) still open in a new tab. Call the returned
+function to unbind.
+
+### Haptic feedback
+
+```ts
+new PencereViewer({
+  items,
+  haptics: true, // or { patterns: { dismiss: [20, 30, 20] } }
+})
+```
+
+Opt-in only. Gated on `matchMedia('(any-pointer: coarse)')` so
+desktop trackpads never buzz, and no-ops on iOS Safari which does
+not expose the Vibration API. Fires on swipe-to-dismiss commit,
+wheel-zoom snap-back, and double-tap toggles.
+
+### Thumbnail → lightbox morph
+
+```ts
+const viewer = new PencereViewer({ items, viewTransition: true })
+
+thumbButton.addEventListener("click", () => {
+  // Passing the trigger tags both the thumbnail and the lightbox
+  // image with a shared `view-transition-name` so the UA animates
+  // the morph natively. Falls back to an instant open where the
+  // View Transitions API is unavailable.
+  void viewer.open(index, thumbButton)
+})
+```
+
+### Hash-based deep linking
+
+```ts
+const viewer = new PencereViewer({
+  items,
+  routing: true, // writes #p1, #p2, … on open + slide change
+})
+
+// On page load, open the slide named in the URL (e.g. /gallery#p3).
+void viewer.openFromLocation()
+```
+
+The browser **Back** button (and Safari / Firefox edge-swipe back
+gestures) close the viewer naturally because pencere listens for
+`popstate`. Customize the fragment with
+`routing: { pattern: (i) => \`#photo/\${i + 1}\`, parse: (h) => … }`.
+
+### Fullscreen API
+
+```ts
+const viewer = new PencereViewer({ items, fullscreen: true })
+
+fullscreenButton.addEventListener("click", () => {
+  void viewer.toggleFullscreen()
+})
+```
+
+Uses `element.requestFullscreen()` where available, falls back to
+a CSS faux-fullscreen class on iOS Safari (which only grants the
+Fullscreen API to `<video>`). The faux path pins the root with
+`position: fixed; inset: 0; height: 100dvh` over any page chrome.
+
+### Responsive images (AVIF / WebP / srcset)
+
+```ts
+new PencereViewer({
+  items: [
+    {
+      type: "image",
+      src: "/a-1600.jpg", // bare fallback for legacy UAs
+      alt: "Yosemite Valley",
+      width: 1600,
+      height: 1067,
+      srcset: "/a-800.jpg 800w, /a-1600.jpg 1600w, /a-2400.jpg 2400w",
+      sizes: "100vw",
+      sources: [
+        { type: "image/avif", srcset: "/a-800.avif 800w, /a-1600.avif 1600w", sizes: "100vw" },
+        { type: "image/webp", srcset: "/a-800.webp 800w, /a-1600.webp 1600w", sizes: "100vw" },
+      ],
+    },
+  ],
+})
+```
+
+When `sources` is present pencere wraps the `<img>` in a
+`<picture>` so the UA picks AVIF or WebP automatically — no
+user-agent sniffing.
+
+### ThumbHash / BlurHash placeholder
+
+```ts
+{
+  type: "image",
+  src: "/a.jpg",
+  alt: "Yosemite Valley",
+  // Any CSS background value: data URL, plain color, gradient.
+  // The viewer cross-fades from this to the decoded image.
+  placeholder: "url(data:image/png;base64,…)",
+}
+```
+
+### Video / iframe / custom renderers
+
+```ts
+import { PencereViewer } from "pencere"
+
+const viewer = new PencereViewer({
+  items: [
+    { type: "video", src: "/clip.mp4", poster: "/clip.jpg", autoplay: true },
+    { type: "iframe", src: "https://example.com/embed" },
+    { type: "html", html: () => buildRichSlide() },
+  ],
+})
+```
+
+Built-in renderers ship for `video`, `iframe`, and `html`. Add your
+own via `renderers: [...]`:
+
+```ts
+import type { Renderer } from "pencere"
+
+const modelRenderer: Renderer = {
+  canHandle: (item) => item.type === "custom:model",
+  mount: (item, { document }) => {
+    const el = document.createElement("model-viewer")
+    el.setAttribute("src", (item as any).data.url)
+    return el
+  },
+  unmount: (el) => el.remove(),
+}
+
+new PencereViewer({ items, renderers: [modelRenderer] })
+```
+
+### Controlled via external state
+
+```ts
+viewer.core.events.on("change", ({ to }) => {
+  // Sync pencere state to your router / store.
+  history.replaceState(null, "", `?p=${to + 1}`)
+})
+```
+
 ### Respond to events
 
 ```ts
@@ -423,6 +588,16 @@ interface PencereViewerOptions<T extends Item = Item> {
   nonce?: string
   /** Writing direction. `"auto"` inherits from <html dir>. */
   dir?: "ltr" | "rtl" | "auto"
+  /** Opt-in haptic feedback on coarse-pointer devices. */
+  haptics?: boolean | HapticsOptions
+  /** Hash-based deep linking (#p1, #p2, …). */
+  routing?: boolean | RoutingOptions
+  /** Expose enterFullscreen() / toggleFullscreen() with iOS fallback. */
+  fullscreen?: boolean
+  /** Wrap open() in document.startViewTransition() when supported. */
+  viewTransition?: boolean
+  /** Custom renderer registry (video, iframe, html, custom:*). */
+  renderers?: Renderer[]
 }
 ```
 
@@ -431,26 +606,39 @@ interface PencereViewerOptions<T extends Item = Item> {
 **Shipped**
 
 - [x] Swipe nav + drag-to-dismiss + pinch + double-tap + wheel zoom (#40 #41 #42 #43 #44)
+- [x] Pinch chaining + re-grip support (#45)
+- [x] rAF-throttled gesture handlers + will-change lifecycle (#34)
 - [x] Keyboard zoom in / out / reset
+- [x] Arrow-key pan as a dragging alternative (#25)
 - [x] CloseWatcher integration (Android back button) (#11)
+- [x] Fullscreen API with iOS faux-fullscreen fallback (#14)
+- [x] View Transitions API thumbnail → lightbox morph (#12)
+- [x] Hash-based deep linking with browser-back to close (#75)
+- [x] Responsive `<picture>` / AVIF / WebP / srcset (#33)
+- [x] ThumbHash / BlurHash placeholder background (#29)
+- [x] Custom renderer registry with built-in video / iframe / html (#8)
+- [x] `bindPencere()` declarative DOM scanner (#7)
+- [x] Opt-in haptic feedback via Vibration API (#46)
 - [x] Strict CSP: adoptedStyleSheets + nonce fallback, zero inline styles (#50)
 - [x] Trusted Types policy helper (#49)
-- [x] RTL support (direction-aware keys, swipes, layout) (#59)
+- [x] RTL support — direction-aware keys, swipes, layout (#59)
+- [x] Per-slide `lang` attribute + CJK/Arabic font stacks (#65)
+- [x] CJK-aware caption line-breaking (#61)
+- [x] `longDescription` wired to `aria-describedby` (#26)
+- [x] Focus-not-obscured guard (WCAG 2.4.11) (#23)
+- [x] Target size 44×44 (WCAG 2.5.5) (#24)
 - [x] `forced-colors` / Windows High Contrast mapping (#22)
-- [x] WCAG 2.2 target size 44×44 (#24)
 - [x] Inert fallback walks ancestor tree for nested dialogs (#13)
 - [x] AbortController-based listener cleanup (#31)
+- [x] SSR-safe imports verified under node environment (#74)
 
 **In flight**
 
-- [ ] View Transitions API thumbnail → lightbox morph (#12)
-- [ ] Native video / iframe / PDF renderers (#74)
-- [ ] Virtualized thumbnail strip (#75)
-- [ ] Hash-based deep linking (#73)
-- [ ] ThumbHash / BlurHash placeholders (#29)
-- [ ] Responsive srcset / AVIF / WebP (#33)
-- [ ] rAF-throttled gesture handlers (#34)
-- [ ] Angular + Qwik adapters (#70)
+- [ ] Virtualized thumbnail strip
+- [ ] Angular + Qwik adapters (#72)
+- [ ] Plugin architecture (#4)
+- [ ] Controlled-mode contract (#6)
+- [ ] van Wijk zoom-pan curve (#47)
 
 ## License
 

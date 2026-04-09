@@ -449,6 +449,90 @@ viewer.core.events.on("close",     ({ reason })    =&gt; {
       </section>
 
       <section>
+        <h2 id="more"><a class="anchor" href="#more">#</a> More features</h2>
+        <p>Every snippet below is wired up in the demo above — open DevTools to watch them fire.</p>
+        <h3>Declarative HTML via <code>bindPencere()</code></h3>
+        <pre><code>&lt;a href="/a.jpg" data-pencere data-gallery="trip" data-caption="Day 1"&gt;
+  &lt;img src="/a-thumb.jpg" alt="Mountain lake" /&gt;
+&lt;/a&gt;
+
+&lt;script type="module"&gt;
+  import { bindPencere } from "pencere"
+  bindPencere("[data-pencere]")
+&lt;/script&gt;</code></pre>
+
+        <h3>Hash-based deep linking</h3>
+        <pre><code>const viewer = new PencereViewer({ items, routing: true })
+// /gallery#p3 opens slide index 2 automatically:
+void viewer.openFromLocation()</code></pre>
+        <p>
+          Browser <strong>Back</strong> and Safari / Firefox edge-swipe back gestures close the
+          viewer natively via <code>popstate</code>.
+        </p>
+
+        <h3>Thumbnail → lightbox morph</h3>
+        <pre><code>new PencereViewer({ items, viewTransition: true })
+// pass the clicked thumb as the trigger so the UA morphs natively:
+void viewer.open(index, thumbEl)</code></pre>
+
+        <h3>Fullscreen with iOS fallback</h3>
+        <pre><code>const viewer = new PencereViewer({ items, fullscreen: true })
+await viewer.toggleFullscreen()</code></pre>
+        <p>
+          Uses <code>requestFullscreen()</code> when available, falls back to a CSS class pinning
+          the root with <code>position: fixed; inset: 0; height: 100dvh</code> on iOS Safari.
+        </p>
+
+        <h3>Responsive <code>&lt;picture&gt;</code> with AVIF / WebP</h3>
+        <pre><code>{
+  type: "image",
+  src: "/a-1600.jpg",
+  srcset: "/a-800.jpg 800w, /a-1600.jpg 1600w",
+  sizes: "100vw",
+  sources: [
+    { type: "image/avif", srcset: "/a-800.avif 800w, /a-1600.avif 1600w" },
+    { type: "image/webp", srcset: "/a-800.webp 800w, /a-1600.webp 1600w" },
+  ],
+}</code></pre>
+
+        <h3>ThumbHash / BlurHash placeholder</h3>
+        <pre><code>{
+  type: "image",
+  src: "/a.jpg",
+  placeholder: "url(data:image/png;base64,…)",
+  // or a CSS gradient / solid color — any background value works.
+}</code></pre>
+
+        <h3>Arrow-key pan while zoomed (WCAG 2.5.7)</h3>
+        <p>
+          Zoom in with <kbd>+</kbd>, then use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> to
+          pan the image without dragging. Reset with <kbd>0</kbd>.
+        </p>
+
+        <h3>Video / iframe / custom renderers</h3>
+        <pre><code>new PencereViewer({
+  items: [
+    { type: "video",  src: "/clip.mp4", poster: "/clip.jpg", autoplay: true },
+    { type: "iframe", src: "https://example.com/embed" },
+    { type: "html",   html: () =&gt; buildRichSlide() },
+  ],
+})</code></pre>
+        <p>
+          Built-in renderers cover <code>video</code>, <code>iframe</code>, and <code>html</code>.
+          Plug in your own via <code>renderers: [...]</code>. User renderers always run ahead of the
+          built-ins so you can override any default.
+        </p>
+
+        <h3>Haptic feedback</h3>
+        <pre><code>new PencereViewer({ items, haptics: true })</code></pre>
+        <p>
+          Opt-in only. Gated on <code>matchMedia('(any-pointer: coarse)')</code>
+          so desktop trackpads never buzz, and no-ops on iOS Safari which does not expose the
+          Vibration API. Fires on swipe-to-dismiss, wheel-zoom snap-back, and double-tap toggles.
+        </p>
+      </section>
+
+      <section>
         <h2 id="security"><a class="anchor" href="#security">#</a> Security</h2>
         <ul class="features">
           <li>Zero runtime dependencies — no supply-chain surface.</li>
