@@ -40,6 +40,86 @@ function move(
   return e
 }
 
+describe("GestureEngine rAF throttle (#34)", () => {
+  let el: HTMLElement
+  let rafQueue: FrameRequestCallback[] = []
+  let originalRaf: typeof requestAnimationFrame
+  let originalCaf: typeof cancelAnimationFrame
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    el = document.createElement("div")
+    document.body.appendChild(el)
+    ;(el as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () => {}
+    // Replace rAF with a synchronous queue so the test can step frames.
+    rafQueue = []
+    originalRaf = globalThis.requestAnimationFrame
+    originalCaf = globalThis.cancelAnimationFrame
+    globalThis.requestAnimationFrame = ((cb: FrameRequestCallback): number => {
+      rafQueue.push(cb)
+      return rafQueue.length
+    }) as typeof requestAnimationFrame
+    globalThis.cancelAnimationFrame = ((id: number): void => {
+      // Clear the slot but keep indices stable.
+      rafQueue[id - 1] = (): void => {}
+    }) as typeof cancelAnimationFrame
+  })
+
+  function flushFrame(): void {
+    const q = rafQueue
+    rafQueue = []
+    for (const cb of q) cb(performance.now())
+  }
+
+  it("coalesces six pointermoves inside one frame into a single emit", () => {
+    const events: Array<{ type: string; delta?: { dx: number; dy: number } }> = []
+    const g = new GestureEngine(el, {
+      onUpdate: (s) => events.push({ type: s.type, delta: s.delta }),
+    })
+    g.handleDown(ptr(1, 0, 0, "pointerdown"))
+    // Six sub-frame pan events.
+    for (let i = 0; i < 6; i++) g.handleMove(move(1, (i + 1) * 10, 0, 10, 0))
+    // No pan emitted yet (rAF not run).
+    expect(events.filter((e) => e.type === "pan").length).toBe(0)
+    flushFrame()
+    const pans = events.filter((e) => e.type === "pan")
+    // Exactly one pan — and its delta is the sum of the six individual moves.
+    expect(pans.length).toBe(1)
+    expect(pans[0]!.delta).toEqual({ dx: 60, dy: 0 })
+    // Teardown for later suites.
+    globalThis.requestAnimationFrame = originalRaf
+    globalThis.cancelAnimationFrame = originalCaf
+  })
+
+  it("pointerup flushes any pending emit synchronously", () => {
+    const types: string[] = []
+    const g = new GestureEngine(el, { onUpdate: (s) => types.push(s.type) })
+    g.handleDown(ptr(1, 0, 0, "pointerdown"))
+    g.handleMove(move(1, 5, 5, 5, 5))
+    // rAF hasn't run — but pointerup must drain the queue before "end".
+    g.handleUp(ptr(1, 5, 5, "pointerup"))
+    const panIdx = types.indexOf("pan")
+    const endIdx = types.indexOf("end")
+    expect(panIdx).toBeGreaterThanOrEqual(0)
+    expect(endIdx).toBeGreaterThan(panIdx)
+    globalThis.requestAnimationFrame = originalRaf
+    globalThis.cancelAnimationFrame = originalCaf
+  })
+
+  it("detach() cancels a pending frame", () => {
+    const types: string[] = []
+    const g = new GestureEngine(el, { onUpdate: (s) => types.push(s.type) })
+    g.attach()
+    g.handleDown(ptr(1, 0, 0, "pointerdown"))
+    g.handleMove(move(1, 5, 5, 5, 5))
+    g.detach()
+    flushFrame()
+    expect(types).not.toContain("pan")
+    globalThis.requestAnimationFrame = originalRaf
+    globalThis.cancelAnimationFrame = originalCaf
+  })
+})
+
 describe("GestureEngine", () => {
   let el: HTMLElement
   beforeEach(() => {

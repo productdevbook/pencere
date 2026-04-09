@@ -399,6 +399,25 @@ describe("PencereViewer", () => {
     expect(PC_STYLES).toMatch(/\.pc-btn\s*\{[^}]*scroll-margin-block:\s*80px/)
   })
 
+  it("#34: will-change lifecycle promotes on start, demotes on end", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const img = v.root.querySelector(".pc-img") as HTMLElement
+    expect(img.style.willChange).toBe("")
+    // @ts-expect-error reach into private
+    const gesture = v.gesture
+    // Simulate a gesture cycle via the engine's public handlers.
+    const down = new PointerEvent("pointerdown", { pointerId: 9, clientX: 10, clientY: 10 })
+    Object.defineProperty(down, "target", { value: img })
+    gesture.handleDown(down)
+    expect(img.style.willChange).toBe("transform")
+    gesture.reset()
+    expect(img.style.willChange).toBe("")
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

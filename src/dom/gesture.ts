@@ -54,6 +54,14 @@ export class GestureEngine {
   private transform: Transform2D = IDENTITY
   private lastPinchDistance = 0
   private lastTap = { time: 0, x: 0, y: 0 }
+  /**
+   * rAF throttle state (#34). pointermove fires at the device sample
+   * rate — on modern iPads that can be 120 Hz while the display only
+   * commits at 60 Hz, wasting ~half of the transform work. We coalesce
+   * all moves received within one frame into a single emit.
+   */
+  private rafId: number | null = null
+  private pendingEmit: { type: "pan" | "pinch"; delta?: { dx: number; dy: number } } | null = null
   private readonly onPointerDown = (e: PointerEvent): void => this.handleDown(e)
   private readonly onPointerMove = (e: PointerEvent): void => this.handleMove(e)
   private readonly onPointerUp = (e: PointerEvent): void => this.handleUp(e)
@@ -88,14 +96,36 @@ export class GestureEngine {
     this.el.removeEventListener("pointerup", this.onPointerUp)
     this.el.removeEventListener("pointercancel", this.onPointerCancel)
     this.el.removeEventListener("pointerleave", this.onPointerCancel)
+    this.cancelPendingEmit()
     this.pointers.clear()
   }
 
   reset(): void {
+    this.cancelPendingEmit()
     this.transform = IDENTITY
     this.pointers.clear()
     this.lastPinchDistance = 0
     this.emit("end")
+  }
+
+  /** Visible for tests: force-drain the rAF queue synchronously. */
+  flushPendingEmit(): void {
+    if (this.rafId === null && this.pendingEmit === null) return
+    const pending = this.pendingEmit
+    // Clear scheduling state first so the flushed emit cannot loop
+    // back into queueEmit via a listener.
+    if (this.rafId !== null) {
+      const caf: typeof cancelAnimationFrame =
+        typeof cancelAnimationFrame === "function"
+          ? cancelAnimationFrame
+          : (id: number): void => {
+              clearTimeout(id as unknown as ReturnType<typeof setTimeout>)
+            }
+      caf(this.rafId)
+      this.rafId = null
+    }
+    this.pendingEmit = null
+    if (pending) this.emit(pending.type, pending.delta)
   }
 
   get current(): Transform2D {
@@ -158,20 +188,63 @@ export class GestureEngine {
         )
       }
       this.lastPinchDistance = dist
-      this.emit("pinch")
+      this.queueEmit("pinch")
     } else if (this.pointers.size === 1) {
       // Compute delta from the prior position — not the start position —
       // so this is true per-frame movement.
       const dx = e.movementX || 0
       const dy = e.movementY || 0
       this.transform = translate(this.transform, dx, dy)
-      this.emit("pan", { dx, dy })
+      // Coalesce per-frame pan deltas so a fast 120 Hz trackpad does
+      // not fire six emits between two display commits.
+      const prior = this.pendingEmit?.type === "pan" ? this.pendingEmit.delta : undefined
+      const merged = prior ? { dx: prior.dx + dx, dy: prior.dy + dy } : { dx, dy }
+      this.queueEmit("pan", merged)
     }
+  }
+
+  /**
+   * Schedule a single emit on the next animation frame. Subsequent
+   * pointermove events that arrive inside the same frame overwrite
+   * the pending snapshot (pinch) or accumulate the delta (pan), so
+   * the caller always sees the freshest transform per display commit.
+   */
+  private queueEmit(type: "pan" | "pinch", delta?: { dx: number; dy: number }): void {
+    this.pendingEmit = { type, delta }
+    if (this.rafId !== null) return
+    const raf: typeof requestAnimationFrame =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : (cb: FrameRequestCallback): number =>
+            setTimeout(() => cb(performance.now()), 16) as unknown as number
+    this.rafId = raf(() => {
+      this.rafId = null
+      const pending = this.pendingEmit
+      this.pendingEmit = null
+      if (pending) this.emit(pending.type, pending.delta)
+    })
+  }
+
+  private cancelPendingEmit(): void {
+    if (this.rafId === null) return
+    const caf: typeof cancelAnimationFrame =
+      typeof cancelAnimationFrame === "function"
+        ? cancelAnimationFrame
+        : (id: number): void => {
+            clearTimeout(id as unknown as ReturnType<typeof setTimeout>)
+          }
+    caf(this.rafId)
+    this.rafId = null
+    this.pendingEmit = null
   }
 
   handleUp(e: PointerEvent): void {
     const p = this.pointers.get(e.pointerId)
     if (!p) return
+    // Flush any pending rAF emit synchronously so the final transform
+    // lands before "end" fires (consumers rely on this ordering for
+    // momentum handoff and swipe release).
+    this.flushPendingEmit()
     this.pointers.delete(e.pointerId)
     const now = e.timeStamp || performance.now()
     const dx = p.x - p.startX

@@ -169,6 +169,15 @@ export class PencereViewer<T extends Item = Item> {
           this.handleDoubleTap()
           return
         }
+        // `will-change: transform` is promoted to a compositor layer by
+        // the browser but keeps that layer alive indefinitely, which
+        // is wasted memory outside of an active gesture. Promote on
+        // start, demote on end. #34.
+        if (snapshot.type === "start" && this.currentImg) {
+          this.currentImg.style.setProperty("will-change", "transform")
+        } else if (snapshot.type === "end" && this.currentImg) {
+          this.currentImg.style.removeProperty("will-change")
+        }
         // While a scale=1 swipe is in flight, the swipe controller owns
         // the visual transform — don't let gesture pan overwrite it.
         if (this.swipe.isActive) return

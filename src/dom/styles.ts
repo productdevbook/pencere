@@ -63,7 +63,8 @@ export const PC_STYLES = `
   user-select: none;
   -webkit-user-drag: none;
   transform-origin: center center;
-  will-change: transform;
+  /* will-change is managed dynamically by the viewer on gesture
+     start/end to avoid keeping a compositor layer alive forever (#34). */
   transform: var(--pc-img-transform, none);
 }
 .pc-toolbar-top,
