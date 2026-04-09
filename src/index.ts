@@ -34,6 +34,22 @@ export type {
 } from "./dom";
 export { computeAspectRatio, loadImage } from "./dom/image-loader";
 export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader";
+export { GestureEngine } from "./dom/gesture";
+export type {
+  GestureEngineOptions,
+  GestureEventType,
+  GestureSnapshot,
+} from "./dom/gesture";
+export {
+  clampScale,
+  distance,
+  IDENTITY,
+  midpoint,
+  scaleAround,
+  toCss as transformToCss,
+  translate,
+} from "./dom/transform";
+export type { Transform2D } from "./dom/transform";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";

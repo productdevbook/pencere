@@ -1,0 +1,188 @@
+import { clampScale, distance, IDENTITY, midpoint, scaleAround, translate } from "./transform";
+import type { Transform2D } from "./transform";
+
+interface PointerSample {
+  id: number;
+  x: number;
+  y: number;
+  startX: number;
+  startY: number;
+  startedAt: number;
+}
+
+export type GestureEventType = "start" | "pan" | "pinch" | "end" | "tap" | "doubleTap" | "swipe";
+
+export interface GestureSnapshot {
+  type: GestureEventType;
+  transform: Transform2D;
+  delta?: { dx: number; dy: number };
+  swipe?: { direction: "up" | "down" | "left" | "right"; velocity: number };
+}
+
+export interface GestureEngineOptions {
+  /** Clamp the output scale to this range. Default [1, 8]. */
+  minScale?: number;
+  maxScale?: number;
+  /** Tap threshold in pixels. Default 8. */
+  tapThreshold?: number;
+  /** Tap timeout in ms. Default 250. */
+  tapTimeout?: number;
+  /** Double-tap window in ms. Default 300. */
+  doubleTapWindow?: number;
+  /** Emit callback with every gesture update. */
+  onUpdate?: (snapshot: GestureSnapshot) => void;
+}
+
+/**
+ * A small Pointer Events-based gesture engine shared by the lightbox.
+ *
+ * Responsibilities:
+ * - unify mouse/touch/pen into a single pipeline via Pointer Events
+ * - pan with one pointer
+ * - pinch-zoom around the centroid with two pointers
+ * - tap / double-tap detection with configurable thresholds
+ *
+ * Swipe / drag-to-dismiss / momentum live in a higher-level controller
+ * (next commit) so this class stays focused and testable.
+ */
+export class GestureEngine {
+  private readonly el: HTMLElement;
+  private readonly opts: Required<Omit<GestureEngineOptions, "onUpdate">> & {
+    onUpdate?: GestureEngineOptions["onUpdate"];
+  };
+  private readonly pointers = new Map<number, PointerSample>();
+  private transform: Transform2D = IDENTITY;
+  private lastPinchDistance = 0;
+  private lastTap = { time: 0, x: 0, y: 0 };
+  private readonly onPointerDown = (e: PointerEvent): void => this.handleDown(e);
+  private readonly onPointerMove = (e: PointerEvent): void => this.handleMove(e);
+  private readonly onPointerUp = (e: PointerEvent): void => this.handleUp(e);
+  private readonly onPointerCancel = (e: PointerEvent): void => this.handleUp(e);
+
+  constructor(el: HTMLElement, opts: GestureEngineOptions = {}) {
+    this.el = el;
+    this.opts = {
+      minScale: opts.minScale ?? 1,
+      maxScale: opts.maxScale ?? 8,
+      tapThreshold: opts.tapThreshold ?? 8,
+      tapTimeout: opts.tapTimeout ?? 250,
+      doubleTapWindow: opts.doubleTapWindow ?? 300,
+      onUpdate: opts.onUpdate,
+    };
+    // touch-action:none ensures the browser does not steal the gesture
+    // for its own pinch-zoom / double-tap-zoom.
+    this.el.style.touchAction = "none";
+  }
+
+  attach(): void {
+    this.el.addEventListener("pointerdown", this.onPointerDown);
+    this.el.addEventListener("pointermove", this.onPointerMove);
+    this.el.addEventListener("pointerup", this.onPointerUp);
+    this.el.addEventListener("pointercancel", this.onPointerCancel);
+    this.el.addEventListener("pointerleave", this.onPointerCancel);
+  }
+
+  detach(): void {
+    this.el.removeEventListener("pointerdown", this.onPointerDown);
+    this.el.removeEventListener("pointermove", this.onPointerMove);
+    this.el.removeEventListener("pointerup", this.onPointerUp);
+    this.el.removeEventListener("pointercancel", this.onPointerCancel);
+    this.el.removeEventListener("pointerleave", this.onPointerCancel);
+    this.pointers.clear();
+  }
+
+  reset(): void {
+    this.transform = IDENTITY;
+    this.pointers.clear();
+    this.lastPinchDistance = 0;
+    this.emit("end");
+  }
+
+  get current(): Transform2D {
+    return this.transform;
+  }
+
+  /** Public for tests: inject synthetic pointer events. */
+  handleDown(e: PointerEvent): void {
+    try {
+      this.el.setPointerCapture(e.pointerId);
+    } catch {
+      // jsdom / older browsers may throw — safe to ignore.
+    }
+    this.pointers.set(e.pointerId, {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      startX: e.clientX,
+      startY: e.clientY,
+      startedAt: e.timeStamp || performance.now(),
+    });
+    if (this.pointers.size === 2) {
+      const [a, b] = [...this.pointers.values()];
+      this.lastPinchDistance = distance(a!, b!);
+    }
+    this.emit("start");
+  }
+
+  handleMove(e: PointerEvent): void {
+    const p = this.pointers.get(e.pointerId);
+    if (!p) return;
+    p.x = e.clientX;
+    p.y = e.clientY;
+
+    if (this.pointers.size === 2) {
+      const [a, b] = [...this.pointers.values()];
+      const dist = distance(a!, b!);
+      if (this.lastPinchDistance > 0) {
+        const k = dist / this.lastPinchDistance;
+        const mid = midpoint(a!, b!);
+        this.transform = clampScale(
+          scaleAround(this.transform, k, mid.x, mid.y),
+          this.opts.minScale,
+          this.opts.maxScale,
+        );
+      }
+      this.lastPinchDistance = dist;
+      this.emit("pinch");
+    } else if (this.pointers.size === 1) {
+      // Compute delta from the prior position — not the start position —
+      // so this is true per-frame movement.
+      const dx = e.movementX || 0;
+      const dy = e.movementY || 0;
+      this.transform = translate(this.transform, dx, dy);
+      this.emit("pan", { dx, dy });
+    }
+  }
+
+  handleUp(e: PointerEvent): void {
+    const p = this.pointers.get(e.pointerId);
+    if (!p) return;
+    this.pointers.delete(e.pointerId);
+    const now = e.timeStamp || performance.now();
+    const dx = p.x - p.startX;
+    const dy = p.y - p.startY;
+    const moved = Math.hypot(dx, dy);
+    const duration = now - p.startedAt;
+    const isTap = moved < this.opts.tapThreshold && duration < this.opts.tapTimeout;
+
+    if (isTap && this.pointers.size === 0) {
+      const isDoubleTap =
+        this.lastTap.time > 0 &&
+        now - this.lastTap.time < this.opts.doubleTapWindow &&
+        Math.hypot(p.x - this.lastTap.x, p.y - this.lastTap.y) < 30;
+      if (isDoubleTap) {
+        this.lastTap = { time: 0, x: 0, y: 0 };
+        this.emit("doubleTap");
+      } else {
+        this.lastTap = { time: now, x: p.x, y: p.y };
+        this.emit("tap");
+      }
+    }
+    if (this.pointers.size < 2) this.lastPinchDistance = 0;
+    if (this.pointers.size === 0) this.emit("end");
+  }
+
+  private emit(type: GestureEventType, delta?: { dx: number; dy: number }): void {
+    this.opts.onUpdate?.({ type, transform: this.transform, delta });
+  }
+}
