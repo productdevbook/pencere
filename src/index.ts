@@ -53,6 +53,8 @@ export { createMediaQuery, prefersReducedMotion } from "./dom/media-query";
 export type { MediaQueryHandle } from "./dom/media-query";
 export { createTranslator, DEFAULT_STRINGS } from "./i18n";
 export type { PencereStrings, Translator } from "./i18n";
+export { getStrings, strings as i18nBundles } from "./i18n-bundles";
+export type { PencereLocale } from "./i18n-bundles";
 export { PencereViewer } from "./dom/viewer";
 export type { PencereViewerOptions } from "./dom/viewer";
 
