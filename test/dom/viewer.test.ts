@@ -487,6 +487,34 @@ describe("PencereViewer", () => {
     }
   })
 
+  it("#26: longDescription lands in a visually-hidden aria-described-by node", async () => {
+    const v = new PencereViewer({
+      items: [
+        {
+          type: "image",
+          src: "https://example.com/a.jpg",
+          alt: "Short alt",
+          caption: "Visible caption",
+          longDescription:
+            "An expanded, multi-sentence description that a screen reader should read in full.",
+        },
+      ],
+      lockScroll: false,
+      useNativeDialog: false,
+    })
+    await v.open()
+    await new Promise((r) => setTimeout(r, 10))
+    const describedBy = v.root.getAttribute("aria-describedby")
+    expect(describedBy).toMatch(/pencere-caption-/)
+    expect(describedBy).toMatch(/pencere-longdesc-/)
+    const ids = describedBy!.split(" ")
+    const longdesc = document.getElementById(ids[1]!)!
+    expect(longdesc.textContent).toMatch(/expanded, multi-sentence/)
+    expect(longdesc.classList.contains("pc-live")).toBe(true) // visually hidden
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

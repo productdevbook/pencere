@@ -84,6 +84,7 @@ export class PencereViewer<T extends Item = Item> {
   private readonly stage: HTMLElement
   private readonly slot: HTMLElement
   private readonly caption: HTMLElement
+  private readonly longDescription: HTMLElement
   private readonly counter: HTMLElement
   private readonly closeButton: HTMLButtonElement
   private readonly prevButton: HTMLButtonElement
@@ -140,6 +141,14 @@ export class PencereViewer<T extends Item = Item> {
     caption.classList.add("pc-caption")
     caption.id = `pencere-caption-${Math.random().toString(36).slice(2, 10)}`
 
+    // Visually-hidden long description, announced by screen readers
+    // alongside the visible caption when the consumer provides
+    // `item.longDescription`. Mounts inside the root so the
+    // aria-describedby reference is never dangling.
+    const longDescription = doc.createElement("div")
+    longDescription.classList.add("pc-longdesc", "pc-live")
+    longDescription.id = `pencere-longdesc-${Math.random().toString(36).slice(2, 10)}`
+
     const counter = doc.createElement("div")
     counter.classList.add("pc-counter")
 
@@ -158,13 +167,14 @@ export class PencereViewer<T extends Item = Item> {
     topBar.append(closeButton, counter)
     bottomBar.append(caption)
     stage.append(slot, prevButton, nextButton, topBar, bottomBar)
-    root.append(stage)
-    root.setAttribute("aria-describedby", caption.id)
+    root.append(stage, longDescription)
+    root.setAttribute("aria-describedby", `${caption.id} ${longDescription.id}`)
 
     this.root = root
     this.stage = stage
     this.slot = slot
     this.caption = caption
+    this.longDescription = longDescription
     this.counter = counter
     this.closeButton = closeButton
     this.prevButton = prevButton
@@ -321,6 +331,14 @@ export class PencereViewer<T extends Item = Item> {
     // Captions are textContent by default (issue #48).
     this.caption.textContent =
       "caption" in item && typeof item.caption === "string" ? item.caption : ""
+    // Long description lives in a visually hidden, aria-described-by
+    // node so AT users get the full descriptor without crowding the
+    // visible caption line (#26).
+    this.longDescription.textContent =
+      "longDescription" in item &&
+      typeof (item as { longDescription?: string }).longDescription === "string"
+        ? (item as { longDescription: string }).longDescription
+        : ""
     // Disable prev/next at ends when loop is off.
     const loop = this.opts.loop ?? true
     this.prevButton.disabled = !loop && this.core.state.index === 0
