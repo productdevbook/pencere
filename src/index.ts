@@ -77,6 +77,13 @@ export { MotionController } from "./dom/motion-controller"
 export type { MotionControllerOptions } from "./dom/motion-controller"
 export { renderSlide } from "./dom/render-pipeline"
 export type { ActiveRendererSlot, RenderSlideContext } from "./dom/render-pipeline"
+export type {
+  CloseHookContext,
+  NavigateHookContext,
+  OpenHookContext,
+  PencereHooks,
+  RenderHookContext,
+} from "./dom/hooks"
 
 import { Pencere } from "./core"
 import type { ImageItem } from "./types"

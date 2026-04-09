@@ -7,6 +7,8 @@ import type { DialogControllerOptions } from "./dialog"
 import { FullscreenController } from "./fullscreen-controller"
 import { Haptics } from "./haptics"
 import type { HapticsOptions } from "./haptics"
+import { runDidHook, runWillHook } from "./hooks"
+import type { PencereHooks } from "./hooks"
 import type { ImageLoaderOptions } from "./image-loader"
 import { resolveKeyAction } from "./keyboard"
 import type { KeyboardMapOptions } from "./keyboard"
@@ -104,6 +106,13 @@ export interface PencereViewerOptions<T extends Item = Item>
    * hard-wired in the viewer and cannot be replaced.
    */
   renderers?: Renderer[]
+  /**
+   * Lifecycle hooks (Phase 2 of the architecture refactor). Gives
+   * plugins + controlled-mode consumers a way to observe and gate
+   * open / close / render / navigate transitions without
+   * subclassing the viewer. See `PencereHooks` for details.
+   */
+  hooks?: PencereHooks<T>
 }
 
 /**
@@ -289,9 +298,14 @@ export class PencereViewer<T extends Item = Item> {
     this.core.events.on("open", () => {
       this.renderPromise = this.renderSlide()
     })
-    this.core.events.on("change", () => {
+    this.core.events.on("change", (payload) => {
       this.renderPromise = this.renderSlide()
       this.routingController.replaceFragment()
+      runDidHook(
+        this.opts.hooks?.didNavigate,
+        { from: payload.from, to: payload.to, item: payload.item },
+        "didNavigate",
+      )
     })
     this.core.events.on("close", () => {
       this.dialog.hide()
@@ -310,6 +324,11 @@ export class PencereViewer<T extends Item = Item> {
     const container = this.opts.container ?? this.root.ownerDocument.body
     this.direction = resolveDirection(this.opts.dir, container)
     this.root.setAttribute("dir", this.direction)
+
+    // Lifecycle: willOpen runs before anything observable changes
+    // so plugins can still gate the transition (throw to abort).
+    const openCtx = { index, trigger, items: this.core.state.items }
+    await runWillHook(this.opts.hooks?.willOpen, openCtx)
 
     // View Transitions API morph (#12). When opted in and supported,
     // tag the trigger thumbnail with a shared `view-transition-name`
@@ -335,9 +354,10 @@ export class PencereViewer<T extends Item = Item> {
       await this.viewTransition.run(run, () => {
         if (trigger) trigger.style.removeProperty("view-transition-name")
       })
-      return
+    } else {
+      await run()
     }
-    await run()
+    runDidHook(this.opts.hooks?.didOpen, openCtx, "didOpen")
   }
 
   /**
@@ -354,7 +374,10 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   async close(reason: CloseReason = "api"): Promise<void> {
+    const closeCtx = { reason }
+    await runWillHook(this.opts.hooks?.willClose, closeCtx)
     await this.core.close(reason)
+    runDidHook(this.opts.hooks?.didClose, closeCtx, "didClose")
   }
 
   destroy(): void {
@@ -387,6 +410,15 @@ export class PencereViewer<T extends Item = Item> {
   private async renderSlide(): Promise<void> {
     this.loadAbort?.abort()
     this.loadAbort = new AbortController()
+    // Phase 3: compose the per-slide signal with the viewer-lifetime
+    // cleanup signal so `destroy()` cancels in-flight loads without
+    // each subsystem having to listen on a second AbortController.
+    const signal = anySignal([this.cleanup.signal, this.loadAbort.signal])
+    const renderCtx = {
+      index: this.core.state.index,
+      item: this.core.item,
+    }
+    await runWillHook(this.opts.hooks?.willRender, renderCtx)
     await renderSlide({
       core: this.core,
       slot: this.slot,
@@ -408,10 +440,11 @@ export class PencereViewer<T extends Item = Item> {
       setCurrentImg: (img) => {
         this.currentImg = img
       },
-      signal: this.loadAbort.signal,
+      signal,
       resetTransform: () => this.motion.reset(),
       applyCurrentTransform: (img) => this.motion.applyCurrentTransform(img),
     })
+    runDidHook(this.opts.hooks?.didRender, renderCtx, "didRender")
   }
 
   /**
@@ -562,6 +595,31 @@ export class PencereViewer<T extends Item = Item> {
  * This keeps the viewer honest with whatever the surrounding app has
  * configured — including mixed LTR docs with an `<article dir="rtl">`.
  */
+/**
+ * `AbortSignal.any` polyfill. Combines multiple signals into one
+ * that aborts as soon as any input aborts. Used in `renderSlide`
+ * to compose the per-slide load signal with the viewer-lifetime
+ * cleanup signal (Phase 3 of the refactor) so `destroy()` cancels
+ * in-flight image loads without each subsystem having to listen on
+ * a second AbortController.
+ */
+function anySignal(signals: readonly AbortSignal[]): AbortSignal {
+  const AnyFn = (AbortSignal as unknown as { any?: (s: readonly AbortSignal[]) => AbortSignal }).any
+  if (typeof AnyFn === "function") return AnyFn(signals)
+  const controller = new AbortController()
+  const onAbort = (s: AbortSignal): void => {
+    if (!controller.signal.aborted) controller.abort(s.reason)
+  }
+  for (const s of signals) {
+    if (s.aborted) {
+      controller.abort(s.reason)
+      break
+    }
+    s.addEventListener("abort", () => onAbort(s), { once: true })
+  }
+  return controller.signal
+}
+
 function resolveDirection(
   explicit: "ltr" | "rtl" | "auto" | undefined,
   container: HTMLElement,
