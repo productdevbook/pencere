@@ -133,6 +133,9 @@ export class PencereViewer<T extends Item = Item> {
     // Prefer the native <dialog> element for top-layer, inertness, ESC.
     const root = doc.createElement("dialog")
     root.style.cssText = ROOT_STYLE
+    // Inline display:flex would otherwise defeat the UA's
+    // `dialog:not([open]) { display: none }` rule — hide until shown.
+    root.style.display = "none"
     root.setAttribute("aria-label", this.t("dialogLabel"))
     root.setAttribute("aria-roledescription", "carousel")
 
@@ -227,6 +230,7 @@ export class PencereViewer<T extends Item = Item> {
     this.core.events.on("change", () => void this.renderSlide())
     this.core.events.on("close", () => {
       this.dialog.hide()
+      this.root.style.display = "none"
       this.gesture.detach()
       this.gesture.reset()
     })
@@ -234,6 +238,7 @@ export class PencereViewer<T extends Item = Item> {
 
   async open(index?: number): Promise<void> {
     await this.core.open(index)
+    this.root.style.display = "flex"
     this.dialog.show()
     this.gesture.attach()
   }
