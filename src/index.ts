@@ -17,6 +17,7 @@ export type { PencereState } from "./core"
 export { createTrustedTypesPolicy, escapeHtml, isSafeUrl, safeUrl } from "./security"
 export type { PencereTrustedTypePolicy } from "./security"
 export {
+  bindPencere,
   DialogController,
   FocusTrap,
   firstTabbable,
@@ -28,10 +29,12 @@ export {
   unlockScroll,
 } from "./dom"
 export type {
+  BindOptions,
   DialogControllerOptions,
   FocusTrapOptions,
   KeyboardAction,
   KeyboardMapOptions,
+  Unbind,
 } from "./dom"
 export { computeAspectRatio, loadImage } from "./dom/image-loader"
 export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader"
