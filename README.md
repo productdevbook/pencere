@@ -110,17 +110,17 @@ const { open } = usePencere({
 
 ## Why pencere?
 
-| Library                     | License     | Framework-agnostic | Zoom | Video  | Thumbs | TS-first | WCAG 2.2 AA | View Transitions |
-| --------------------------- | ----------- | ------------------ | ---- | ------ | ------ | -------- | ----------- | ---------------- |
-| **pencere**                 | **MIT**     | ✅                 | ✅   | ✅     | ❌     | ✅       | ✅          | ✅               |
-| PhotoSwipe v5               | MIT         | ✅                 | ✅   | plugin | plugin | ~        | ~           | ❌               |
-| GLightbox                   | MIT         | ✅                 | ~    | ✅     | ❌     | ❌       | ~           | ❌               |
-| Fancybox v6 (@fancyapps/ui) | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
-| yet-another-react-lightbox  | MIT         | React only         | ~    | plugin | plugin | ✅       | ✅          | ❌               |
-| lightGallery                | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
-| basicLightbox               | MIT         | ✅                 | ❌   | ❌     | ❌     | ~        | ❌          | ❌               |
-| Spotlight.js                | Apache      | ✅                 | ~    | ✅     | ❌     | ~        | ❌          | ❌               |
-| Swiper (lightbox mode)      | MIT         | ✅                 | ~    | ❌     | ✅     | ✅       | ~           | ❌               |
+| Library                                                                                   | License     | Framework-agnostic | Zoom | Video  | Thumbs | TS-first | WCAG 2.2 AA | View Transitions |
+| ----------------------------------------------------------------------------------------- | ----------- | ------------------ | ---- | ------ | ------ | -------- | ----------- | ---------------- |
+| **pencere**                                                                               | **MIT**     | ✅                 | ✅   | ✅     | ❌     | ✅       | ✅          | ✅               |
+| [PhotoSwipe v5](https://github.com/dimsemenov/PhotoSwipe)                                 | MIT         | ✅                 | ✅   | plugin | plugin | ~        | ~           | ❌               |
+| [GLightbox](https://github.com/biati-digital/glightbox)                                   | MIT         | ✅                 | ~    | ✅     | ❌     | ❌       | ~           | ❌               |
+| [Fancybox v6 (@fancyapps/ui)](https://github.com/fancyapps/ui)                            | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
+| [yet-another-react-lightbox](https://github.com/igordanchenko/yet-another-react-lightbox) | MIT         | React only         | ~    | plugin | plugin | ✅       | ✅          | ❌               |
+| [lightGallery](https://github.com/sachinchoolur/lightGallery)                             | **GPL / ₺** | ✅                 | ✅   | ✅     | ✅     | ✅       | ✅          | ❌               |
+| [basicLightbox](https://github.com/electerious/basicLightbox)                             | MIT         | ✅                 | ❌   | ❌     | ❌     | ~        | ❌          | ❌               |
+| [Spotlight.js](https://github.com/nextapps-de/spotlight)                                  | Apache      | ✅                 | ~    | ✅     | ❌     | ~        | ❌          | ❌               |
+| [Swiper (lightbox mode)](https://github.com/nolimits4web/swiper)                          | MIT         | ✅                 | ~    | ❌     | ✅     | ✅       | ~           | ❌               |
 
 Key differentiators:
 
@@ -656,6 +656,22 @@ interface PencereViewerOptions<T extends Item = Item> {
 - [ ] Plugin architecture (#4)
 - [ ] Controlled-mode contract (#6)
 - [ ] van Wijk zoom-pan curve (#47)
+
+## Acknowledgments
+
+`pencere` stands on the shoulders of a decade of lightbox craft. Big
+thanks to the maintainers whose work we studied, learned from, and
+drew direct inspiration from while designing this library:
+
+- [**PhotoSwipe**](https://github.com/dimsemenov/PhotoSwipe) by Dmytro Semenov — the gold standard for zero-dep image viewers; its focus trap + gesture engine shaped ours.
+- [**Fancybox**](https://github.com/fancyapps/ui) by fancyapps — the most feature-complete commercial option; its UX polish (caption animation, renderer registry shape) set the bar for our defaults.
+- [**lightGallery**](https://github.com/sachinchoolur/lightGallery) by Sachin Neravath — the thumbnail strip interaction patterns and plugin system ergonomics.
+- [**GLightbox**](https://github.com/biati-digital/glightbox) by biati-digital — `data-*` declarative markup was a direct reference for `bindPencere()`.
+- [**yet-another-react-lightbox**](https://github.com/igordanchenko/yet-another-react-lightbox) by Igor Danchenko — the cleanest typed React API in the ecosystem; strongly influenced our controlled-mode contract.
+- [**basicLightbox**](https://github.com/electerious/basicLightbox) by Tobias Reich — proof that 2 kB can still feel great; a constant reminder to keep core small.
+- [**Spotlight.js**](https://github.com/nextapps-de/spotlight) by Thomas Wilkerling — the compact gesture-first mobile UX benchmark.
+- [**Swiper**](https://github.com/nolimits4web/swiper) by Vladimir Kharlampidi — the touchstone for swipe navigation physics, axis locking, and momentum.
+- [**Lightbox2**](https://github.com/lokesh/lightbox2) by Lokesh Dhakar — the original. Every web lightbox traces back here.
 
 ## License
 
