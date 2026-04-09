@@ -65,20 +65,46 @@ const STAGE_STYLE = [
 ].join(";")
 
 const CAPTION_STYLE = [
-  "flex:0 0 auto",
+  "margin:0 auto",
   "max-width:90ch",
-  "padding:0.75rem 1rem",
   "text-align:center",
   "line-height:1.4",
   "font-size:0.95rem",
 ].join(";")
 
-const COUNTER_STYLE = [
+const COUNTER_STYLE = ["font-size:0.85rem", "opacity:0.85", "letter-spacing:0.02em"].join(";")
+
+const TOP_BAR_STYLE = [
   "position:absolute",
-  "top:0.75rem",
-  "inset-inline-end:0.75rem",
-  "font-size:0.85rem",
-  "opacity:0.8",
+  "top:0",
+  "inset-inline:0",
+  "display:flex",
+  "align-items:center",
+  "justify-content:space-between",
+  "padding:0.75rem 1rem",
+  "gap:1rem",
+  "background:linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0))",
+  "pointer-events:none",
+  "z-index:2",
+].join(";")
+
+const BOTTOM_BAR_STYLE = [
+  "position:absolute",
+  "bottom:0",
+  "inset-inline:0",
+  "padding:1rem 1.5rem 1.25rem",
+  "background:linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))",
+  "pointer-events:none",
+  "z-index:2",
+].join(";")
+
+const NAV_BUTTON_STYLE = [
+  "background:rgba(0,0,0,0.45)",
+  "backdrop-filter:blur(8px)",
+  "-webkit-backdrop-filter:blur(8px)",
+  "border-radius:999px",
+  "width:48px",
+  "height:48px",
 ].join(";")
 
 const IMG_STYLE = [
@@ -154,20 +180,27 @@ export class PencereViewer<T extends Item = Item> {
     const counter = doc.createElement("div")
     counter.style.cssText = COUNTER_STYLE
 
+    const topBar = doc.createElement("div")
+    topBar.style.cssText = TOP_BAR_STYLE
+    topBar.setAttribute("data-pc-part", "toolbar-top")
+
+    const bottomBar = doc.createElement("div")
+    bottomBar.style.cssText = BOTTOM_BAR_STYLE
+    bottomBar.setAttribute("data-pc-part", "toolbar-bottom")
+
     const closeButton = this.makeButton(doc, "close", "×")
-    closeButton.style.cssText +=
-      ";position:absolute;top:0.5rem;inset-inline-start:0.5rem;font-size:1.75rem"
+    closeButton.style.cssText += ";font-size:1.75rem;pointer-events:auto"
 
     const prevButton = this.makeButton(doc, "previous", "‹")
-    prevButton.style.cssText +=
-      ";position:absolute;inset-inline-start:0.5rem;top:50%;transform:translateY(-50%);font-size:2rem"
+    prevButton.style.cssText += `;position:absolute;inset-inline-start:0.75rem;top:50%;transform:translateY(-50%);font-size:2rem;${NAV_BUTTON_STYLE}`
 
     const nextButton = this.makeButton(doc, "next", "›")
-    nextButton.style.cssText +=
-      ";position:absolute;inset-inline-end:0.5rem;top:50%;transform:translateY(-50%);font-size:2rem"
+    nextButton.style.cssText += `;position:absolute;inset-inline-end:0.75rem;top:50%;transform:translateY(-50%);font-size:2rem;${NAV_BUTTON_STYLE}`
 
-    stage.append(slot, prevButton, nextButton)
-    root.append(closeButton, stage, caption, counter)
+    topBar.append(closeButton, counter)
+    bottomBar.append(caption)
+    stage.append(slot, prevButton, nextButton, topBar, bottomBar)
+    root.append(stage)
     root.setAttribute("aria-describedby", caption.id)
 
     this.root = root

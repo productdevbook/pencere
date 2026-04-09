@@ -131,6 +131,42 @@ describe("PencereViewer", () => {
     expect(document.body.querySelector("dialog")).toBeNull()
   })
 
+  it("mounts top and bottom toolbars with gradient backdrops", () => {
+    const v = factory()
+    const top = v.root.querySelector("[data-pc-part='toolbar-top']") as HTMLElement
+    const bottom = v.root.querySelector("[data-pc-part='toolbar-bottom']") as HTMLElement
+    expect(top).not.toBeNull()
+    expect(bottom).not.toBeNull()
+    // Close button + counter live in the top bar, caption in the bottom bar.
+    expect(top.querySelector("button[aria-label]")).not.toBeNull()
+    expect(bottom.querySelector("figcaption")).not.toBeNull()
+    // Gradient backdrops so controls stay legible over any image.
+    expect(top.style.background).toContain("linear-gradient")
+    expect(bottom.style.background).toContain("linear-gradient")
+    // Bars themselves are pointer-transparent; only the button reclaims clicks.
+    expect(top.style.pointerEvents).toBe("none")
+    expect(bottom.style.pointerEvents).toBe("none")
+    v.destroy()
+  })
+
+  it("nav buttons have circular backdrop for contrast on light images", () => {
+    const v = factory()
+    const prev = v.root.querySelector("button[aria-label='Previous image']") as HTMLElement
+    expect(prev.style.borderRadius).toBe("999px")
+    expect(prev.style.background).toContain("rgba")
+    v.destroy()
+  })
+
+  it("hidden by default, shown on open, hidden again on close", async () => {
+    const v = factory()
+    expect(v.root.style.display).toBe("none")
+    await v.open()
+    expect(v.root.style.display).toBe("flex")
+    await v.close()
+    expect(v.root.style.display).toBe("none")
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,
