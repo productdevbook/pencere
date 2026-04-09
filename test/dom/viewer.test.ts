@@ -259,6 +259,39 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("+/- keys zoom in and out; 0 resets", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    // @ts-expect-error reach into private
+    const gesture = v.gesture
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "+", cancelable: true }))
+    expect(gesture.current.scale).toBeGreaterThan(1)
+    const scaled = gesture.current.scale
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "+", cancelable: true }))
+    expect(gesture.current.scale).toBeGreaterThan(scaled)
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "-", cancelable: true }))
+    expect(gesture.current.scale).toBeLessThan(gesture.current.scale * 1.25 + 0.001)
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "0", cancelable: true }))
+    expect(gesture.current.scale).toBe(1)
+    await v.close()
+    v.destroy()
+  })
+
+  it("zoomOut below 1 snaps back to identity", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    // @ts-expect-error reach into private
+    v.zoomBy(0.5)
+    // @ts-expect-error
+    expect(v.gesture.current.scale).toBe(1)
+    // @ts-expect-error
+    expect(v.gesture.current.x).toBe(0)
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

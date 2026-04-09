@@ -510,10 +510,41 @@ export class PencereViewer<T extends Item = Item> {
       case "last":
         void this.core.goTo(this.core.state.items.length - 1)
         break
+      case "zoomIn":
+        this.zoomBy(1.25)
+        break
+      case "zoomOut":
+        this.zoomBy(1 / 1.25)
+        break
+      case "zoomReset":
+        this.zoomReset()
+        break
       default:
-        // zoom actions are plumbed in a later pass
         break
     }
+  }
+
+  /** Zoom by a multiplicative factor around the image center. */
+  private zoomBy(factor: number): void {
+    if (!this.currentImg) return
+    const current = this.gesture.current
+    const newScale = Math.max(1, Math.min(8, current.scale * factor))
+    if (newScale === current.scale) return
+    const k = newScale / current.scale
+    const next = {
+      x: current.x * k,
+      y: current.y * k,
+      scale: newScale,
+    }
+    const snapped = next.scale <= 1 ? IDENTITY : next
+    this.gesture.setTransform(snapped)
+    this.currentImg.style.transform = toCss(this.gesture.current)
+  }
+
+  private zoomReset(): void {
+    if (!this.currentImg) return
+    this.gesture.setTransform(IDENTITY)
+    this.currentImg.style.transform = toCss(IDENTITY)
   }
 
   /** For tests: is the user in reduced-motion mode? */
