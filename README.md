@@ -367,6 +367,23 @@ new PencereViewer({
 })
 ```
 
+### Hash-based deep linking
+
+```ts
+const viewer = new PencereViewer({
+  items,
+  routing: true, // writes #p1, #p2, … on open + slide change
+})
+
+// On page load, open the slide named in the URL (e.g. /gallery#p3).
+void viewer.openFromLocation()
+```
+
+The browser **Back** button (and Safari / Firefox edge-swipe back
+gestures) close the viewer naturally because pencere listens for
+`popstate`. Customize the fragment with
+`routing: { pattern: (i) => \`#photo/\${i + 1}\`, parse: (h) => … }`.
+
 ### Respond to events
 
 ```ts

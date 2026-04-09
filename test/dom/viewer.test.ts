@@ -547,6 +547,58 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#75: routing pushes #p{n+1} on open and replaces on change", async () => {
+    history.replaceState(null, "", "/")
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      routing: true,
+    })
+    await v.open(0)
+    expect(location.hash).toBe("#p1")
+    await v.core.next()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(location.hash).toBe("#p2")
+    await v.close()
+    v.destroy()
+    history.replaceState(null, "", "/")
+  })
+
+  it("#75: popstate closes the viewer without looping history.back", async () => {
+    history.replaceState(null, "", "/")
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      routing: true,
+    })
+    await v.open(0)
+    expect(v.core.state.isOpen).toBe(true)
+    // Simulate the browser Back button.
+    window.dispatchEvent(new PopStateEvent("popstate", { state: null }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(v.core.state.isOpen).toBe(false)
+    v.destroy()
+    history.replaceState(null, "", "/")
+  })
+
+  it("#75: openFromLocation() honors the current URL fragment", async () => {
+    history.replaceState(null, "", "/#p3")
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      routing: true,
+    })
+    const opened = await v.openFromLocation()
+    expect(opened).toBe(true)
+    expect(v.core.state.index).toBe(2)
+    await v.close()
+    v.destroy()
+    history.replaceState(null, "", "/")
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

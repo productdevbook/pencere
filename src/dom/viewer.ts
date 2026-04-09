@@ -67,6 +67,26 @@ export interface PencereViewerOptions<T extends Item = Item>
    * `haptics: false` as well.
    */
   haptics?: boolean | HapticsOptions
+  /**
+   * Hash-based deep linking (#75). When `true`, the viewer writes
+   * `#p{n+1}` into the URL on open, updates it on every slide
+   * change, and closes on `popstate` so the browser Back button
+   * (and Safari / Firefox edge-swipe back gestures) dismiss the
+   * viewer naturally. Pass an object to customize the pattern.
+   */
+  routing?: boolean | RoutingOptions
+}
+
+/** See `PencereViewerOptions.routing`. */
+export interface RoutingOptions {
+  /** Build the fragment for a given slide index. Default: `#p{n+1}`. */
+  pattern?: (index: number) => string
+  /**
+   * Parse the current `location.hash` into a slide index, or return
+   * `null` when the URL does not identify a slide. Default matches
+   * the default pattern.
+   */
+  parse?: (hash: string) => number | null
 }
 
 /**
@@ -104,6 +124,11 @@ export class PencereViewer<T extends Item = Item> {
   private readonly onKeyDown: (e: KeyboardEvent) => void
   private direction: "ltr" | "rtl"
   private readonly haptics: Haptics
+  private readonly routing: {
+    pattern: (i: number) => string
+    parse: (h: string) => number | null
+  } | null
+  private routedOpen = false
 
   constructor(options: PencereViewerOptions<T>) {
     this.opts = options
@@ -121,6 +146,7 @@ export class PencereViewer<T extends Item = Item> {
     this.haptics = new Haptics(
       typeof options.haptics === "boolean" ? { enabled: options.haptics } : (options.haptics ?? {}),
     )
+    this.routing = resolveRouting(options.routing)
 
     // Prefer the native <dialog> element for top-layer, inertness, ESC.
     const root = doc.createElement("dialog")
@@ -250,14 +276,40 @@ export class PencereViewer<T extends Item = Item> {
     root.addEventListener("focusin", (e) => this.onFocusIn(e), { signal: sig })
 
     this.core.events.on("open", () => void this.renderSlide())
-    this.core.events.on("change", () => void this.renderSlide())
+    this.core.events.on("change", () => {
+      void this.renderSlide()
+      this.syncRoutingFragment("replace")
+    })
     this.core.events.on("close", () => {
       this.dialog.hide()
       this.root.classList.remove("pc-root--open")
       this.gesture.detach()
       this.gesture.reset()
+      // Unwind the routing entry only when the close came from inside
+      // pencere — popstate-driven closes must NOT call back() again
+      // or the user's real history would be stepped twice.
+      if (this.routedOpen && !this.suppressRoutingPop) {
+        this.routedOpen = false
+        try {
+          window.history.back()
+        } catch {
+          /* ignore */
+        }
+      }
+      this.suppressRoutingPop = false
     })
+
+    if (this.routing) {
+      const onPopState = (): void => {
+        if (!this.core.state.isOpen) return
+        this.suppressRoutingPop = true
+        void this.close("user")
+      }
+      window.addEventListener("popstate", onPopState, { signal: sig })
+    }
   }
+
+  private suppressRoutingPop = false
 
   async open(index?: number): Promise<void> {
     // Re-resolve direction on every open so consumers that toggle
@@ -272,6 +324,39 @@ export class PencereViewer<T extends Item = Item> {
     this.root.classList.add("pc-root--open")
     this.dialog.show()
     this.gesture.attach()
+    this.syncRoutingFragment("push")
+  }
+
+  /**
+   * Look at the current `location.hash`, and if it identifies a
+   * valid slide via the configured `routing.parse`, open the
+   * matching index. No-op when routing is off or the URL does not
+   * match. Returns `true` iff the viewer was actually opened.
+   */
+  async openFromLocation(): Promise<boolean> {
+    if (!this.routing) return false
+    const hash = typeof location !== "undefined" ? location.hash : ""
+    const idx = this.routing.parse(hash)
+    if (idx === null || idx < 0 || idx >= this.core.state.items.length) return false
+    await this.open(idx)
+    return true
+  }
+
+  private syncRoutingFragment(mode: "push" | "replace"): void {
+    if (!this.routing) return
+    if (typeof window === "undefined") return
+    const next = this.routing.pattern(this.core.state.index)
+    const url = location.pathname + location.search + next
+    try {
+      if (mode === "push" && !this.routedOpen) {
+        window.history.pushState({ pencere: true, i: this.core.state.index }, "", url)
+        this.routedOpen = true
+      } else {
+        window.history.replaceState({ pencere: true, i: this.core.state.index }, "", url)
+      }
+    } catch {
+      // Some sandboxed contexts throw on history mutation; ignore.
+    }
   }
 
   async close(reason: CloseReason = "api"): Promise<void> {
@@ -679,6 +764,27 @@ export class PencereViewer<T extends Item = Item> {
  * This keeps the viewer honest with whatever the surrounding app has
  * configured — including mixed LTR docs with an `<article dir="rtl">`.
  */
+/**
+ * Normalize the `routing` option into a concrete pattern/parse pair,
+ * or `null` when routing is disabled.
+ */
+function resolveRouting(
+  option: boolean | RoutingOptions | undefined,
+): { pattern: (i: number) => string; parse: (h: string) => number | null } | null {
+  if (!option) return null
+  const o = option === true ? {} : option
+  const pattern = o.pattern ?? ((i: number) => `#p${i + 1}`)
+  const parse =
+    o.parse ??
+    ((hash: string): number | null => {
+      const m = /^#p(\d+)$/.exec(hash)
+      if (!m) return null
+      const n = Number.parseInt(m[1]!, 10)
+      return Number.isFinite(n) && n >= 1 ? n - 1 : null
+    })
+  return { pattern, parse }
+}
+
 function resolveDirection(
   explicit: "ltr" | "rtl" | "auto" | undefined,
   container: HTMLElement,
