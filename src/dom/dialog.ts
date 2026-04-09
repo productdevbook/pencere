@@ -159,13 +159,39 @@ export class DialogController {
     if (this.opts.label) this.root.setAttribute("aria-label", this.opts.label)
   }
 
+  /**
+   * Walk from the root up toward <body> and mark every sibling along
+   * the way `inert`. This matches the ARIA APG Dialog (Modal) pattern
+   * — the only element reachable to AT/keyboard is the dialog itself.
+   *
+   * Walking ancestors (rather than only `document.body.children`)
+   * matters when the consumer attaches the viewer inside a custom
+   * container: the viewer's own ancestors must stay interactive for
+   * the root to remain focusable, while everything *beside* them at
+   * each level becomes inert.
+   */
   private applyInertSiblings(): void {
+    let node: Element | null = this.root
     const body = this.root.ownerDocument.body
-    for (const child of Array.from(body.children)) {
-      if (child === this.root) continue
-      if (child.hasAttribute("inert")) continue
-      child.setAttribute("inert", "")
-      this.inertTargets.add(child)
+    while (node && node !== body && node.parentElement) {
+      const parent: HTMLElement = node.parentElement
+      for (const sibling of Array.from(parent.children) as Element[]) {
+        if (sibling === node) continue
+        if (sibling.hasAttribute("inert")) continue
+        sibling.setAttribute("inert", "")
+        this.inertTargets.add(sibling)
+      }
+      node = parent
+    }
+    // Finally, any siblings of <body>'s direct children that aren't
+    // ancestors of the root (e.g. adjacent <main>, <header>, <nav>).
+    if (body) {
+      for (const child of Array.from(body.children)) {
+        if (child === this.root || child.contains(this.root)) continue
+        if (child.hasAttribute("inert")) continue
+        child.setAttribute("inert", "")
+        this.inertTargets.add(child)
+      }
     }
   }
 
