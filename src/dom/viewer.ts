@@ -11,6 +11,8 @@ import { resolveKeyAction } from "./keyboard"
 import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
+import { runMomentum } from "./momentum"
+import { SwipeNavigator } from "./swipe-nav"
 import { toCss } from "./transform"
 
 export interface PencereViewerOptions<T extends Item = Item>
@@ -109,6 +111,9 @@ export class PencereViewer<T extends Item = Item> {
   private readonly liveRegion: LiveRegion
   private readonly dialog: DialogController
   private readonly gesture: GestureEngine
+  private readonly swipe = new SwipeNavigator()
+  private swipeActivePointer: number | null = null
+  private momentumCancel: (() => void) | null = null
   private readonly reducedMotion: ReturnType<typeof prefersReducedMotion>
   private readonly t: Translator
   private readonly opts: PencereViewerOptions<T>
@@ -182,6 +187,9 @@ export class PencereViewer<T extends Item = Item> {
     this.gesture = new GestureEngine(stage, {
       onUpdate: (snapshot) => {
         if (snapshot.type === "tap" && !this.stage.matches(":hover")) return
+        // While a scale=1 swipe is in flight, the swipe controller owns
+        // the visual transform — don't let gesture pan overwrite it.
+        if (this.swipe.isActive) return
         if (this.currentImg) this.currentImg.style.transform = toCss(snapshot.transform)
       },
     })
@@ -197,6 +205,23 @@ export class PencereViewer<T extends Item = Item> {
     nextButton.addEventListener("click", () => void this.core.next(), { signal: sig })
     this.onKeyDown = (e: KeyboardEvent): void => this.handleKeyDown(e)
     doc.addEventListener("keydown", this.onKeyDown, { signal: sig })
+
+    // Swipe navigation + drag-to-dismiss listeners. Registered in capture
+    // phase so they run before GestureEngine's bubble listeners and can
+    // short-circuit pan application while at scale=1.
+    stage.addEventListener("pointerdown", (e) => this.onSwipeDown(e), {
+      signal: sig,
+      capture: true,
+    })
+    stage.addEventListener("pointermove", (e) => this.onSwipeMove(e), {
+      signal: sig,
+      capture: true,
+    })
+    stage.addEventListener("pointerup", (e) => this.onSwipeUp(e), { signal: sig, capture: true })
+    stage.addEventListener("pointercancel", (e) => this.onSwipeCancel(e), {
+      signal: sig,
+      capture: true,
+    })
 
     this.core.events.on("open", () => void this.renderSlide())
     this.core.events.on("change", () => void this.renderSlide())
@@ -219,6 +244,7 @@ export class PencereViewer<T extends Item = Item> {
 
   destroy(): void {
     this.cleanup.abort()
+    this.momentumCancel?.()
     this.loadAbort?.abort()
     this.gesture.detach()
     this.dialog.destroy()
@@ -287,6 +313,97 @@ export class PencereViewer<T extends Item = Item> {
       if ((err as Error).name === "AbortError") return
       this.slot.textContent = "Image failed to load"
     }
+  }
+
+  private isSwipeEligible(): boolean {
+    return this.gesture.current.scale === 1
+  }
+
+  private onSwipeDown(e: PointerEvent): void {
+    if (!this.isSwipeEligible()) return
+    if (this.swipeActivePointer !== null) return
+    this.swipeActivePointer = e.pointerId
+    this.momentumCancel?.()
+    this.momentumCancel = null
+    this.swipe.begin(e.clientX, e.clientY, e.timeStamp || performance.now())
+  }
+
+  private onSwipeMove(e: PointerEvent): void {
+    if (this.swipeActivePointer !== e.pointerId) return
+    if (!this.isSwipeEligible()) {
+      this.swipe.cancel()
+      this.swipeActivePointer = null
+      this.resetSwipeVisual()
+      return
+    }
+    const { dx, dy, axis } = this.swipe.move(e.clientX, e.clientY, e.timeStamp || performance.now())
+    if (!axis || !this.currentImg) return
+    // Horizontal: translate follows finger 1:1; vertical: translate + fade.
+    if (axis === "horizontal") {
+      this.currentImg.style.transform = `translate3d(${dx.toFixed(1)}px, 0, 0)`
+      this.root.style.opacity = "1"
+    } else {
+      this.currentImg.style.transform = `translate3d(0, ${dy.toFixed(1)}px, 0)`
+      const rect = this.stage.getBoundingClientRect()
+      const h = rect.height || 1
+      const fade = Math.max(0.3, 1 - Math.abs(dy) / h)
+      this.root.style.opacity = String(fade)
+    }
+  }
+
+  private onSwipeUp(e: PointerEvent): void {
+    if (this.swipeActivePointer !== e.pointerId) return
+    this.swipeActivePointer = null
+    const rect = this.stage.getBoundingClientRect()
+    const W = rect.width || this.root.clientWidth || 0
+    const H = rect.height || this.root.clientHeight || 0
+    const result = this.swipe.release(W, H)
+    this.resetSwipeVisual()
+
+    switch (result.action) {
+      case "next":
+        void this.core.next()
+        break
+      case "prev":
+        void this.core.prev()
+        break
+      case "dismiss":
+        void this.close("user")
+        break
+      case "cancel": {
+        // Run a short momentum spring back to origin.
+        if (!this.currentImg) return
+        const img = this.currentImg
+        let x = result.dx
+        let y = result.dy
+        this.momentumCancel = runMomentum(
+          -x * 0.2,
+          -y * 0.2,
+          (vx, vy) => {
+            x += vx
+            y += vy
+            if (Math.hypot(x, y) < 0.5) {
+              img.style.transform = "translate3d(0,0,0)"
+              return false
+            }
+            img.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+          },
+          { friction: 0.82 },
+        )
+        break
+      }
+    }
+  }
+
+  private onSwipeCancel(e: PointerEvent): void {
+    if (this.swipeActivePointer !== e.pointerId) return
+    this.swipeActivePointer = null
+    this.swipe.cancel()
+    this.resetSwipeVisual()
+  }
+
+  private resetSwipeVisual(): void {
+    this.root.style.opacity = ""
   }
 
   private handleKeyDown(e: KeyboardEvent): void {

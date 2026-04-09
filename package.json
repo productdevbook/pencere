@@ -65,6 +65,7 @@
   "scripts": {
     "build": "obuild",
     "dev": "vitest",
+    "playground": "vite playground",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
     "fmt": "oxfmt .",
@@ -90,6 +91,7 @@
     "solid-js": "^1.9.12",
     "svelte": "^5.55.2",
     "typescript": "^6.0.2",
+    "vite": "^8.0.8",
     "vitest": "^4.1.4",
     "vue": "^3.5.32"
   },

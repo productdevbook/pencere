@@ -48,6 +48,8 @@ export {
 export type { Transform2D } from "./dom/transform"
 export { classifySwipe, computeVelocity, runMomentum } from "./dom/momentum"
 export type { VelocitySample } from "./dom/momentum"
+export { SwipeNavigator } from "./dom/swipe-nav"
+export type { SwipeAxis, SwipeNavigatorOptions, SwipeRelease } from "./dom/swipe-nav"
 export { LiveRegion } from "./dom/live-region"
 export { createMediaQuery, prefersReducedMotion } from "./dom/media-query"
 export type { MediaQueryHandle } from "./dom/media-query"
