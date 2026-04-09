@@ -33,6 +33,27 @@ export interface ImageLoaderOptions {
 }
 
 /**
+ * Pluggable image loader contract (#9). Default implementation
+ * below uses `new Image()` + `decode()`, but consumers can inject
+ * their own loader to add CDN signing, blur-up previews, custom
+ * AVIF fallbacks, service-worker caching, etc. The loader MUST
+ * honor the provided AbortSignal so rapid slide navigation can
+ * cancel in-flight loads.
+ */
+export interface ImageLoader {
+  load(
+    item: ImageItem,
+    signal: AbortSignal,
+    options?: ImageLoaderOptions & { priority?: "high" | "low" | "auto" },
+  ): Promise<ImageLoadResult>
+}
+
+/** The built-in default loader. Wraps `loadImage` in the interface. */
+export const defaultImageLoader: ImageLoader = {
+  load: (item, signal, options) => loadImage(item, signal, options),
+}
+
+/**
  * Load an image and await decode(), racing a timeout so a stalled
  * server cannot block the pipeline forever. Applies fetchpriority,
  * decoding hints, and referrer policy for safer defaults (issues

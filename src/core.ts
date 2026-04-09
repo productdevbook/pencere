@@ -14,17 +14,24 @@ export class Pencere<T extends Item = Item> {
   private loop: boolean
   private currentIndex: number
   private opened = false
+  private readonly controlled: boolean
 
   constructor(options: PencereOptions<T>) {
     this.items = [...options.items]
     this.loop = options.loop ?? true
     this.currentIndex = options.startIndex ?? 0
+    this.controlled = options.controlled === true
     if (this.items.length === 0) {
       throw new PencereIndexError(0, 0)
     }
     if (this.currentIndex < 0 || this.currentIndex >= this.items.length) {
       throw new PencereIndexError(this.currentIndex, this.items.length)
     }
+  }
+
+  /** Whether the state machine is in controlled (external) mode. */
+  get isControlled(): boolean {
+    return this.controlled
   }
 
   get state(): PencereState<T> {
@@ -55,6 +62,12 @@ export class Pencere<T extends Item = Item> {
     if (target < 0 || target >= this.items.length) {
       throw new PencereIndexError(target, this.items.length)
     }
+    // Controlled mode: defer the mutation to the consumer. The
+    // viewer stays closed until `commitOpen(index)` is called.
+    if (this.controlled) {
+      this.events.emit("requestOpen", { index: target })
+      return
+    }
     this.currentIndex = target
     this.events.emit("beforeOpen", { index: target, item: this.item })
     this.opened = true
@@ -63,6 +76,10 @@ export class Pencere<T extends Item = Item> {
 
   async close(reason: CloseReason = "api"): Promise<void> {
     if (!this.opened) return
+    if (this.controlled) {
+      this.events.emit("requestClose", { reason })
+      return
+    }
     this.events.emit("beforeClose", { reason })
     this.opened = false
     this.events.emit("close", { reason })
@@ -77,9 +94,53 @@ export class Pencere<T extends Item = Item> {
     }
     if (index === this.currentIndex) return
     const from = this.currentIndex
+    if (this.controlled) {
+      this.events.emit("requestChange", { from, to: index })
+      return
+    }
     this.events.emit("beforeChange", { from, to: index })
     this.currentIndex = index
     this.events.emit("change", { from, to: index, item: this.item })
+  }
+
+  /**
+   * Commit an open in controlled mode. Consumers call this from
+   * their `requestOpen` listener after their external store has
+   * applied the change. No-op in uncontrolled mode — uncontrolled
+   * `open()` already commits synchronously.
+   */
+  commitOpen(index: number): void {
+    if (this.opened) return
+    if (index < 0 || index >= this.items.length) {
+      throw new PencereIndexError(index, this.items.length)
+    }
+    this.currentIndex = index
+    this.events.emit("beforeOpen", { index, item: this.item })
+    this.opened = true
+    this.events.emit("open", { index, item: this.item })
+  }
+
+  /** Commit a navigation in controlled mode. */
+  commitChange(index: number): void {
+    if (!this.opened) {
+      throw new PencereStateError("Cannot commitChange() before open()")
+    }
+    if (index < 0 || index >= this.items.length) {
+      throw new PencereIndexError(index, this.items.length)
+    }
+    if (index === this.currentIndex) return
+    const from = this.currentIndex
+    this.events.emit("beforeChange", { from, to: index })
+    this.currentIndex = index
+    this.events.emit("change", { from, to: index, item: this.item })
+  }
+
+  /** Commit a close in controlled mode. */
+  commitClose(reason: CloseReason = "api"): void {
+    if (!this.opened) return
+    this.events.emit("beforeClose", { reason })
+    this.opened = false
+    this.events.emit("close", { reason })
   }
 
   /**

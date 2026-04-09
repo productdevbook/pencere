@@ -9,7 +9,7 @@ import { Haptics } from "./haptics"
 import type { HapticsOptions } from "./haptics"
 import { runDidHook, runWillHook } from "./hooks"
 import type { PencereHooks } from "./hooks"
-import type { ImageLoaderOptions } from "./image-loader"
+import type { ImageLoader, ImageLoaderOptions } from "./image-loader"
 import { resolveKeyAction } from "./keyboard"
 import type { KeyboardMapOptions } from "./keyboard"
 import { LiveRegion } from "./live-region"
@@ -46,6 +46,14 @@ export interface PencereViewerOptions<T extends Item = Item>
   keyboard?: KeyboardMapOptions
   /** Image loading options (CORS, referrer policy, etc). */
   image?: ImageLoaderOptions
+  /**
+   * Inject a custom ImageLoader (#9). Use this to add CDN
+   * signing, blur-up previews, service-worker caching, or a
+   * bespoke AVIF fallback strategy. The loader must honor the
+   * AbortSignal passed on every `load()` call so rapid slide
+   * navigation can cancel in-flight requests.
+   */
+  imageLoader?: ImageLoader
   /**
    * Force reduced-motion behavior regardless of the user's OS setting.
    * `"auto"` (default) honors `prefers-reduced-motion`.
@@ -152,6 +160,7 @@ export class PencereViewer<T extends Item = Item> {
   private readonly opts: PencereViewerOptions<T>
   private loadAbort: AbortController | null = null
   private closePromise: Promise<void> | null = null
+  private closeAnimation: Promise<void> | null = null
   private currentImg: HTMLImageElement | null = null
   private renderPromise: Promise<void> | null = null
   private currentRendererEl: ActiveRendererSlot | null = null
@@ -354,10 +363,52 @@ export class PencereViewer<T extends Item = Item> {
       )
     })
     this.core.events.on("close", () => {
-      this.dialog.hide()
-      this.root.classList.remove("pc-root--open")
-      this.motion.disengage()
+      // Play a CSS fade-out on engines without View Transitions
+      // support. The viewer's logical state is already closed
+      // (core.opened === false) — we only defer dialog.hide() so
+      // the content stays visible for the animation duration.
+      // View transitions handle close via startViewTransition, so
+      // skip the class-based animation there. `close()` awaits
+      // `closeAnimation` before returning so tests / consumers
+      // can observe the teardown deterministically.
       this.routingController.handleClose()
+      this.motion.disengage()
+      const finish = (): void => {
+        this.root.classList.remove("pc-root--closing")
+        this.dialog.hide()
+        this.root.classList.remove("pc-root--open")
+      }
+      if (this.viewTransition.supported || this.isReducedMotion) {
+        finish()
+        return
+      }
+      this.root.classList.add("pc-root--closing")
+      // Probe the resolved animation-duration: if the host engine
+      // has no CSS animations (jsdom, strict CSP, user disabled
+      // animations via an extension), the computed value is "0s"
+      // and we skip the wait entirely. Real browsers return
+      // "0.18s" for the pc-root-out keyframe and we time out
+      // slightly after that as a belt-and-braces fallback.
+      const view = this.root.ownerDocument.defaultView
+      const animDurationSec = view
+        ? Number.parseFloat(view.getComputedStyle(this.root).animationDuration) || 0
+        : 0
+      if (animDurationSec === 0) {
+        finish()
+        return
+      }
+      const fallbackMs = Math.ceil(animDurationSec * 1000) + 50
+      this.closeAnimation = new Promise<void>((resolve) => {
+        const done = (): void => {
+          this.root.removeEventListener("animationend", done)
+          clearTimeout(fb)
+          finish()
+          this.closeAnimation = null
+          resolve()
+        }
+        const fb = setTimeout(done, fallbackMs)
+        this.root.addEventListener("animationend", done, { once: true })
+      })
     })
 
     // Plugin install. Each plugin receives a narrow context and
@@ -500,6 +551,10 @@ export class PencereViewer<T extends Item = Item> {
       await this.viewTransition.run(run)
     } else {
       await run()
+      // Wait for the CSS fade-out kicked off inside the "close"
+      // core event handler so consumers awaiting close() see a
+      // fully torn-down dialog.
+      if (this.closeAnimation) await this.closeAnimation
     }
     this.runAllDid("didClose", closeCtx, "didClose")
   }
@@ -571,6 +626,7 @@ export class PencereViewer<T extends Item = Item> {
       t: this.t,
       renderers: [...(this.opts.renderers ?? []), ...this.runtimeRenderers],
       image: this.opts.image,
+      imageLoader: this.opts.imageLoader,
       loop: this.opts.loop,
       viewTransition: this.opts.viewTransition === true,
       activeRenderer: this.currentRendererEl,

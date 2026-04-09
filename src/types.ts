@@ -89,12 +89,33 @@ export interface PencereEvents<T extends Item = Item> extends Record<string, unk
   beforeClose: { reason: CloseReason }
   close: { reason: CloseReason }
   destroy: undefined
+  /**
+   * Controlled-mode request events (#6). Emitted when the viewer
+   * is in `controlled: true` mode and the user attempts to open,
+   * navigate, or close. The consumer must call the matching
+   * `commit*` method to actually advance the state machine.
+   * Without a commit, the viewer's state stays unchanged.
+   */
+  requestOpen: { index: number }
+  requestChange: { from: number; to: number }
+  requestClose: { reason: CloseReason }
 }
 
 export interface PencereOptions<T extends Item = Item> {
   items: T[]
   startIndex?: number
   loop?: boolean
+  /**
+   * Controlled mode (#6). When `true`, `open()`, `goTo()`,
+   * `next()`, `prev()`, and `close()` emit `request*` events
+   * instead of mutating internal state. The consumer listens on
+   * those events and calls `commitOpen(index)` /
+   * `commitChange(index)` / `commitClose(reason)` to actually
+   * advance the state machine. Use this to sync with a router,
+   * an external store (Redux, Pinia, Nanostores), or a parent
+   * component's controlled prop.
+   */
+  controlled?: boolean
 }
 
 // Legacy alias kept for the initial scaffolding tests.

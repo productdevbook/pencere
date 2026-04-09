@@ -36,8 +36,8 @@ export type {
   KeyboardMapOptions,
   Unbind,
 } from "./dom"
-export { computeAspectRatio, loadImage } from "./dom/image-loader"
-export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader"
+export { computeAspectRatio, defaultImageLoader, loadImage } from "./dom/image-loader"
+export type { ImageLoader, ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader"
 export { GestureEngine } from "./dom/gesture"
 export type { GestureEngineOptions, GestureEventType, GestureSnapshot } from "./dom/gesture"
 export {

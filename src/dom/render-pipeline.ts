@@ -1,8 +1,8 @@
 import type { Pencere } from "../core"
 import type { Translator } from "../i18n"
 import type { ImageItem, Item } from "../types"
-import { computeAspectRatio, loadImage } from "./image-loader"
-import type { ImageLoaderOptions } from "./image-loader"
+import { computeAspectRatio, defaultImageLoader } from "./image-loader"
+import type { ImageLoader, ImageLoaderOptions } from "./image-loader"
 import type { LiveRegion } from "./live-region"
 import { pickRenderer } from "./renderers"
 import type { Renderer } from "./renderers"
@@ -25,6 +25,8 @@ export interface RenderSlideContext<T extends Item = Item> {
   t: Translator
   renderers?: Renderer[]
   image?: ImageLoaderOptions
+  /** Injectable loader. Defaults to `defaultImageLoader`. */
+  imageLoader?: ImageLoader
   loop?: boolean
   viewTransition: boolean
   /** Current renderer mount (video/iframe/html) to tear down before re-render. */
@@ -158,7 +160,8 @@ async function loadAndDisplayImage<T extends Item>(
   }
 
   try {
-    const { element, image } = await loadImage(imageItem, ctx.signal, ctx.image)
+    const loader = ctx.imageLoader ?? defaultImageLoader
+    const { element, image } = await loader.load(imageItem, ctx.signal, ctx.image)
     if (ctx.signal.aborted) return
     // The transform target is always the <img>, even when the
     // loader wrapped it in a <picture> for AVIF/WebP fallback.
