@@ -13,6 +13,25 @@ describe("SwipeNavigator", () => {
     expect(s.move(120, 102, 20).axis).toBe("horizontal")
   })
 
+  it("rtl flips horizontal commit direction", () => {
+    // Dragging right past the commit threshold in LTR → prev; in RTL → next.
+    const ltr = new SwipeNavigator()
+    ltr.begin(100, 100, 0)
+    ltr.move(500, 100, 50)
+    expect(ltr.release(W, H, "ltr").action).toBe("prev")
+
+    const rtl = new SwipeNavigator()
+    rtl.begin(100, 100, 0)
+    rtl.move(500, 100, 50)
+    expect(rtl.release(W, H, "rtl").action).toBe("next")
+
+    // And the reverse — dragging left commits to next in LTR, prev in RTL.
+    const rtl2 = new SwipeNavigator()
+    rtl2.begin(500, 100, 0)
+    rtl2.move(100, 100, 50)
+    expect(rtl2.release(W, H, "rtl").action).toBe("prev")
+  })
+
   it("locks vertical axis when vertical drift dominates", () => {
     const s = new SwipeNavigator()
     s.begin(100, 100, 0)

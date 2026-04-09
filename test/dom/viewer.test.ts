@@ -292,6 +292,39 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("rtl: inherits dir from <html dir='rtl'> and flips arrow navigation", async () => {
+    document.documentElement.setAttribute("dir", "rtl")
+    try {
+      const v = factory()
+      expect(v.dir).toBe("rtl")
+      expect(v.root.getAttribute("dir")).toBe("rtl")
+      await v.open()
+      // In rtl, ArrowLeft should advance to the next slide.
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", cancelable: true }))
+      await new Promise((r) => setTimeout(r, 0))
+      expect(v.core.state.index).toBe(1)
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true }))
+      await new Promise((r) => setTimeout(r, 0))
+      expect(v.core.state.index).toBe(0)
+      await v.close()
+      v.destroy()
+    } finally {
+      document.documentElement.removeAttribute("dir")
+    }
+  })
+
+  it("rtl: explicit option wins over document direction", () => {
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      dir: "rtl",
+    })
+    expect(v.dir).toBe("rtl")
+    expect(v.root.getAttribute("dir")).toBe("rtl")
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,

@@ -159,6 +159,19 @@ All shortcuts are IME-safe (ignored during `isComposing`) and can be remapped or
 - [BITV 2.0 / BFSG](https://bundesfachstelle-barrierefreiheit.de/) (Germany)
 - [KWCAG 2.2](https://nuli.navercorp.com/) (South Korea)
 
+### Right-to-left
+
+`pencere` auto-detects writing direction from the host document's
+`<html dir>` (or any ancestor with an explicit `dir` attribute). You
+can also force it with `dir: "rtl"`. Under RTL:
+
+- Layout flips via CSS logical properties (`inset-inline-start/end`),
+  so prev/next buttons swap sides automatically.
+- `ArrowLeft` advances to the **next** slide and `ArrowRight` goes
+  **back** — matching the APG Carousel pattern and user expectation.
+- Horizontal swipe flips too: dragging right in RTL pulls the next
+  slide in from the left.
+
 Built-in translations: English, German, French, Spanish, Italian,
 Portuguese (BR), Russian, Turkish, Arabic, Hebrew, Japanese, Simplified
 Chinese, Traditional Chinese, Korean. Override any string via `strings`
@@ -239,6 +252,8 @@ interface PencereViewerOptions<T extends Item = Item> {
   lockScroll?: boolean
   /** CSP nonce for the fallback <style> element. */
   nonce?: string
+  /** Writing direction. `"auto"` inherits from <html dir>. */
+  dir?: "ltr" | "rtl" | "auto"
 }
 ```
 

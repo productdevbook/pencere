@@ -39,6 +39,14 @@ export interface PencereViewerOptions<T extends Item = Item>
    * nonce is irrelevant because no inline style element is created.
    */
   nonce?: string
+  /**
+   * Writing direction. `"auto"` (default) inherits from the host
+   * document's `<html dir>` / computed direction. Explicit `"ltr"` or
+   * `"rtl"` forces the viewer independently of the page. In `"rtl"`,
+   * arrow keys and horizontal swipes flip so that "next" always means
+   * "toward the end of the reading flow".
+   */
+  dir?: "ltr" | "rtl" | "auto"
 }
 
 /**
@@ -73,6 +81,7 @@ export class PencereViewer<T extends Item = Item> {
   private currentImg: HTMLImageElement | null = null
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
+  private readonly direction: "ltr" | "rtl"
 
   constructor(options: PencereViewerOptions<T>) {
     this.opts = options
@@ -83,9 +92,15 @@ export class PencereViewer<T extends Item = Item> {
     const doc = container.ownerDocument
     injectStyles(doc, options.nonce)
 
+    // Resolve writing direction. `auto` (default) walks up from the
+    // container to find an explicit `dir` attribute and falls back to
+    // the computed direction of <html>. Explicit `ltr` / `rtl` wins.
+    this.direction = resolveDirection(options.dir, container)
+
     // Prefer the native <dialog> element for top-layer, inertness, ESC.
     const root = doc.createElement("dialog")
     root.classList.add("pc-root")
+    root.setAttribute("dir", this.direction)
     root.setAttribute("aria-label", this.t("dialogLabel"))
     root.setAttribute("aria-roledescription", "carousel")
 
@@ -366,7 +381,7 @@ export class PencereViewer<T extends Item = Item> {
     const rect = this.stage.getBoundingClientRect()
     const W = rect.width || this.root.clientWidth || 0
     const H = rect.height || this.root.clientHeight || 0
-    const result = this.swipe.release(W, H)
+    const result = this.swipe.release(W, H, this.direction)
     this.resetSwipeVisual()
 
     switch (result.action) {
@@ -416,7 +431,7 @@ export class PencereViewer<T extends Item = Item> {
 
   private handleKeyDown(e: KeyboardEvent): void {
     if (!this.core.state.isOpen) return
-    const action = resolveKeyAction(e, this.opts.keyboard)
+    const action = resolveKeyAction(e, { ...this.opts.keyboard, direction: this.direction })
     if (!action) return
     // Route to core.
     e.preventDefault()
@@ -479,4 +494,38 @@ export class PencereViewer<T extends Item = Item> {
     if (this.opts.reducedMotion === "never") return false
     return this.reducedMotion.matches
   }
+
+  /** For tests + integrations: resolved writing direction. */
+  get dir(): "ltr" | "rtl" {
+    return this.direction
+  }
+}
+
+/**
+ * Resolve the viewer's effective writing direction.
+ *
+ * Explicit `ltr`/`rtl` always win. `auto` (or `undefined`) walks up
+ * from the container looking for a `dir` attribute and, failing that,
+ * reads the computed direction of the host document's root element.
+ * This keeps the viewer honest with whatever the surrounding app has
+ * configured — including mixed LTR docs with an `<article dir="rtl">`.
+ */
+function resolveDirection(
+  explicit: "ltr" | "rtl" | "auto" | undefined,
+  container: HTMLElement,
+): "ltr" | "rtl" {
+  if (explicit === "ltr" || explicit === "rtl") return explicit
+  let node: Element | null = container
+  while (node) {
+    const d = node.getAttribute("dir")
+    if (d === "ltr" || d === "rtl") return d
+    node = node.parentElement
+  }
+  const doc = container.ownerDocument
+  const view = doc.defaultView
+  if (view) {
+    const computed = view.getComputedStyle(doc.documentElement).direction
+    if (computed === "rtl") return "rtl"
+  }
+  return "ltr"
 }

@@ -21,6 +21,13 @@ export interface KeyboardMapOptions {
   overrides?: Partial<Record<KeyboardAction, string[]>>
   /** Disable specific actions entirely. */
   disable?: KeyboardAction[]
+  /**
+   * Writing direction. In `rtl`, ArrowLeft maps to `next` and
+   * ArrowRight to `prev` — matching the APG Carousel pattern and the
+   * user's physical expectation that "forward" means toward the end
+   * of the reading flow. PageUp/PageDown stay unchanged.
+   */
+  direction?: "ltr" | "rtl"
 }
 
 const DEFAULT_MAP: Record<KeyboardAction, string[]> = {
@@ -54,7 +61,15 @@ export function resolveKeyAction(
   if (event.ctrlKey || event.metaKey || event.altKey) return null
 
   const disabled = new Set(options.disable ?? [])
-  const map: Record<KeyboardAction, string[]> = { ...DEFAULT_MAP, ...options.overrides }
+  const base: Record<KeyboardAction, string[]> =
+    options.direction === "rtl"
+      ? {
+          ...DEFAULT_MAP,
+          next: ["ArrowLeft", "PageDown"],
+          prev: ["ArrowRight", "PageUp"],
+        }
+      : DEFAULT_MAP
+  const map: Record<KeyboardAction, string[]> = { ...base, ...options.overrides }
 
   for (const action of Object.keys(map) as KeyboardAction[]) {
     if (disabled.has(action)) continue

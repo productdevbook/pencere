@@ -23,6 +23,14 @@ describe("resolveKeyAction()", () => {
     expect(resolveKeyAction(key({ key: "PageUp" }))).toBe("prev")
   })
 
+  it("flips horizontal arrows under rtl direction", () => {
+    expect(resolveKeyAction(key({ key: "ArrowLeft" }), { direction: "rtl" })).toBe("next")
+    expect(resolveKeyAction(key({ key: "ArrowRight" }), { direction: "rtl" })).toBe("prev")
+    // PageDown / PageUp stay reading-order-based, unchanged by rtl.
+    expect(resolveKeyAction(key({ key: "PageDown" }), { direction: "rtl" })).toBe("next")
+    expect(resolveKeyAction(key({ key: "PageUp" }), { direction: "rtl" })).toBe("prev")
+  })
+
   it("maps Home / End to first / last", () => {
     expect(resolveKeyAction(key({ key: "Home" }))).toBe("first")
     expect(resolveKeyAction(key({ key: "End" }))).toBe("last")

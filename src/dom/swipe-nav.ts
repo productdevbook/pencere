@@ -93,7 +93,11 @@ export class SwipeNavigator {
     return { dx: this.dx, dy: this.dy, axis: this.axis }
   }
 
-  release(viewportWidth: number, viewportHeight: number): SwipeRelease {
+  release(
+    viewportWidth: number,
+    viewportHeight: number,
+    direction: "ltr" | "rtl" = "ltr",
+  ): SwipeRelease {
     const { vx, vy } = computeVelocity(this.samples)
     const swipe = classifySwipe(vx, vy, this.opts.flingVelocity)
     const result: SwipeRelease = {
@@ -106,7 +110,12 @@ export class SwipeNavigator {
     if (this.axis === "horizontal") {
       const committed = Math.abs(this.dx) > viewportWidth * this.opts.horizontalCommit
       if (committed || (swipe && (swipe.direction === "left" || swipe.direction === "right"))) {
-        result.action = this.dx < 0 ? "next" : "prev"
+        // In LTR, dragging left (dx<0) pulls the next slide in from
+        // the right → "next". In RTL, reading flows right-to-left so
+        // the next slide lives to the left; dragging right (dx>0)
+        // pulls it in → "next".
+        const goingNext = direction === "rtl" ? this.dx > 0 : this.dx < 0
+        result.action = goingNext ? "next" : "prev"
         result.velocity = Math.abs(vx)
       }
     } else if (this.axis === "vertical") {
