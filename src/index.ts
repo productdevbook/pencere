@@ -48,6 +48,13 @@ export {
 export type { Transform2D } from "./dom/transform";
 export { classifySwipe, computeVelocity, runMomentum } from "./dom/momentum";
 export type { VelocitySample } from "./dom/momentum";
+export { LiveRegion } from "./dom/live-region";
+export { createMediaQuery, prefersReducedMotion } from "./dom/media-query";
+export type { MediaQueryHandle } from "./dom/media-query";
+export { createTranslator, DEFAULT_STRINGS } from "./i18n";
+export type { PencereStrings, Translator } from "./i18n";
+export { PencereViewer } from "./dom/viewer";
+export type { PencereViewerOptions } from "./dom/viewer";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";

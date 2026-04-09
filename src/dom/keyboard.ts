@@ -49,8 +49,7 @@ export function resolveKeyAction(
   // the spec-mandated flag; `keyCode === 229` is the legacy fallback.
   if (event.isComposing || event.keyCode === 229) return null;
   // Never hijack keys while the user is typing in a field.
-  const target = event.target as Element | null;
-  if (isEditableTarget(target)) return null;
+  if (isEditableTarget(event.target)) return null;
   // Ignore shortcuts with modifiers to avoid clashing with browser shortcuts.
   if (event.ctrlKey || event.metaKey || event.altKey) return null;
 
@@ -64,8 +63,8 @@ export function resolveKeyAction(
   return null;
 }
 
-function isEditableTarget(target: Element | null): boolean {
-  if (!target) return false;
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof Element)) return false;
   const tag = target.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
     const input = target as HTMLInputElement;
