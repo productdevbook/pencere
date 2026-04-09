@@ -12,70 +12,70 @@
 
     <filter id="glow-warm" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#d6cfc7" flood-opacity="0.3"/>
+      <feFlood flood-color="#7dd3fc" flood-opacity="0.3"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
     <filter id="glow-sand" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#c2b5a3" flood-opacity="0.25"/>
+      <feFlood flood-color="#a78bfa" flood-opacity="0.28"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
     <filter id="glow-linen" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feFlood flood-color="#e8e0d8" flood-opacity="0.25"/>
+      <feFlood flood-color="#cbd5e1" flood-opacity="0.25"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
     <filter id="glow-taupe" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feFlood flood-color="#a89984" flood-opacity="0.2"/>
+      <feFlood flood-color="#64748b" flood-opacity="0.22"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
     <linearGradient id="cottonBg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a1512"/>
-      <stop offset="30%" stop-color="#292017"/>
-      <stop offset="60%" stop-color="#2d261e"/>
-      <stop offset="100%" stop-color="#1f1b16"/>
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="30%" stop-color="#11182c"/>
+      <stop offset="60%" stop-color="#0f1830"/>
+      <stop offset="100%" stop-color="#070a18"/>
     </linearGradient>
 
     <radialGradient id="warmCream" cx="0.1" cy="0.2" r="0.5">
-      <stop offset="0%" stop-color="#d6cfc7" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#d6cfc7" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="warmSand" cx="0.9" cy="0.15" r="0.45">
-      <stop offset="0%" stop-color="#c2b5a3" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#c2b5a3" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="warmLinen" cx="0.85" cy="0.85" r="0.4">
-      <stop offset="0%" stop-color="#a89984" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#a89984" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="warmButter" cx="0.1" cy="0.85" r="0.4">
-      <stop offset="0%" stop-color="#e8dfd4" stop-opacity="0.07"/>
-      <stop offset="100%" stop-color="#e8dfd4" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#c4b5fd" stop-opacity="0"/>
     </radialGradient>
 
     <radialGradient id="centerBackdrop" cx="0.5" cy="0.5" r="0.45">
-      <stop offset="0%" stop-color="#1a1512" stop-opacity="0.98"/>
-      <stop offset="45%" stop-color="#1a1512" stop-opacity="0.95"/>
-      <stop offset="70%" stop-color="#1a1512" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#1a1512" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#070a18" stop-opacity="0.98"/>
+      <stop offset="45%" stop-color="#070a18" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#070a18" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#070a18" stop-opacity="0"/>
     </radialGradient>
 
     <pattern id="dotGrid" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="15" cy="15" r="0.6" fill="#a89984" opacity="0.1"/>
+      <circle cx="15" cy="15" r="0.6" fill="#64748b" opacity="0.14"/>
     </pattern>
 
     <radialGradient id="vignetteGrad" cx="0.5" cy="0.5" r="0.75">
       <stop offset="0%" stop-color="transparent"/>
-      <stop offset="100%" stop-color="#0f0d0a"/>
+      <stop offset="100%" stop-color="#04060f"/>
     </radialGradient>
   </defs>
 
@@ -91,7 +91,7 @@
   <!-- TOP-LEFT: Declarative HTML          -->
   <!-- ═══════════════════════════════════ -->
   <g transform="translate(20, 20)" filter="url(#glow-warm)" opacity="0.6">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="16" fill="#d6cfc7">
+    <text font-family="'SF Mono','Fira Code',monospace" font-size="16" fill="#7dd3fc">
       <tspan x="0" y="0">&lt;a href="/photo.jpg"</tspan>
       <tspan x="16" y="22">data-pencere</tspan>
       <tspan x="16" y="44">data-gallery="trip"</tspan>
@@ -112,7 +112,7 @@
   <!-- TOP-RIGHT: Viewer API               -->
   <!-- ═══════════════════════════════════ -->
   <g transform="translate(850, 20)" filter="url(#glow-sand)" opacity="0.55">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#c2b5a3">
+    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#a78bfa">
       <tspan x="0" y="0" font-weight="bold">const</tspan>
       <tspan x="44" y="0"> v = new PencereViewer({</tspan>
       <tspan x="0" y="24">  items,</tspan>
@@ -134,7 +134,7 @@
   <!-- BOTTOM-LEFT: Plugin contract        -->
   <!-- ═══════════════════════════════════ -->
   <g transform="translate(20, 360)" filter="url(#glow-linen)" opacity="0.45">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="14" fill="#e8e0d8">
+    <text font-family="'SF Mono','Fira Code',monospace" font-size="14" fill="#cbd5e1">
       <tspan x="0" y="0">PencerePlugin {</tspan>
       <tspan x="16" y="22">name: "slideshow"</tspan>
       <tspan x="16" y="44">install(ctx) {</tspan>
@@ -153,7 +153,7 @@
   <!-- BOTTOM-RIGHT: Adapters              -->
   <!-- ═══════════════════════════════════ -->
   <g transform="translate(920, 400)" filter="url(#glow-taupe)" opacity="0.45">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#a89984">
+    <text font-family="'SF Mono','Fira Code',monospace" font-size="15" fill="#94a3b8">
       <tspan x="0" y="0" font-weight="bold">pencere/react</tspan>
       <tspan x="16" y="24">useLightbox()</tspan>
       <tspan x="0" y="56" font-weight="bold">pencere/vue</tspan>
@@ -167,7 +167,7 @@
   <!-- RIGHT-MID: Hooks                    -->
   <!-- ═══════════════════════════════════ -->
   <g transform="translate(1060, 360)" filter="url(#glow-taupe)" opacity="0.35">
-    <text font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#a89984">
+    <text font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#94a3b8">
       <tspan x="0" y="0" font-weight="bold">hooks</tspan>
       <tspan x="0" y="22">willOpen</tspan>
       <tspan x="0" y="44">didOpen</tspan>
@@ -186,51 +186,51 @@
   <!-- ═══════════════════════════════════ -->
 
   <!-- "pencere" wordmark -->
-  <text x="600" y="264" text-anchor="middle" fill="#f5f0eb" font-family="'Georgia','Playfair Display','Times New Roman',serif" font-size="152" font-weight="bold" letter-spacing="-4" opacity="0.97">pencere</text>
+  <text x="600" y="264" text-anchor="middle" fill="#f1f5fd" font-family="'Georgia','Playfair Display','Times New Roman',serif" font-size="152" font-weight="bold" letter-spacing="-4" opacity="0.97">pencere</text>
 
   <!-- Rule -->
-  <line x1="340" y1="290" x2="860" y2="290" stroke="#a89984" stroke-width="1.5" opacity="0.3"/>
+  <line x1="340" y1="290" x2="860" y2="290" stroke="#94a3b8" stroke-width="1.5" opacity="0.3"/>
 
   <!-- Tagline -->
-  <text x="600" y="330" text-anchor="middle" fill="#d6cfc7" font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="19" letter-spacing="6">MODERN · ACCESSIBLE · LIGHTBOX</text>
+  <text x="600" y="330" text-anchor="middle" fill="#7dd3fc" font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="19" letter-spacing="6">MODERN · ACCESSIBLE · LIGHTBOX</text>
 
   <!-- Feature pills -->
   <g font-family="'SF Mono','Fira Code','Menlo',monospace" font-size="14" letter-spacing="1.5">
     <g transform="translate(128, 358)">
-      <rect x="0" y="0" width="164" height="38" rx="19" fill="#f5f0eb08" stroke="#d6cfc7" stroke-width="1" opacity="0.45"/>
-      <text x="82" y="25" text-anchor="middle" fill="#d6cfc7" opacity="0.85">0 DEPENDENCIES</text>
+      <rect x="0" y="0" width="164" height="38" rx="19" fill="#f1f5fd08" stroke="#7dd3fc" stroke-width="1" opacity="0.45"/>
+      <text x="82" y="25" text-anchor="middle" fill="#7dd3fc" opacity="0.85">0 DEPENDENCIES</text>
     </g>
     <g transform="translate(308, 358)">
-      <rect x="0" y="0" width="128" height="38" rx="19" fill="#f5f0eb08" stroke="#c2b5a3" stroke-width="1" opacity="0.45"/>
-      <text x="64" y="25" text-anchor="middle" fill="#c2b5a3" opacity="0.85">WCAG 2.2 AA</text>
+      <rect x="0" y="0" width="128" height="38" rx="19" fill="#f1f5fd08" stroke="#a78bfa" stroke-width="1" opacity="0.45"/>
+      <text x="64" y="25" text-anchor="middle" fill="#a78bfa" opacity="0.85">WCAG 2.2 AA</text>
     </g>
     <g transform="translate(452, 358)">
-      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f5f0eb08" stroke="#e8e0d8" stroke-width="1" opacity="0.45"/>
-      <text x="86" y="25" text-anchor="middle" fill="#e8e0d8" opacity="0.85">VIEW TRANSITIONS</text>
+      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f1f5fd08" stroke="#cbd5e1" stroke-width="1" opacity="0.45"/>
+      <text x="86" y="25" text-anchor="middle" fill="#cbd5e1" opacity="0.85">VIEW TRANSITIONS</text>
     </g>
     <g transform="translate(640, 358)">
-      <rect x="0" y="0" width="108" height="38" rx="19" fill="#f5f0eb08" stroke="#a89984" stroke-width="1" opacity="0.45"/>
-      <text x="54" y="25" text-anchor="middle" fill="#a89984" opacity="0.85">PLUGINS</text>
+      <rect x="0" y="0" width="108" height="38" rx="19" fill="#f1f5fd08" stroke="#94a3b8" stroke-width="1" opacity="0.45"/>
+      <text x="54" y="25" text-anchor="middle" fill="#94a3b8" opacity="0.85">PLUGINS</text>
     </g>
     <g transform="translate(764, 358)">
-      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f5f0eb08" stroke="#f5f0eb" stroke-width="1" opacity="0.45"/>
-      <text x="86" y="25" text-anchor="middle" fill="#f5f0eb" opacity="0.85">TREE-SHAKEABLE</text>
+      <rect x="0" y="0" width="172" height="38" rx="19" fill="#f1f5fd08" stroke="#f1f5fd" stroke-width="1" opacity="0.45"/>
+      <text x="86" y="25" text-anchor="middle" fill="#f1f5fd" opacity="0.85">TREE-SHAKEABLE</text>
     </g>
   </g>
 
   <!-- Feature list -->
-  <text x="600" y="434" text-anchor="middle" fill="#a89984" opacity="0.5" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="2.5">REACT · VUE · SVELTE · SOLID · WEB COMPONENT · VANILLA</text>
+  <text x="600" y="434" text-anchor="middle" fill="#94a3b8" opacity="0.5" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="2.5">REACT · VUE · SVELTE · SOLID · WEB COMPONENT · VANILLA</text>
 
   <!-- npm install badge -->
   <g transform="translate(478, 460)">
-    <rect x="0" y="0" width="244" height="40" rx="8" fill="#1a151240" stroke="#a8998430" stroke-width="1"/>
-    <text x="20" y="26" fill="#a8998470" font-family="'SF Mono','Fira Code',monospace" font-size="16">$</text>
-    <text x="38" y="26" fill="#c2b5a3" font-family="'SF Mono','Fira Code',monospace" font-size="16"> npm i </text>
-    <text x="120" y="26" fill="#f5f0eb" font-family="'SF Mono','Fira Code',monospace" font-size="16" font-weight="bold">pencere</text>
+    <rect x="0" y="0" width="244" height="40" rx="8" fill="#070a1840" stroke="#94a3b830" stroke-width="1"/>
+    <text x="20" y="26" fill="#94a3b870" font-family="'SF Mono','Fira Code',monospace" font-size="16">$</text>
+    <text x="38" y="26" fill="#a78bfa" font-family="'SF Mono','Fira Code',monospace" font-size="16"> npm i </text>
+    <text x="120" y="26" fill="#f1f5fd" font-family="'SF Mono','Fira Code',monospace" font-size="16" font-weight="bold">pencere</text>
   </g>
 
   <!-- GitHub link -->
-  <text x="600" y="554" text-anchor="middle" fill="#a89984" opacity="0.4" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="1.5">github.com/productdevbook/pencere</text>
+  <text x="600" y="554" text-anchor="middle" fill="#94a3b8" opacity="0.4" font-family="'SF Mono','Fira Code',monospace" font-size="13" letter-spacing="1.5">github.com/productdevbook/pencere</text>
 
   <!-- Grain -->
   <rect width="1200" height="628" filter="url(#grain)" opacity="0.18"/>
