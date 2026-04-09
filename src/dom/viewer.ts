@@ -101,7 +101,7 @@ export class PencereViewer<T extends Item = Item> {
   private currentImg: HTMLImageElement | null = null
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
-  private readonly direction: "ltr" | "rtl"
+  private direction: "ltr" | "rtl"
   private readonly haptics: Haptics
 
   constructor(options: PencereViewerOptions<T>) {
@@ -250,6 +250,14 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   async open(index?: number): Promise<void> {
+    // Re-resolve direction on every open so consumers that toggle
+    // `<html dir>` at runtime (docs pages, i18n switchers) pick up
+    // the change without having to destroy + recreate the viewer.
+    // Explicit `dir: "ltr"|"rtl"` still wins because resolveDirection
+    // short-circuits when the option is set.
+    const container = this.opts.container ?? this.root.ownerDocument.body
+    this.direction = resolveDirection(this.opts.dir, container)
+    this.root.setAttribute("dir", this.direction)
     await this.core.open(index)
     this.root.classList.add("pc-root--open")
     this.dialog.show()
