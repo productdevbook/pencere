@@ -115,6 +115,25 @@ describe("injectStyles", () => {
     expect(PC_STYLES).toMatch(/\.pc-btn\s*\{[^}]*min-height:\s*44px/)
   })
 
+  it("#61: ships CJK-aware line-breaking defaults", () => {
+    expect(PC_STYLES).toContain("line-break: strict")
+    expect(PC_STYLES).toContain("overflow-wrap: anywhere")
+    // Korean carve-out: word-break: keep-all under [lang="ko"].
+    expect(PC_STYLES).toMatch(/\.pc-caption\[lang="ko"\][\s\S]*word-break:\s*keep-all/)
+  })
+
+  it("#65: exposes CJK + Arabic font stack custom properties", () => {
+    for (const v of [
+      "--pc-font-cjk-ja",
+      "--pc-font-cjk-ko",
+      "--pc-font-cjk-zh-hans",
+      "--pc-font-cjk-zh-hant",
+      "--pc-font-arabic",
+    ]) {
+      expect(PC_STYLES).toContain(v)
+    }
+  })
+
   it("exposes runtime values as CSS custom properties", () => {
     // The viewer should only ever touch --pc-* variables at runtime.
     expect(PC_STYLES).toContain("--pc-img-transform")

@@ -95,6 +95,21 @@ export const PC_STYLES = `
   text-align: center;
   line-height: 1.4;
   font-size: 0.95rem;
+  /*
+   * CJK-aware line breaking (#61). overflow-wrap: anywhere ensures
+   * very long Latin tokens wrap; line-break: strict pulls Japanese
+   * and Chinese break rules in line with print typography
+   * conventions; word-break: normal stays out of the way for
+   * mixed-script content.
+   */
+  word-break: normal;
+  overflow-wrap: anywhere;
+  line-break: strict;
+}
+/* Korean convention is to avoid breaking inside eojeol (word units). */
+.pc-caption[lang="ko"],
+.pc-caption[lang^="ko-"] {
+  word-break: keep-all;
 }
 /*
  * Script-specific font stacks (#65). Consumers override these custom
