@@ -5,6 +5,8 @@ import type { CloseReason, ImageItem, Item, PencereOptions } from "../types"
 import { DialogController } from "./dialog"
 import type { DialogControllerOptions } from "./dialog"
 import { GestureEngine } from "./gesture"
+import { Haptics } from "./haptics"
+import type { HapticsOptions } from "./haptics"
 import { computeAspectRatio, loadImage } from "./image-loader"
 import type { ImageLoaderOptions } from "./image-loader"
 import { resolveKeyAction } from "./keyboard"
@@ -55,6 +57,16 @@ export interface PencereViewerOptions<T extends Item = Item>
    * "toward the end of the reading flow".
    */
   dir?: "ltr" | "rtl" | "auto"
+  /**
+   * Opt in to haptic feedback on touch devices. `true` enables the
+   * default pattern set; an object lets you override individual
+   * durations. Never triggers on coarse-less pointers (desktop) and
+   * is a no-op on iOS Safari which does not expose the Vibration API.
+   * See #46 / WCAG: haptics pair with `prefers-reduced-motion`, so
+   * consumers who force `reducedMotion: "always"` should set
+   * `haptics: false` as well.
+   */
+  haptics?: boolean | HapticsOptions
 }
 
 /**
@@ -90,6 +102,7 @@ export class PencereViewer<T extends Item = Item> {
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
   private readonly direction: "ltr" | "rtl"
+  private readonly haptics: Haptics
 
   constructor(options: PencereViewerOptions<T>) {
     this.opts = options
@@ -104,6 +117,9 @@ export class PencereViewer<T extends Item = Item> {
     // container to find an explicit `dir` attribute and falls back to
     // the computed direction of <html>. Explicit `ltr` / `rtl` wins.
     this.direction = resolveDirection(options.dir, container)
+    this.haptics = new Haptics(
+      typeof options.haptics === "boolean" ? { enabled: options.haptics } : (options.haptics ?? {}),
+    )
 
     // Prefer the native <dialog> element for top-layer, inertness, ESC.
     const root = doc.createElement("dialog")
@@ -332,6 +348,7 @@ export class PencereViewer<T extends Item = Item> {
     const next = current.scale > 1 ? IDENTITY : { x: 0, y: 0, scale: 2 }
     this.gesture.setTransform(next)
     this.writeImgTransform(this.gesture.current)
+    this.haptics.fire("doubleTap")
   }
 
   private onWheelZoom(e: WheelEvent): void {
@@ -357,6 +374,7 @@ export class PencereViewer<T extends Item = Item> {
     }
     // Snap-back fully to identity when zooming below 1.
     const snapped = next.scale <= 1 ? IDENTITY : next
+    if (snapped === IDENTITY && current.scale > 1) this.haptics.fire("snap")
     this.gesture.setTransform(snapped)
     this.writeImgTransform(this.gesture.current)
   }
@@ -417,6 +435,7 @@ export class PencereViewer<T extends Item = Item> {
         void this.core.prev()
         break
       case "dismiss":
+        this.haptics.fire("dismiss")
         void this.close("user")
         break
       case "cancel": {

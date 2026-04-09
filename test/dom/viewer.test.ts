@@ -452,6 +452,41 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#46: haptics opt-in fires on double-tap", async () => {
+    const vibrate = vi.fn(() => true)
+    ;(navigator as unknown as { vibrate?: (p: number | number[]) => boolean }).vibrate = vibrate
+    const originalMM = window.matchMedia
+    window.matchMedia = ((q: string) =>
+      ({
+        matches: q.includes("coarse"),
+        media: q,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+        onchange: null,
+      }) as unknown as MediaQueryList) as typeof window.matchMedia
+    try {
+      const v = new PencereViewer({
+        items,
+        lockScroll: false,
+        useNativeDialog: false,
+        haptics: true,
+      })
+      await v.open()
+      await new Promise((r) => setTimeout(r, 120))
+      // @ts-expect-error reach into private
+      v.handleDoubleTap()
+      expect(vibrate).toHaveBeenCalledTimes(1)
+      await v.close()
+      v.destroy()
+    } finally {
+      window.matchMedia = originalMM
+      delete (navigator as unknown as { vibrate?: unknown }).vibrate
+    }
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,
