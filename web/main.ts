@@ -57,3 +57,23 @@ items.forEach((item, i) => {
   })
   gallery.appendChild(btn)
 })
+
+// RTL toggle demo — flipping <html dir> is enough; pencere's `dir: "auto"`
+// default will pick the new direction up the next time the viewer opens.
+const rtlToggle = document.getElementById("toggle-rtl")
+const rtlState = document.getElementById("rtl-state")
+rtlToggle?.addEventListener("click", () => {
+  const html = document.documentElement
+  const next = html.dir === "rtl" ? "ltr" : "rtl"
+  html.dir = next
+  if (rtlState) rtlState.textContent = `currently: ${next}`
+})
+
+// Light analytics demo so the "Events" snippet in the docs has a
+// corresponding live wiring that you can watch in DevTools.
+viewer.core.events.on("change", ({ index }) => {
+  console.info("[pencere] change →", index + 1)
+})
+viewer.core.events.on("close", ({ reason }) => {
+  console.info("[pencere] closed via", reason)
+})

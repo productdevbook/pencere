@@ -117,7 +117,9 @@ Key differentiators:
 
 - **License freedom.** Fancybox and lightGallery — the two most feature-complete options — are GPL/commercial. `pencere` is MIT end to end.
 - **Zero runtime dependencies.** Framework adapters are optional peer deps.
-- **WCAG 2.2 AA from the start.** APG Dialog + Carousel patterns, focus trap with shadow-DOM-aware tabbable detection, minimum 24×24 target sizes, `prefers-reduced-motion` respected.
+- **WCAG 2.2 AA from the start.** APG Dialog + Carousel patterns, focus trap with shadow-DOM-aware tabbable detection, 44×44 target sizes, `prefers-reduced-motion` respected, `forced-colors` mapping for Windows High Contrast.
+- **Strict CSP compatible.** Zero inline styles. Stylesheet ships through `adoptedStyleSheets` (no `style-src` impact) with a `<style nonce>` fallback. Runtime values go through CSS custom properties. Trusted Types policy helper for consumers who opt into HTML captions.
+- **Bidirectional.** Auto-detects `dir=rtl` from the host document and flips arrow keys, swipes, and layout via CSS logical properties.
 - **TypeScript-first.** Strict types, generic `Pencere<T>`, typed event emitter.
 - **IME-safe keyboard.** Arrow keys and Escape ignore `isComposing` so Japanese, Korean, and Chinese users do not dismiss the lightbox while confirming IME input.
 - **SSR-safe.** No `window`/`document` access at module import time; adapters use lazy mount hooks.
@@ -242,6 +244,113 @@ See [`SECURITY.md`](./SECURITY.md) for the disclosure policy. Highlights:
   `<img>`.
 - npm releases published with `--provenance` (SLSA attestation).
 
+## Theming
+
+Every visual hook is a CSS custom property. Override them anywhere in
+your cascade — no build step, no CSS-in-JS:
+
+```css
+:root {
+  --pc-bg: oklch(0.16 0.02 260 / 0.94); /* backdrop             */
+  --pc-fg: #f5f5f5; /* toolbar + caption    */
+  --pc-font: "Inter", system-ui, sans-serif;
+  --pc-focus: #facc15; /* focus ring color     */
+}
+```
+
+Under `@media (forced-colors: active)` pencere automatically swaps to
+system color keywords (`Canvas`, `CanvasText`, `ButtonFace`,
+`ButtonText`, `Highlight`, `GrayText`) so Windows High Contrast users
+see a legible, AT-friendly UI without any configuration.
+
+## Recipes
+
+### Remap keyboard shortcuts
+
+```ts
+new PencereViewer({
+  items,
+  keyboard: {
+    overrides: {
+      close: ["Escape", "q"], // add `q` as a second close key
+      next: ["ArrowRight", "l"], // vim-style forward
+      prev: ["ArrowLeft", "h"],
+    },
+    disable: ["toggleSlideshow"], // space should scroll the page instead
+  },
+})
+```
+
+### Force right-to-left
+
+```ts
+new PencereViewer({
+  items,
+  dir: "rtl", // or omit to inherit from <html dir>
+})
+```
+
+In RTL, `ArrowLeft` becomes **next**, `ArrowRight` becomes **prev**,
+and horizontal swipes flip accordingly — so "forward" always means
+toward the end of the reading flow.
+
+### Strict CSP with a nonce
+
+```ts
+new PencereViewer({
+  items,
+  nonce: document.querySelector<HTMLMetaElement>("meta[name='csp-nonce']")?.content,
+})
+```
+
+Pass the same nonce you use for `style-src 'nonce-…'`. On engines that
+support `adoptedStyleSheets` (Chrome 73+, Firefox 101+, Safari 16.4+)
+pencere bypasses `style-src` entirely; the nonce is only stamped on
+the fallback `<style>` element for older browsers.
+
+### HTML captions with Trusted Types
+
+```ts
+import DOMPurify from "dompurify"
+import { createTrustedTypesPolicy } from "pencere"
+
+const policy = createTrustedTypesPolicy({
+  sanitize: (html) => DOMPurify.sanitize(html),
+})
+
+// Any surface of your own app that needs to render rich captions:
+captionEl.innerHTML = policy.createHTML(item.richCaption) as string
+```
+
+### Custom container (SPA shell / portal)
+
+```ts
+new PencereViewer({
+  items,
+  container: document.getElementById("app-shell")!,
+  useNativeDialog: false, // opt out of <dialog>
+})
+```
+
+pencere's `DialogController` walks the root's ancestors and marks
+every sibling `inert` at each level — even when mounted deep inside a
+custom container, the rest of the page becomes unreachable to keyboard
+and AT while the viewer is open.
+
+### Respond to events
+
+```ts
+viewer.core.events.on("change", ({ index, item }) => {
+  history.replaceState(null, "", `#p${index + 1}`)
+})
+viewer.core.events.on("slideLoad", ({ index }) => {
+  analytics.track("slide_view", { index })
+})
+viewer.core.events.on("close", ({ reason }) => {
+  console.log("closed via", reason) // "escape" | "backdrop" | "user" | "api"
+})
+```
+
 ## Options
 
 ```ts
@@ -272,14 +381,28 @@ interface PencereViewerOptions<T extends Item = Item> {
 
 ## Roadmap
 
-- [x] Swipe nav + drag-to-dismiss + pinch zoom (#40 #41 #42 #43 #44)
+**Shipped**
+
+- [x] Swipe nav + drag-to-dismiss + pinch + double-tap + wheel zoom (#40 #41 #42 #43 #44)
 - [x] Keyboard zoom in / out / reset
-- [x] CloseWatcher integration (#11)
+- [x] CloseWatcher integration (Android back button) (#11)
+- [x] Strict CSP: adoptedStyleSheets + nonce fallback, zero inline styles (#50)
+- [x] Trusted Types policy helper (#49)
+- [x] RTL support (direction-aware keys, swipes, layout) (#59)
+- [x] `forced-colors` / Windows High Contrast mapping (#22)
+- [x] WCAG 2.2 target size 44×44 (#24)
+- [x] Inert fallback walks ancestor tree for nested dialogs (#13)
+- [x] AbortController-based listener cleanup (#31)
+
+**In flight**
+
 - [ ] View Transitions API thumbnail → lightbox morph (#12)
 - [ ] Native video / iframe / PDF renderers (#74)
 - [ ] Virtualized thumbnail strip (#75)
 - [ ] Hash-based deep linking (#73)
 - [ ] ThumbHash / BlurHash placeholders (#29)
+- [ ] Responsive srcset / AVIF / WebP (#33)
+- [ ] rAF-throttled gesture handlers (#34)
 - [ ] Angular + Qwik adapters (#70)
 
 ## License

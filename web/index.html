@@ -190,6 +190,24 @@
       footer a {
         color: var(--accent);
       }
+      .demo-btn {
+        padding: 0.5rem 0.9rem;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: 6px;
+        cursor: pointer;
+        font: inherit;
+      }
+      .demo-btn:focus-visible {
+        outline: 2px solid var(--fg);
+        outline-offset: 2px;
+      }
+      .muted-label {
+        margin-left: 0.75rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
     </style>
   </head>
   <body>
@@ -308,18 +326,150 @@ document.querySelector("#open")?.addEventListener("click", () => {
       </section>
 
       <section>
+        <h2 id="theming"><a class="anchor" href="#theming">#</a> Theming</h2>
+        <p>
+          Every color, font and focus ring is a CSS custom property. Drop these variables anywhere
+          in your cascade — pencere never injects inline styles so your overrides always win.
+        </p>
+        <pre><code>:root {
+  --pc-bg: oklch(0.16 0.02 260 / 0.94);
+  --pc-fg: #f5f5f5;
+  --pc-font: "Inter", system-ui, sans-serif;
+  --pc-focus: #facc15;
+}</code></pre>
+        <p>
+          Under <code>@media (forced-colors: active)</code> pencere automatically swaps to system
+          color keywords (<code>Canvas</code>, <code>ButtonFace</code>, <code>Highlight</code>,
+          <code>GrayText</code>) so Windows High Contrast users see a legible UI with zero
+          configuration.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="rtl"><a class="anchor" href="#rtl">#</a> Right-to-left</h2>
+        <p>
+          pencere inherits direction from <code>&lt;html dir&gt;</code> (or any ancestor). You can
+          also force it per viewer via the <code>dir</code>
+          option. Under RTL:
+        </p>
+        <ul class="features">
+          <li>
+            Layout flips via <code>inset-inline-start/end</code> — prev/next buttons swap sides
+            automatically.
+          </li>
+          <li>
+            <kbd>←</kbd> advances to the <strong>next</strong> slide, <kbd>→</kbd> goes
+            <strong>back</strong>.
+          </li>
+          <li>
+            Horizontal swipes flip so dragging toward the end of the reading flow is always "next".
+          </li>
+        </ul>
+        <p>Try it live — toggle the whole page to RTL and reopen the lightbox:</p>
+        <p>
+          <button id="toggle-rtl" type="button" class="demo-btn">Toggle dir=rtl</button>
+          <span id="rtl-state" class="muted-label">currently: ltr</span>
+        </p>
+      </section>
+
+      <section>
+        <h2 id="keymap"><a class="anchor" href="#keymap">#</a> Remap keyboard shortcuts</h2>
+        <p>
+          Every key binding is data-only. Override any action, disable any key, or add a second
+          binding without touching the event pipeline:
+        </p>
+        <pre><code>new PencereViewer({
+  items,
+  keyboard: {
+    overrides: {
+      close: ["Escape", "q"],
+      next: ["ArrowRight", "l"],     // vim-style
+      prev: ["ArrowLeft", "h"],
+    },
+    disable: ["toggleSlideshow"],    // space scrolls the page instead
+  },
+})</code></pre>
+        <p>
+          All shortcuts are IME-safe: while a Japanese, Korean or Chinese user is confirming
+          conversion, <code>isComposing</code> suppresses every pencere binding so
+          <kbd>Enter</kbd> and <kbd>Esc</kbd> do not close the viewer by accident.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="csp"><a class="anchor" href="#csp">#</a> Content Security Policy</h2>
+        <p>
+          pencere is written to run under the strictest CSP profile you can ship. The minimum header
+          it needs:
+        </p>
+        <pre><code>Content-Security-Policy:
+  default-src 'self';
+  img-src 'self' https: data: blob:;
+  style-src 'self' 'nonce-RANDOM';
+  script-src 'self' 'nonce-RANDOM';
+  trusted-types pencere;
+  require-trusted-types-for 'script';</code></pre>
+        <ul class="features">
+          <li>
+            <strong>No inline styles.</strong> On modern engines pencere attaches its stylesheet
+            through <code>adoptedStyleSheets</code>, which bypasses <code>style-src</code> entirely.
+            Older browsers get a fallback <code>&lt;style nonce="..."&gt;</code> element — pass the
+            same nonce via <code>new PencereViewer({ nonce })</code>.
+          </li>
+          <li>
+            <strong>Runtime values via custom properties.</strong> Transform, opacity and aspect
+            ratio are written through <code>style.setProperty("--pc-*", ...)</code>, never
+            <code>style.cssText</code>, so no inline <code>style=""</code>
+            attribute is ever generated.
+          </li>
+          <li>
+            <strong>Trusted Types ready.</strong> pencere itself renders captions with
+            <code>textContent</code>. If you opt into HTML captions:
+          </li>
+        </ul>
+        <pre><code>import DOMPurify from "dompurify"
+import { createTrustedTypesPolicy } from "pencere"
+
+const policy = createTrustedTypesPolicy({
+  sanitize: (html) => DOMPurify.sanitize(html),
+})
+el.innerHTML = policy.createHTML(userHtml)</code></pre>
+      </section>
+
+      <section>
+        <h2 id="events"><a class="anchor" href="#events">#</a> Events</h2>
+        <pre><code>viewer.core.events.on("open",    ({ index })       =&gt; { /* ... */ })
+viewer.core.events.on("change",  ({ index, item }) =&gt; {
+  history.replaceState(null, "", `#p${index + 1}`)
+})
+viewer.core.events.on("slideLoad", ({ index })     =&gt; { /* analytics */ })
+viewer.core.events.on("close",     ({ reason })    =&gt; {
+  // "escape" | "backdrop" | "user" | "api"
+})</code></pre>
+      </section>
+
+      <section>
         <h2 id="security"><a class="anchor" href="#security">#</a> Security</h2>
         <ul class="features">
           <li>Zero runtime dependencies — no supply-chain surface.</li>
           <li>
             URL protocol allowlist (<code>http</code>, <code>https</code>, <code>data</code>,
-            <code>blob</code>). <code>javascript:</code> rejected.
+            <code>blob</code>). <code>javascript:</code>, <code>vbscript:</code>,
+            <code>file:</code> rejected — including whitespace-smuggling variants.
           </li>
           <li>
             All user-supplied strings rendered via <code>textContent</code>, never
-            <code>innerHTML</code>.
+            <code>innerHTML</code>. Opt into HTML captions with the Trusted Types helper above.
           </li>
           <li><code>referrerpolicy="strict-origin-when-cross-origin"</code> by default.</li>
+          <li>
+            SVGs are rendered via <code>&lt;img src&gt;</code> only — the spec sandbox blocks
+            scripts and external fetches from inside the file.
+          </li>
+          <li>
+            npm releases published with <code>--provenance</code> (SLSA attestation) and SRI hashes
+            in every GitHub release note.
+          </li>
         </ul>
       </section>
 
