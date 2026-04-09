@@ -371,6 +371,20 @@ export class PencereViewer<T extends Item = Item> {
       // skip the class-based animation there. `close()` awaits
       // `closeAnimation` before returning so tests / consumers
       // can observe the teardown deterministically.
+      //
+      // Tear down the active renderer BEFORE the fade so
+      // `<video>` autoplay stops immediately on close — otherwise
+      // audio leaks out behind the closed dialog until the next
+      // open / slide change.
+      if (this.currentRendererEl) {
+        const { renderer, el, item: previous } = this.currentRendererEl
+        try {
+          renderer.unmount?.(el, previous as never)
+        } catch {
+          /* ignore teardown errors */
+        }
+        this.currentRendererEl = null
+      }
       this.routingController.handleClose()
       this.motion.disengage()
       const finish = (): void => {

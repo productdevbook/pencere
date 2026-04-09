@@ -29,7 +29,7 @@ pnpm lint:fix    # oxlint --fix + oxfmt
 pnpm fmt         # oxfmt
 pnpm test        # lint + typecheck + vitest
 pnpm typecheck   # tsgo --noEmit
-pnpm release     # test + build + bumpp
+pnpm release     # test + build
 ```
 
 ## Code Conventions

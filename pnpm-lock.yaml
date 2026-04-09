@@ -23,9 +23,6 @@ importers:
       axe-core:
         specifier: ^4.11.2
         version: 4.11.2
-      bumpp:
-        specifier: ^11.0.1
-        version: 11.0.1
       jsdom:
         specifier: ^29.0.2
         version: 29.0.2
@@ -607,9 +604,6 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@quansync/fs@1.0.0':
-    resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
-
   '@rolldown/binding-android-arm64@1.0.0-rc.15':
     resolution: {integrity: sha512-YYe6aWruPZDtHNpwu7+qAHEMbQ/yRl6atqb/AhznLTnD3UY99Q1jE7ihLSahNWkF4EqRPVC4SiR4O0UkLK02tA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1012,9 +1006,6 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  args-tokenizer@0.3.0:
-    resolution: {integrity: sha512-xXAd7G2Mll5W8uo37GETpQ2VrE84M181Z7ugHFGQnJZ50M2mbOv0osSZ9VsSgPfJQ+LVG0prSi0th+ELMsno7Q==}
-
   aria-query@5.3.1:
     resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
     engines: {node: '>= 0.4'}
@@ -1048,11 +1039,6 @@ packages:
   birpc@4.0.0:
     resolution: {integrity: sha512-LShSxJP0KTmd101b6DRyGBj57LZxSDYWKitQNW/mi8GRMvZb078Uf9+pveax1DrVL89vm7mWe+TovdI/UDOuPw==}
 
-  bumpp@11.0.1:
-    resolution: {integrity: sha512-X0ti27I/ewsx/u0EJSyl0IZWWOE95q+wIpAG/60kc5gqMNR4a23YJdd3lL7JsBN11TgLbCM4KpfGMuFfdigb4g==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
-
   bytes-iec@3.1.1:
     resolution: {integrity: sha512-fey6+4jDK7TFtFg/klGSvNKJctyU7n2aQdnM+CO0ruLPbqqMOM8Tio0Pc+deqUeVKX1tL5DQep1zQ7+37aTAsA==}
     engines: {node: '>= 0.8'}
@@ -1076,10 +1062,6 @@ packages:
         optional: true
       magicast:
         optional: true
-
-  cac@7.0.0:
-    resolution: {integrity: sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ==}
-    engines: {node: '>=20.19.0'}
 
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
@@ -1240,9 +1222,6 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  jsonc-parser@3.3.1:
-    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
-
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
     engines: {node: '>= 12.0.0'}
@@ -1386,9 +1365,6 @@ packages:
       oxlint-tsgolint:
         optional: true
 
-  package-manager-detector@1.6.0:
-    resolution: {integrity: sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==}
-
   package-name-regex@2.0.6:
     resolution: {integrity: sha512-gFL35q7kbE/zBaPA3UKhp2vSzcPYx2ecbYuwv1ucE9Il6IIgBDweBlH8D68UFGZic2MkllKa2KHCfC1IQBQUYA==}
     engines: {node: '>=12'}
@@ -1424,9 +1400,6 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
-
-  quansync@1.0.0:
-    resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
 
   rc9@3.0.1:
     resolution: {integrity: sha512-gMDyleLWVE+i6Sgtc0QbbY6pEKqYs97NGi6isHQPqYlLemPoO8dxQ3uGi0f4NiP98c+jMW6cG1Kx9dDwfvqARQ==}
@@ -1603,12 +1576,6 @@ packages:
     resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  unconfig-core@7.5.0:
-    resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
-
-  unconfig@7.5.0:
-    resolution: {integrity: sha512-oi8Qy2JV4D3UQ0PsopR28CzdQ3S/5A1zwsUwp/rosSbfhJ5z7b90bIyTwi/F7hCLD4SGcZVjDzd4XoUQcEanvA==}
 
   undici@7.24.7:
     resolution: {integrity: sha512-H/nlJ/h0ggGC+uRL3ovD+G0i4bqhvsDOpbDv7At5eFLlj2b41L8QliGbnl2H7SnDiYhENphh1tQFJZf+MyfLsQ==}
@@ -2081,10 +2048,6 @@ snapshots:
   '@polka/url@1.0.0-next.29':
     optional: true
 
-  '@quansync/fs@1.0.0':
-    dependencies:
-      quansync: 1.0.0
-
   '@rolldown/binding-android-arm64@1.0.0-rc.15':
     optional: true
 
@@ -2419,8 +2382,6 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  args-tokenizer@0.3.0: {}
-
   aria-query@5.3.1: {}
 
   array-find-index@1.0.2: {}
@@ -2449,18 +2410,6 @@ snapshots:
 
   birpc@4.0.0: {}
 
-  bumpp@11.0.1:
-    dependencies:
-      args-tokenizer: 0.3.0
-      cac: 7.0.0
-      jsonc-parser: 3.3.1
-      package-manager-detector: 1.6.0
-      semver: 7.7.4
-      tinyexec: 1.1.1
-      tinyglobby: 0.2.16
-      unconfig: 7.5.0
-      yaml: 2.8.3
-
   bytes-iec@3.1.1: {}
 
   c12@4.0.0-beta.4(jiti@2.6.1)(magicast@0.5.2):
@@ -2474,8 +2423,6 @@ snapshots:
     optionalDependencies:
       jiti: 2.6.1
       magicast: 0.5.2
-
-  cac@7.0.0: {}
 
   chai@6.2.2: {}
 
@@ -2607,7 +2554,8 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
-  jiti@2.6.1: {}
+  jiti@2.6.1:
+    optional: true
 
   js-tokens@10.0.0: {}
 
@@ -2638,8 +2586,6 @@ snapshots:
       - '@noble/hashes'
 
   jsesc@3.1.0: {}
-
-  jsonc-parser@3.3.1: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -2802,8 +2748,6 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.59.0
       '@oxlint/binding-win32-x64-msvc': 1.59.0
 
-  package-manager-detector@1.6.0: {}
-
   package-name-regex@2.0.6: {}
 
   parse5@8.0.0:
@@ -2834,8 +2778,6 @@ snapshots:
   pretty-bytes@7.1.0: {}
 
   punycode@2.3.1: {}
-
-  quansync@1.0.0: {}
 
   rc9@3.0.1:
     dependencies:
@@ -3063,19 +3005,6 @@ snapshots:
 
   typescript@6.0.2: {}
 
-  unconfig-core@7.5.0:
-    dependencies:
-      '@quansync/fs': 1.0.0
-      quansync: 1.0.0
-
-  unconfig@7.5.0:
-    dependencies:
-      '@quansync/fs': 1.0.0
-      defu: 6.1.7
-      jiti: 2.6.1
-      quansync: 1.0.0
-      unconfig-core: 7.5.0
-
   undici@7.24.7: {}
 
   vite@8.0.8(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3):
@@ -3157,6 +3086,7 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
-  yaml@2.8.3: {}
+  yaml@2.8.3:
+    optional: true
 
   zimmerframe@1.1.4: {}

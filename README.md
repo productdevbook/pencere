@@ -14,10 +14,10 @@
 > [!IMPORTANT]
 > Early development. API is not stable yet. Feedback welcome on [GitHub Issues](https://github.com/productdevbook/pencere/issues).
 
-`pencere` (Turkish for _window_) is the lightbox library that's been
-missing from the ecosystem: MIT-licensed end-to-end, runs anywhere
-(vanilla, React, Vue, Svelte, Solid, Web Components), and built on
-web standards rather than layers of custom JS.
+`pencere` is the lightbox library that's been missing from the
+ecosystem: MIT-licensed end-to-end, runs anywhere (vanilla, React,
+Vue, Svelte, Solid, Web Components), and built on web standards
+rather than layers of custom JS.
 
 ## Install
 

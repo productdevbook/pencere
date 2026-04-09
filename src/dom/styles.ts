@@ -236,8 +236,12 @@ export const PC_STYLES = `
 }
 .pc-btn--nav {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  /* Vertically center via top:0/bottom:0 + margin:auto. More robust
+   * than top:50%+translateY(-50%) which can drift when the stage
+   * has a pending transform from the slide-in animation. */
+  top: 0;
+  bottom: 0;
+  margin-block: auto;
   font-size: 2rem;
   width: 48px;
   height: 48px;
