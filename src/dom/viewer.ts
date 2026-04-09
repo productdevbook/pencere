@@ -394,6 +394,9 @@ export class PencereViewer<T extends Item = Item> {
   private onSwipeDown(e: PointerEvent): void {
     if (!this.isSwipeEligible()) return
     if (this.swipeActivePointer !== null) return
+    // Don't start a swipe when the user taps an interactive control.
+    const target = e.target as Element | null
+    if (target?.closest("button, a, [data-pc-no-gesture]")) return
     this.swipeActivePointer = e.pointerId
     this.momentumCancel?.()
     this.momentumCancel = null

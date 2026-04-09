@@ -194,6 +194,54 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("close button click closes the viewer even through gesture layer", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const close = v.root.querySelector("button[aria-label='Close']") as HTMLButtonElement
+    // Simulate a real pointer sequence — this is what was failing in
+    // the browser: gesture.setPointerCapture stole the pointerup so
+    // the synthetic click never fired.
+    close.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }))
+    close.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }))
+    close.click()
+    await new Promise((r) => setTimeout(r, 10))
+    expect(v.core.state.isOpen).toBe(false)
+    v.destroy()
+  })
+
+  it("prev/next button pointer sequences navigate instead of starting a swipe", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const next = v.root.querySelector("button[aria-label='Next image']") as HTMLButtonElement
+    next.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 2 }))
+    next.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 2 }))
+    next.click()
+    await new Promise((r) => setTimeout(r, 10))
+    expect(v.core.state.index).toBe(1)
+    // Swipe must NOT have been started by the button press.
+    // @ts-expect-error reach into private
+    expect(v.swipe.isActive).toBe(false)
+    await v.close()
+    v.destroy()
+  })
+
+  it("gesture engine ignores pointerdown on buttons", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    const prev = v.root.querySelector("button[aria-label='Previous image']") as HTMLButtonElement
+    // @ts-expect-error reach into private
+    const gesture = v.gesture
+    prev.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 3 }))
+    // Gesture engine should not have registered any pointer.
+    // @ts-expect-error reach into private
+    expect(gesture.pointers.size).toBe(0)
+    await v.close()
+    v.destroy()
+  })
+
   it("double-tap toggles between 1x and 2x zoom", async () => {
     const v = factory()
     await v.open()

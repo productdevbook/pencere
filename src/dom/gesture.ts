@@ -114,6 +114,11 @@ export class GestureEngine {
 
   /** Public for tests: inject synthetic pointer events. */
   handleDown(e: PointerEvent): void {
+    // Let clicks on interactive controls (buttons, links) flow through
+    // without being captured as a gesture — otherwise setPointerCapture
+    // would steal the pointerup and the browser would never fire click.
+    const target = e.target as Element | null
+    if (target?.closest("button, a, [data-pc-no-gesture]")) return
     try {
       this.el.setPointerCapture(e.pointerId)
     } catch {
