@@ -93,6 +93,40 @@ describe("DialogController", () => {
     expect(() => ctl.hide()).not.toThrow()
   })
 
+  it("uses CloseWatcher when available and routes cancel to onDismiss", () => {
+    const { root } = setup("div")
+    const destroyed: number[] = []
+    class FakeCloseWatcher {
+      oncancel: ((e: Event) => void) | null = null
+      onclose: ((e: Event) => void) | null = null
+      static instances: FakeCloseWatcher[] = []
+      constructor() {
+        FakeCloseWatcher.instances.push(this)
+      }
+      requestClose(): void {
+        this.oncancel?.(new Event("cancel", { cancelable: true }))
+      }
+      destroy(): void {
+        destroyed.push(1)
+      }
+    }
+    // @ts-expect-error install polyfill for test
+    globalThis.CloseWatcher = FakeCloseWatcher
+    try {
+      const onDismiss = vi.fn()
+      const ctl = new DialogController(root, { lockScroll: false, onDismiss })
+      ctl.show()
+      expect(FakeCloseWatcher.instances.length).toBe(1)
+      FakeCloseWatcher.instances[0]!.requestClose()
+      expect(onDismiss).toHaveBeenCalledWith("escape")
+      ctl.hide()
+      expect(destroyed.length).toBe(1)
+    } finally {
+      // @ts-expect-error cleanup
+      delete globalThis.CloseWatcher
+    }
+  })
+
   it("destroy() closes and strips role/aria-modal", () => {
     const { root } = setup("div")
     const ctl = new DialogController(root, { lockScroll: false })

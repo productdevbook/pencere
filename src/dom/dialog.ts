@@ -29,11 +29,22 @@ export interface DialogControllerOptions {
  * and decides what to render inside. This keeps the core decoupled
  * from any particular visual design.
  */
+interface CloseWatcherLike {
+  requestClose(): void
+  destroy(): void
+  oncancel: ((e: Event) => void) | null
+  onclose: ((e: Event) => void) | null
+}
+interface CloseWatcherCtor {
+  new (): CloseWatcherLike
+}
+
 export class DialogController {
   private readonly root: HTMLElement
   private readonly opts: DialogControllerOptions
   private readonly trap: FocusTrap
   private readonly inertTargets = new Set<Element>()
+  private closeWatcher: CloseWatcherLike | null = null
   private open = false
   private readonly onKeyDown = (e: KeyboardEvent): void => {
     if (!this.open) return
@@ -67,6 +78,10 @@ export class DialogController {
       this.applyInertSiblings()
       this.root.ownerDocument.addEventListener("keydown", this.onKeyDown, true)
     }
+    // CloseWatcher intercepts Android back-button and browser close
+    // requests uniformly with Escape. Gracefully no-op on browsers
+    // without the API (Firefox, older Safari).
+    this.installCloseWatcher()
     if (this.opts.lockScroll !== false) lockScroll(this.root.ownerDocument)
     this.trap.activate()
   }
@@ -74,6 +89,7 @@ export class DialogController {
   hide(): void {
     if (!this.open) return
     this.open = false
+    this.teardownCloseWatcher()
     this.trap.deactivate()
     if (this.opts.lockScroll !== false) unlockScroll(this.root.ownerDocument)
     if (this.shouldUseNative()) {
@@ -95,6 +111,36 @@ export class DialogController {
     this.hide()
     this.root.removeAttribute("role")
     this.root.removeAttribute("aria-modal")
+  }
+
+  private installCloseWatcher(): void {
+    const view = this.root.ownerDocument.defaultView as
+      | (Window & {
+          CloseWatcher?: CloseWatcherCtor
+        })
+      | null
+    const Ctor = view?.CloseWatcher
+    if (!Ctor) return
+    try {
+      const watcher = new Ctor()
+      watcher.oncancel = (e: Event): void => {
+        e.preventDefault()
+        this.opts.onDismiss?.("escape")
+      }
+      this.closeWatcher = watcher
+    } catch {
+      // Some engines throw if too many watchers are stacked; ignore.
+    }
+  }
+
+  private teardownCloseWatcher(): void {
+    if (!this.closeWatcher) return
+    try {
+      this.closeWatcher.destroy()
+    } catch {
+      // ignore
+    }
+    this.closeWatcher = null
   }
 
   private shouldUseNative(): boolean {
