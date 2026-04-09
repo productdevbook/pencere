@@ -35,11 +35,7 @@ export type {
 export { computeAspectRatio, loadImage } from "./dom/image-loader";
 export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader";
 export { GestureEngine } from "./dom/gesture";
-export type {
-  GestureEngineOptions,
-  GestureEventType,
-  GestureSnapshot,
-} from "./dom/gesture";
+export type { GestureEngineOptions, GestureEventType, GestureSnapshot } from "./dom/gesture";
 export {
   clampScale,
   distance,
@@ -50,6 +46,8 @@ export {
   translate,
 } from "./dom/transform";
 export type { Transform2D } from "./dom/transform";
+export { classifySwipe, computeVelocity, runMomentum } from "./dom/momentum";
+export type { VelocitySample } from "./dom/momentum";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";
