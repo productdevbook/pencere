@@ -70,6 +70,7 @@
     "fmt": "oxfmt .",
     "test": "pnpm lint && pnpm typecheck && vitest run",
     "typecheck": "tsgo --noEmit",
+    "size": "size-limit",
     "release": "pnpm test && pnpm build && bumpp --commit --tag --push --all",
     "prepack": "pnpm build"
   },
