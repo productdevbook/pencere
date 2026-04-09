@@ -36,6 +36,13 @@ export interface ImageItem {
    * `img.decode()` resolves. See #29.
    */
   placeholder?: string
+  /**
+   * Optional low-res thumbnail the docs/demo use to populate a
+   * grid. Does not affect lightbox loading — pencere always uses
+   * `src` (and `srcset` / `sources` when present) for the actual
+   * slide image.
+   */
+  thumb?: string
 }
 
 export interface VideoItem {
