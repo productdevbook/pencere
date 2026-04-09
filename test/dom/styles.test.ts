@@ -96,6 +96,25 @@ describe("injectStyles", () => {
     expect(PC_STYLES).toMatch(/pc-root--open[\s,\S]*display:\s*flex/)
   })
 
+  it("maps chrome to system colors under forced-colors: active", () => {
+    // Regression guard for #22 — Windows High Contrast visibility.
+    expect(PC_STYLES).toMatch(/@media\s*\(forced-colors:\s*active\)/)
+    const block = PC_STYLES.split("@media (forced-colors: active)")[1] ?? ""
+    expect(block).toContain("Canvas")
+    expect(block).toContain("CanvasText")
+    expect(block).toContain("ButtonFace")
+    expect(block).toContain("ButtonText")
+    expect(block).toContain("Highlight")
+    expect(block).toContain("GrayText")
+  })
+
+  it("buttons meet WCAG 2.2 minimum target size (24x24, actually 44x44)", () => {
+    // Regression guard for #24. pencere ships 44×44 buttons which
+    // also satisfies the older WCAG 2.1 AAA 44×44 recommendation.
+    expect(PC_STYLES).toMatch(/\.pc-btn\s*\{[^}]*min-width:\s*44px/)
+    expect(PC_STYLES).toMatch(/\.pc-btn\s*\{[^}]*min-height:\s*44px/)
+  })
+
   it("exposes runtime values as CSS custom properties", () => {
     // The viewer should only ever touch --pc-* variables at runtime.
     expect(PC_STYLES).toContain("--pc-img-transform")

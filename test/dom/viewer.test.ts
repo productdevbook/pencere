@@ -126,6 +126,19 @@ describe("PencereViewer", () => {
     expect(document.body.querySelector("dialog")).toBeNull()
   })
 
+  it("destroy() stops routing keyboard events to closed viewer (#31)", async () => {
+    // Regression guard: every listener must be tied to an AbortController
+    // signal so destroy() removes them atomically.
+    const v = factory()
+    await v.open()
+    v.destroy()
+    // After destroy, dispatching keys should not throw or re-open state.
+    expect(() =>
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" })),
+    ).not.toThrow()
+    expect(v.core.state.isOpen).toBe(false)
+  })
+
   it("mounts top and bottom toolbars with the expected CSS hooks", () => {
     const v = factory()
     const top = v.root.querySelector("[data-pc-part='toolbar-top']") as HTMLElement

@@ -157,14 +157,41 @@ export const PC_STYLES = `
   }
 }
 @media (forced-colors: active) {
+  /*
+   * Windows High Contrast / forced-colors mode strips author colors
+   * and backgrounds. Map pencere's chrome to the standard system
+   * color keywords so controls stay visible and focusable without
+   * relying on gradient backdrops or rgba fills.
+   */
   .pc-root {
     background: Canvas;
     color: CanvasText;
+    forced-color-adjust: none;
   }
-  .pc-btn--nav {
+  .pc-toolbar-top,
+  .pc-toolbar-bottom {
+    /* Gradients become flat white in forced-colors; drop them. */
+    background: transparent;
+  }
+  .pc-btn {
     background: ButtonFace;
     color: ButtonText;
     border: 1px solid ButtonText;
+  }
+  .pc-btn:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .pc-btn[disabled] {
+    color: GrayText;
+    border-color: GrayText;
+  }
+  .pc-btn--nav {
+    background: ButtonFace;
+  }
+  .pc-counter,
+  .pc-caption {
+    color: CanvasText;
   }
 }
 `
