@@ -32,6 +32,8 @@ export type {
   KeyboardAction,
   KeyboardMapOptions,
 } from "./dom";
+export { computeAspectRatio, loadImage } from "./dom/image-loader";
+export type { ImageLoaderOptions, ImageLoadResult } from "./dom/image-loader";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";

@@ -55,7 +55,7 @@ export function resolveKeyAction(
   if (event.ctrlKey || event.metaKey || event.altKey) return null;
 
   const disabled = new Set(options.disable ?? []);
-  const map: Record<KeyboardAction, string[]> = { ...DEFAULT_MAP, ...(options.overrides ?? {}) };
+  const map: Record<KeyboardAction, string[]> = { ...DEFAULT_MAP, ...options.overrides };
 
   for (const action of Object.keys(map) as KeyboardAction[]) {
     if (disabled.has(action)) continue;
