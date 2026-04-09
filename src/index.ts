@@ -15,6 +15,23 @@ export { Emitter } from "./emitter";
 export { Pencere } from "./core";
 export type { PencereState } from "./core";
 export { escapeHtml, isSafeUrl, safeUrl } from "./security";
+export {
+  DialogController,
+  FocusTrap,
+  firstTabbable,
+  getTabbable,
+  isTabbable,
+  lastTabbable,
+  lockScroll,
+  resolveKeyAction,
+  unlockScroll,
+} from "./dom";
+export type {
+  DialogControllerOptions,
+  FocusTrapOptions,
+  KeyboardAction,
+  KeyboardMapOptions,
+} from "./dom";
 
 import type { ImageItem } from "./types";
 import { Pencere } from "./core";
