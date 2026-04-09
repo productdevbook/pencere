@@ -68,6 +68,17 @@ export const PC_STYLES = `
   justify-content: center;
   aspect-ratio: var(--pc-slot-ar, auto);
 }
+/* ThumbHash / BlurHash placeholder background while the full-res
+ * image decodes (#29). The consumer supplies any CSS background
+ * value via the --pc-slot-placeholder custom property; pencere
+ * mounts it here and strips the class one rAF after the real
+ * image lands. */
+.pc-slot.pc-slot--placeholder {
+  background: var(--pc-slot-placeholder, #0000);
+  background-size: cover;
+  background-position: center;
+  transition: opacity 160ms ease-out;
+}
 .pc-img {
   max-width: 100%;
   max-height: 100%;

@@ -486,6 +486,17 @@ export class PencereViewer<T extends Item = Item> {
     }
     const imageItem = item as ImageItem
     this.slot.style.setProperty("--pc-slot-ar", computeAspectRatio(imageItem))
+    // ThumbHash / BlurHash style placeholder (#29). Paint the
+    // consumer-supplied low-res hint under the slot so the user
+    // sees a chromatic silhouette instantly instead of an empty
+    // void while the full-res image decodes.
+    if (imageItem.placeholder) {
+      this.slot.style.setProperty("--pc-slot-placeholder", imageItem.placeholder)
+      this.slot.classList.add("pc-slot--placeholder")
+    } else {
+      this.slot.style.removeProperty("--pc-slot-placeholder")
+      this.slot.classList.remove("pc-slot--placeholder")
+    }
 
     try {
       const { element, image } = await loadImage(imageItem, this.loadAbort.signal, this.opts.image)
@@ -498,6 +509,12 @@ export class PencereViewer<T extends Item = Item> {
       }
       this.slot.textContent = ""
       this.slot.appendChild(element)
+      // Drop the placeholder once the decoded image is in the slot
+      // (#29). A small rAF gives the browser a frame to commit the
+      // image layer before we fade the hint out.
+      requestAnimationFrame(() => {
+        this.slot.classList.remove("pc-slot--placeholder")
+      })
       this.currentImg = image
       this.writeImgTransform(this.gesture.current)
       this.core.events.emit("slideLoad", { index: this.core.state.index, item })

@@ -27,6 +27,15 @@ export interface ImageItem {
    * custom properties.
    */
   lang?: string
+  /**
+   * Low-quality image placeholder shown under the slot while the
+   * full-resolution image decodes. Accepts any CSS `background`
+   * value: a `data:` URL (e.g. a ThumbHash / BlurHash decoded into
+   * a tiny base64 PNG), a plain CSS color, or a gradient. pencere
+   * cross-fades from the placeholder to the loaded image once
+   * `img.decode()` resolves. See #29.
+   */
+  placeholder?: string
 }
 
 export interface VideoItem {

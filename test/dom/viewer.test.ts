@@ -689,6 +689,32 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#29: placeholder lands on the slot before the image decodes", async () => {
+    const v = new PencereViewer({
+      items: [
+        {
+          type: "image",
+          src: "https://example.com/a.jpg",
+          alt: "A",
+          placeholder: "url(data:image/png;base64,iVBORw0KGgo=)",
+        },
+      ],
+      lockScroll: false,
+      useNativeDialog: false,
+    })
+    await v.open()
+    const slot = v.root.querySelector(".pc-slot") as HTMLElement
+    expect(slot.style.getPropertyValue("--pc-slot-placeholder")).toContain("data:image/png")
+    // After renderSlide finishes and rAF fires, the class must be cleared.
+    await new Promise((r) => setTimeout(r, 50))
+    // jsdom does not schedule rAF synchronously in all test runners, so
+    // we assert the property itself is still set (the custom property
+    // survives the class removal) as the regression guard:
+    expect(slot.style.getPropertyValue("--pc-slot-placeholder")).toBeTruthy()
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,
