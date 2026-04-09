@@ -138,6 +138,11 @@ Key differentiators:
 
 All shortcuts are IME-safe (ignored during `isComposing`) and can be remapped or disabled via the `keyboard` option.
 
+**Dragging alternative (WCAG 2.5.7).** While zoomed in, the arrow
+keys pan the image one step at a time (<kbd>←</kbd>/<kbd>→</kbd>
+horizontal, <kbd>↑</kbd>/<kbd>↓</kbd> vertical). This gives
+keyboard-only users the same reach as a one-finger pan gesture.
+
 ## Gestures
 
 - **Swipe left / right** at fit scale navigates between slides.

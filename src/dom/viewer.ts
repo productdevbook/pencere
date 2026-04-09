@@ -493,8 +493,41 @@ export class PencereViewer<T extends Item = Item> {
 
   private handleKeyDown(e: KeyboardEvent): void {
     if (!this.core.state.isOpen) return
+
+    // WCAG 2.5.7 dragging alternative. While zoomed in, the arrow keys
+    // pan the image instead of navigating slides or triggering the
+    // default carousel mapping — this gives keyboard-only users the
+    // same reach as a one-finger pan gesture. ArrowUp / ArrowDown are
+    // otherwise unused by pencere, so we intercept them here before
+    // `resolveKeyAction` gets a chance.
+    const zoomed = this.gesture.current.scale > 1
+    if (zoomed && !e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const step = 48
+      if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        this.panBy(step, 0)
+        return
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault()
+        this.panBy(-step, 0)
+        return
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault()
+        this.panBy(0, step)
+        return
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        this.panBy(0, -step)
+        return
+      }
+    }
+
     const action = resolveKeyAction(e, { ...this.opts.keyboard, direction: this.direction })
     if (!action) return
+
     // Route to core.
     e.preventDefault()
     switch (action) {
@@ -525,6 +558,23 @@ export class PencereViewer<T extends Item = Item> {
       default:
         break
     }
+  }
+
+  /**
+   * Shift the pan translation by a pixel vector. Used by the keyboard
+   * pan alternative (#25 / WCAG 2.5.7) so users who cannot drag can
+   * still reach every corner of a zoomed image.
+   */
+  private panBy(dx: number, dy: number): void {
+    if (!this.currentImg) return
+    const current = this.gesture.current
+    if (current.scale <= 1) return
+    this.gesture.setTransform({
+      x: current.x + dx,
+      y: current.y + dy,
+      scale: current.scale,
+    })
+    this.writeImgTransform(this.gesture.current)
   }
 
   /** Zoom by a multiplicative factor around the image center. */

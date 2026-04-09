@@ -418,6 +418,40 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#25: arrow keys pan while zoomed in (WCAG 2.5.7 dragging alternative)", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    // @ts-expect-error reach into private
+    const gesture = v.gesture
+    // @ts-expect-error reach into private
+    v.zoomBy(2) // scale > 1 enables pan mode
+    expect(gesture.current.scale).toBeGreaterThan(1)
+    const startX = gesture.current.x
+    const startY = gesture.current.y
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true }))
+    expect(gesture.current.x).toBeLessThan(startX) // panned left by 48
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", cancelable: true }))
+    expect(gesture.current.y).toBeLessThan(startY)
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", cancelable: true }))
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", cancelable: true }))
+    // Index must not change while zoomed — arrows pan, not navigate.
+    expect(v.core.state.index).toBe(0)
+    await v.close()
+    v.destroy()
+  })
+
+  it("#25: at fit scale arrow keys still navigate slides", async () => {
+    const v = factory()
+    await v.open()
+    await new Promise((r) => setTimeout(r, 120))
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(v.core.state.index).toBe(1)
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,
