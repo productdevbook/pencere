@@ -28,13 +28,30 @@ import { PencereViewer } from "pencere"
 
 const viewer = new PencereViewer({
   items: [
-    { type: "image", src: "/a.jpg", alt: "Sunrise" },
-    { type: "image", src: "/b.jpg", alt: "Bosphorus at dusk" },
+    {
+      type: "image",
+      src: "/a.jpg",
+      alt: "Mountain lake at sunrise",
+      caption: "Yosemite Valley",
+      width: 1600,
+      height: 1067,
+    },
+    {
+      type: "image",
+      src: "/b.jpg",
+      alt: "Bosphorus at dusk",
+      width: 1600,
+      height: 1067,
+    },
   ],
+  loop: true,
 })
 
 document.querySelector("#open")?.addEventListener("click", () => viewer.open(0))
 ```
+
+> [!TIP]
+> Run `pnpm playground` to see a live docs site at `http://localhost:5173` with every gesture and keyboard shortcut wired up.
 
 ### React
 
@@ -104,6 +121,29 @@ Key differentiators:
 - **TypeScript-first.** Strict types, generic `Pencere<T>`, typed event emitter.
 - **IME-safe keyboard.** Arrow keys and Escape ignore `isComposing` so Japanese, Korean, and Chinese users do not dismiss the lightbox while confirming IME input.
 - **SSR-safe.** No `window`/`document` access at module import time; adapters use lazy mount hooks.
+
+## Keyboard
+
+| Key                                | Action                                    |
+| ---------------------------------- | ----------------------------------------- |
+| <kbd>Esc</kbd>                     | Close (Android back via CloseWatcher too) |
+| <kbd>←</kbd> / <kbd>PageUp</kbd>   | Previous image                            |
+| <kbd>→</kbd> / <kbd>PageDown</kbd> | Next image                                |
+| <kbd>Home</kbd> / <kbd>End</kbd>   | Jump to first / last                      |
+| <kbd>+</kbd> / <kbd>=</kbd>        | Zoom in 1.25×                             |
+| <kbd>-</kbd>                       | Zoom out 1.25×                            |
+| <kbd>0</kbd>                       | Reset zoom                                |
+
+All shortcuts are IME-safe (ignored during `isComposing`) and can be remapped or disabled via the `keyboard` option.
+
+## Gestures
+
+- **Swipe left / right** at fit scale navigates between slides.
+- **Swipe down** dismisses the viewer with a backdrop fade.
+- **Pinch** zooms around the centroid, clamped to 1×–8×.
+- **Double-tap** toggles 1× ↔ 2× zoom at the image center.
+- **Mouse wheel** zooms exponentially at the cursor; zooming out past 1× snaps back to identity.
+- **Pan** (one-finger drag) works once zoomed in.
 
 ## Accessibility
 
@@ -198,7 +238,10 @@ interface PencereViewerOptions<T extends Item = Item> {
 
 ## Roadmap
 
-- [ ] View Transitions API thumbnail → lightbox morph (#11)
+- [x] Swipe nav + drag-to-dismiss + pinch zoom (#40 #41 #42 #43 #44)
+- [x] Keyboard zoom in / out / reset
+- [x] CloseWatcher integration (#11)
+- [ ] View Transitions API thumbnail → lightbox morph (#12)
 - [ ] Native video / iframe / PDF renderers (#74)
 - [ ] Virtualized thumbnail strip (#75)
 - [ ] Hash-based deep linking (#73)

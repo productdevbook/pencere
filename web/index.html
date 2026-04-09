@@ -3,42 +3,332 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pencere playground</title>
+    <title>pencere — accessible, framework-free lightbox</title>
+    <meta
+      name="description"
+      content="pencere is a modern, accessible, zero-dependency lightbox for images. Pure ESM TypeScript."
+    />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <style>
-      body {
-        font-family: system-ui, sans-serif;
-        max-width: 900px;
-        margin: 2rem auto;
-        padding: 1rem;
+      :root {
+        --fg: #0f172a;
+        --muted: #64748b;
+        --bg: #ffffff;
+        --bg-soft: #f8fafc;
+        --border: #e2e8f0;
+        --accent: #0ea5e9;
+        --code-bg: #0f172a;
+        --code-fg: #e2e8f0;
+        --radius: 10px;
+        --maxw: 960px;
       }
-      h1 {
-        margin-top: 0;
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e2e8f0;
+          --muted: #94a3b8;
+          --bg: #0b1220;
+          --bg-soft: #111827;
+          --border: #1f2937;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 3rem 1.25rem 6rem;
+      }
+      header.hero {
+        padding: 4rem 0 2.5rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 3rem;
+      }
+      header.hero h1 {
+        font-size: clamp(2.25rem, 5vw, 3.5rem);
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.02em;
+      }
+      header.hero p.tagline {
+        font-size: 1.15rem;
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+        max-width: 60ch;
+      }
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+      }
+      .badge {
+        padding: 0.25rem 0.6rem;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted);
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 3rem 0 0.75rem;
+        letter-spacing: -0.01em;
+      }
+      h2 .anchor {
+        color: var(--muted);
+        text-decoration: none;
+        margin-right: 0.5rem;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 1.75rem 0 0.5rem;
+      }
+      p,
+      li {
+        color: var(--fg);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+      :not(pre) > code {
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        padding: 0.1em 0.4em;
+        border-radius: 6px;
+      }
+      pre {
+        background: var(--code-bg);
+        color: var(--code-fg);
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+      kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8em;
+        padding: 0.15em 0.45em;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        color: var(--fg);
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 0;
       }
       .grid button {
         padding: 0;
-        border: 1px solid #ddd;
+        border: 1px solid var(--border);
         background: none;
         cursor: pointer;
-        border-radius: 8px;
+        border-radius: var(--radius);
         overflow: hidden;
+        aspect-ratio: 4 / 3;
+        transition: transform 0.15s ease;
+      }
+      .grid button:hover {
+        transform: translateY(-2px);
+      }
+      .grid button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
       .grid img {
         width: 100%;
-        height: 160px;
+        height: 100%;
         object-fit: cover;
         display: block;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.75rem 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      ul.features {
+        padding-left: 1.1rem;
+      }
+      ul.features li {
+        margin: 0.3rem 0;
+      }
+      footer {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+      footer a {
+        color: var(--accent);
       }
     </style>
   </head>
   <body>
-    <h1>pencere playground</h1>
-    <p>Click any image to open the lightbox.</p>
-    <div class="grid" id="gallery"></div>
+    <main>
+      <header class="hero">
+        <h1>pencere</h1>
+        <p class="tagline">
+          A modern, accessible, framework-agnostic image lightbox in pure TypeScript. Zero runtime
+          dependencies, pure ESM, tree-shakeable.
+        </p>
+        <div class="badges">
+          <span class="badge">MIT</span>
+          <span class="badge">zero deps</span>
+          <span class="badge">pure ESM</span>
+          <span class="badge">WCAG 2.2 AA</span>
+          <span class="badge">&lt; 12 kB gz</span>
+        </div>
+      </header>
+
+      <section>
+        <h2 id="install"><a class="anchor" href="#install">#</a> Install</h2>
+        <pre><code>pnpm add pencere
+# or
+npm i pencere</code></pre>
+      </section>
+
+      <section>
+        <h2 id="demo"><a class="anchor" href="#demo">#</a> Live demo</h2>
+        <p>
+          Click any thumbnail to open the viewer. Try <kbd>←</kbd> / <kbd>→</kbd> to navigate,
+          <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> to zoom, <kbd>Esc</kbd> to close. Double-click
+          or double-tap the image to zoom to 2×. Scroll the mouse wheel to zoom at the cursor.
+        </p>
+        <div class="grid" id="gallery"></div>
+      </section>
+
+      <section>
+        <h2 id="quickstart"><a class="anchor" href="#quickstart">#</a> Quick start</h2>
+        <pre><code>import { PencereViewer } from "pencere"
+
+const viewer = new PencereViewer({
+  items: [
+    { type: "image", src: "/a.jpg", alt: "Mountain lake", width: 1600, height: 1067 },
+    { type: "image", src: "/b.jpg", alt: "River valley", width: 1600, height: 1067 },
+  ],
+  loop: true,
+})
+
+document.querySelector("#open")?.addEventListener("click", () => {
+  void viewer.open(0)
+})</code></pre>
+      </section>
+
+      <section>
+        <h2 id="keyboard"><a class="anchor" href="#keyboard">#</a> Keyboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><kbd>Esc</kbd></td>
+              <td>Close the viewer (also respects Android back via CloseWatcher)</td>
+            </tr>
+            <tr>
+              <td><kbd>←</kbd> / <kbd>PageUp</kbd></td>
+              <td>Previous image</td>
+            </tr>
+            <tr>
+              <td><kbd>→</kbd> / <kbd>PageDown</kbd></td>
+              <td>Next image</td>
+            </tr>
+            <tr>
+              <td><kbd>Home</kbd> / <kbd>End</kbd></td>
+              <td>Jump to first / last</td>
+            </tr>
+            <tr>
+              <td><kbd>+</kbd> / <kbd>-</kbd></td>
+              <td>Zoom in / out by 1.25×</td>
+            </tr>
+            <tr>
+              <td><kbd>0</kbd></td>
+              <td>Reset zoom</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2 id="gestures"><a class="anchor" href="#gestures">#</a> Gestures</h2>
+        <ul class="features">
+          <li><strong>Swipe left / right</strong> — navigate between images at fit scale.</li>
+          <li><strong>Swipe down</strong> — drag-to-dismiss with backdrop fade.</li>
+          <li><strong>Pinch</strong> — zoom around the centroid, clamped to 1×–8×.</li>
+          <li><strong>Double-tap</strong> — toggle 1× ↔ 2× zoom.</li>
+          <li><strong>Wheel</strong> — exponential zoom at the cursor; snaps back at 1×.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="a11y"><a class="anchor" href="#a11y">#</a> Accessibility</h2>
+        <ul class="features">
+          <li>
+            Native <code>&lt;dialog&gt;</code> + <code>showModal()</code> for top-layer focus trap.
+          </li>
+          <li>ARIA APG Dialog (Modal) + Carousel pattern; every control has an accessible name.</li>
+          <li><code>aria-live="polite"</code> slide announcements.</li>
+          <li>Focus returns to the invoking element on close.</li>
+          <li>Honors <code>prefers-reduced-motion</code>.</li>
+          <li>IME-safe keyboard: ignores events during composition.</li>
+          <li>CloseWatcher integration — Android back button closes like Escape.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="security"><a class="anchor" href="#security">#</a> Security</h2>
+        <ul class="features">
+          <li>Zero runtime dependencies — no supply-chain surface.</li>
+          <li>
+            URL protocol allowlist (<code>http</code>, <code>https</code>, <code>data</code>,
+            <code>blob</code>). <code>javascript:</code> rejected.
+          </li>
+          <li>
+            All user-supplied strings rendered via <code>textContent</code>, never
+            <code>innerHTML</code>.
+          </li>
+          <li><code>referrerpolicy="strict-origin-when-cross-origin"</code> by default.</li>
+        </ul>
+      </section>
+
+      <footer>
+        pencere is open source under the MIT license.
+        <a href="https://github.com/productdevbook/pencere">github.com/productdevbook/pencere</a>
+      </footer>
+    </main>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
