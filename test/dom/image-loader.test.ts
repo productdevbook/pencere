@@ -145,6 +145,46 @@ describe("loadImage()", () => {
     }
   })
 
+  it("#53: crossOrigin + referrerPolicy honor caller overrides", async () => {
+    const origImage = globalThis.Image
+    class StubImage {
+      public src = ""
+      public srcset = ""
+      public sizes = ""
+      public alt = ""
+      public width = 0
+      public height = 0
+      public complete = true
+      public naturalWidth = 10
+      public naturalHeight = 10
+      public decoding = ""
+      public crossOrigin: string | null = null
+      public referrerPolicy = ""
+      private attrs: Record<string, string> = {}
+      addEventListener(_: string, fn: () => void): void {
+        queueMicrotask(fn)
+      }
+      removeEventListener(): void {}
+      setAttribute(k: string, v: string): void {
+        this.attrs[k] = v
+      }
+    }
+    // @ts-expect-error stub
+    globalThis.Image = StubImage
+    try {
+      const item: ImageItem = { type: "image", src: "https://example.com/x.jpg" }
+      const result = await loadImage(item, new AbortController().signal, {
+        crossOrigin: "use-credentials",
+        referrerPolicy: "no-referrer",
+      })
+      const img = result.image as unknown as StubImage
+      expect(img.crossOrigin).toBe("use-credentials")
+      expect(img.referrerPolicy).toBe("no-referrer")
+    } finally {
+      globalThis.Image = origImage
+    }
+  })
+
   it("aborts via AbortSignal", async () => {
     const origImage = globalThis.Image
     class StubImage {
