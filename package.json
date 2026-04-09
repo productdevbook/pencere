@@ -40,6 +40,26 @@
     ".": {
       "types": "./dist/index.d.mts",
       "default": "./dist/index.mjs"
+    },
+    "./react": {
+      "types": "./dist/adapters/react.d.mts",
+      "default": "./dist/adapters/react.mjs"
+    },
+    "./vue": {
+      "types": "./dist/adapters/vue.d.mts",
+      "default": "./dist/adapters/vue.mjs"
+    },
+    "./svelte": {
+      "types": "./dist/adapters/svelte.d.mts",
+      "default": "./dist/adapters/svelte.mjs"
+    },
+    "./solid": {
+      "types": "./dist/adapters/solid.d.mts",
+      "default": "./dist/adapters/solid.mjs"
+    },
+    "./element": {
+      "types": "./dist/adapters/element.d.mts",
+      "default": "./dist/adapters/element.mjs"
     }
   },
   "scripts": {
@@ -54,6 +74,7 @@
     "prepack": "pnpm build"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
     "@typescript/native-preview": "7.0.0-dev.20260316.1",
     "@vitest/coverage-v8": "^4.1.2",
     "bumpp": "^11.0.1",
@@ -61,7 +82,31 @@
     "obuild": "^0.4.32",
     "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
+    "react": "^19.2.5",
+    "solid-js": "^1.9.12",
+    "svelte": "^5.55.2",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "vue": "^3.5.32"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "solid-js": ">=1.8",
+    "svelte": ">=4",
+    "vue": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   }
 }
