@@ -13,7 +13,7 @@ import { LiveRegion } from "./live-region"
 import { prefersReducedMotion } from "./media-query"
 import { runMomentum } from "./momentum"
 import { SwipeNavigator } from "./swipe-nav"
-import { clampScale, IDENTITY, scaleAround, toCss } from "./transform"
+import { IDENTITY, toCss } from "./transform"
 
 export interface PencereViewerOptions<T extends Item = Item>
   extends PencereOptions<T>, Pick<DialogControllerOptions, "useNativeDialog" | "lockScroll"> {
@@ -112,7 +112,7 @@ const IMG_STYLE = [
   "max-height:100%",
   "user-select:none",
   "-webkit-user-drag:none",
-  "transform-origin:0 0",
+  "transform-origin:center center",
   "will-change:transform",
 ].join(";")
 
@@ -360,30 +360,37 @@ export class PencereViewer<T extends Item = Item> {
 
   private handleDoubleTap(): void {
     if (!this.currentImg) return
-    // Double-tap toggles between fit (scale=1) and 2x zoom around the
-    // image center. Anchor at the stage centroid for predictability.
-    const rect = this.stage.getBoundingClientRect()
-    const cx = rect.width / 2
-    const cy = rect.height / 2
+    // With transform-origin:center, a pure scale already pins center.
     const current = this.gesture.current
-    const next = current.scale > 1 ? IDENTITY : clampScale(scaleAround(IDENTITY, 2, cx, cy), 1, 8)
+    const next = current.scale > 1 ? IDENTITY : { x: 0, y: 0, scale: 2 }
     this.gesture.setTransform(next)
-    this.currentImg.style.transform = toCss(next)
+    this.currentImg.style.transform = toCss(this.gesture.current)
   }
 
   private onWheelZoom(e: WheelEvent): void {
-    // Ctrl+wheel is the trackpad pinch on macOS / Chrome; plain wheel
-    // also zooms while the lightbox is open so desktop users can zoom
-    // without a keyboard shortcut. preventDefault stops page scroll.
     if (!this.currentImg) return
     e.preventDefault()
-    // Exponential feel: each 100px of wheel delta ≈ 1.1x.
+    // Exponential feel: each 300px of wheel delta ≈ e.
     const factor = Math.exp(-e.deltaY / 300)
-    const rect = this.stage.getBoundingClientRect()
-    const ax = e.clientX - rect.left
-    const ay = e.clientY - rect.top
-    const next = scaleAround(this.gesture.current, factor, ax, ay)
-    this.gesture.setTransform(next)
+    const current = this.gesture.current
+    const newScale = Math.max(1, Math.min(8, current.scale * factor))
+    const k = newScale / current.scale
+    // With transform-origin:center, we compute the vector from the
+    // image visual center to the cursor and adjust translation so the
+    // point under the cursor stays fixed.
+    const rect = this.currentImg.getBoundingClientRect()
+    const imgCx = rect.left + rect.width / 2
+    const imgCy = rect.top + rect.height / 2
+    const offsetX = e.clientX - imgCx
+    const offsetY = e.clientY - imgCy
+    const next = {
+      x: current.x + offsetX * (1 - k),
+      y: current.y + offsetY * (1 - k),
+      scale: newScale,
+    }
+    // Snap-back fully to identity when zooming below 1.
+    const snapped = next.scale <= 1 ? IDENTITY : next
+    this.gesture.setTransform(snapped)
     this.currentImg.style.transform = toCss(this.gesture.current)
   }
 
