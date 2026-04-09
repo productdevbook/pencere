@@ -82,6 +82,15 @@ export interface PencereViewerOptions<T extends Item = Item>
    * fullscreen to `<video>`). Defaults to `false`.
    */
   fullscreen?: boolean
+  /**
+   * View Transitions API (#12). When `true` and the host browser
+   * exposes `document.startViewTransition`, `open(index, trigger)`
+   * wraps the open in a view transition and assigns a shared
+   * `view-transition-name` to the trigger thumbnail and the
+   * lightbox image, so the UA morphs between them. Gracefully
+   * degrades to an instant open on unsupporting engines.
+   */
+  viewTransition?: boolean
 }
 
 /** See `PencereViewerOptions.routing`. */
@@ -318,7 +327,7 @@ export class PencereViewer<T extends Item = Item> {
 
   private suppressRoutingPop = false
 
-  async open(index?: number): Promise<void> {
+  async open(index?: number, trigger?: HTMLElement): Promise<void> {
     // Re-resolve direction on every open so consumers that toggle
     // `<html dir>` at runtime (docs pages, i18n switchers) pick up
     // the change without having to destroy + recreate the viewer.
@@ -327,11 +336,35 @@ export class PencereViewer<T extends Item = Item> {
     const container = this.opts.container ?? this.root.ownerDocument.body
     this.direction = resolveDirection(this.opts.dir, container)
     this.root.setAttribute("dir", this.direction)
-    await this.core.open(index)
-    this.root.classList.add("pc-root--open")
-    this.dialog.show()
-    this.gesture.attach()
-    this.syncRoutingFragment("push")
+
+    // View Transitions API morph (#12). When opted in and supported,
+    // tag the trigger thumbnail with a shared `view-transition-name`
+    // and wrap the core open in `document.startViewTransition` so
+    // the browser animates the thumbnail → lightbox image transform.
+    const run = async (): Promise<void> => {
+      await this.core.open(index)
+      this.root.classList.add("pc-root--open")
+      this.dialog.show()
+      this.gesture.attach()
+      this.syncRoutingFragment("push")
+    }
+    const doc = this.root.ownerDocument as Document & {
+      startViewTransition?: (cb: () => unknown) => { finished: Promise<void> }
+    }
+    if (this.opts.viewTransition === true && typeof doc.startViewTransition === "function") {
+      if (trigger) {
+        trigger.style.setProperty("view-transition-name", "pencere-hero")
+      }
+      const vt = doc.startViewTransition(() => run())
+      try {
+        await vt.finished
+      } catch {
+        /* ignore aborted transition */
+      }
+      if (trigger) trigger.style.removeProperty("view-transition-name")
+      return
+    }
+    await run()
   }
 
   /**
@@ -460,6 +493,9 @@ export class PencereViewer<T extends Item = Item> {
       // The transform target is always the <img>, even when the
       // loader wrapped it in a <picture> for AVIF/WebP fallback.
       image.classList.add("pc-img")
+      if (this.opts.viewTransition === true) {
+        image.style.setProperty("view-transition-name", "pencere-hero")
+      }
       this.slot.textContent = ""
       this.slot.appendChild(element)
       this.currentImg = image

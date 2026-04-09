@@ -645,6 +645,50 @@ describe("PencereViewer", () => {
     v.destroy()
   })
 
+  it("#12: wraps open in document.startViewTransition when supported", async () => {
+    const spy = vi.fn((cb: () => unknown) => {
+      void cb()
+      return {
+        finished: Promise.resolve(),
+        ready: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+      }
+    })
+    ;(document as unknown as { startViewTransition?: unknown }).startViewTransition = spy
+    try {
+      const trigger = document.createElement("button")
+      document.body.appendChild(trigger)
+      const v = new PencereViewer({
+        items,
+        lockScroll: false,
+        useNativeDialog: false,
+        viewTransition: true,
+      })
+      await v.open(0, trigger)
+      expect(spy).toHaveBeenCalledTimes(1)
+      // Trigger's VT name is cleared after the transition commits.
+      expect(trigger.style.getPropertyValue("view-transition-name")).toBe("")
+      await v.close()
+      v.destroy()
+    } finally {
+      delete (document as unknown as { startViewTransition?: unknown }).startViewTransition
+    }
+  })
+
+  it("#12: falls back cleanly when View Transitions are unavailable", async () => {
+    delete (document as unknown as { startViewTransition?: unknown }).startViewTransition
+    const v = new PencereViewer({
+      items,
+      lockScroll: false,
+      useNativeDialog: false,
+      viewTransition: true,
+    })
+    await v.open(0)
+    expect(v.core.state.isOpen).toBe(true)
+    await v.close()
+    v.destroy()
+  })
+
   it("reduced-motion override is honored", () => {
     const v = new PencereViewer({
       items,
