@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://pencere.productdevbook.com">
-    <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.svg" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
+    <img src="https://raw.githubusercontent.com/productdevbook/pencere/main/.github/assets/cover.png" alt="pencere — modern, accessible, framework-agnostic lightbox" width="100%" />
   </a>
 </p>
 
