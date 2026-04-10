@@ -16,6 +16,29 @@
  */
 
 export const PC_STYLES = `
+/* Typed custom properties — enables CSS transitions on these values
+ * and gives the browser type information for optimised interpolation.
+ * Baseline since July 2024. */
+@property --pc-root-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --pc-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(0, 0, 0, 0.92);
+}
+@property --pc-fg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fff;
+}
+@property --pc-focus {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #7dd3fc;
+}
 .pc-root {
   position: fixed;
   inset: 0;
@@ -139,13 +162,13 @@ export const PC_STYLES = `
   justify-content: space-between;
   padding: 0.75rem 1rem;
   gap: 1rem;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pc-bg) 60%, transparent), transparent);
 }
 .pc-toolbar-bottom {
   bottom: 0;
   justify-content: center;
   padding: 1rem 1.5rem 1.25rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  background: linear-gradient(to top, color-mix(in srgb, var(--pc-bg) 60%, transparent), transparent);
 }
 .pc-caption {
   margin: 0 auto;
@@ -264,7 +287,7 @@ export const PC_STYLES = `
   width: 48px;
   height: 48px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--pc-bg) 50%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
