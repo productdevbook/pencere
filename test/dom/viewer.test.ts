@@ -30,14 +30,28 @@ function StubImage(): HTMLImageElement {
 }
 
 describe("PencereViewer", () => {
+  const originalMatchMedia = globalThis.matchMedia
   beforeEach(() => {
     document.body.innerHTML = ""
     _resetScrollLock()
     // @ts-expect-error — test stub
     globalThis.Image = StubImage
+    // Fake prefers-reduced-motion so animated zoom helpers resolve
+    // synchronously in jsdom (van Wijk curve #47).
+    globalThis.matchMedia = ((query: string) => ({
+      matches: query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof matchMedia
   })
   afterEach(() => {
     globalThis.Image = originalImage
+    globalThis.matchMedia = originalMatchMedia
   })
 
   function factory() {

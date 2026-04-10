@@ -4,6 +4,7 @@ import { runMomentum } from "./momentum"
 import { SwipeNavigator } from "./swipe-nav"
 import { IDENTITY, toCss } from "./transform"
 import type { Transform2D } from "./transform"
+import { animateZoomPan } from "./zoom-pan-curve"
 
 export interface MotionControllerOptions {
   /** Root element of the dialog; read for opacity writes + rect. */
@@ -43,6 +44,7 @@ export class MotionController {
   private readonly swipe = new SwipeNavigator()
   private swipeActivePointer: number | null = null
   private momentumCancel: (() => void) | null = null
+  private zoomAnimCancel: (() => void) | null = null
   private readonly opts: MotionControllerOptions
 
   constructor(options: MotionControllerOptions) {
@@ -93,12 +95,14 @@ export class MotionController {
     this.gesture.attach()
   }
 
-  /** Disengage gesture tracking + cancel any running momentum. */
+  /** Disengage gesture tracking + cancel any running momentum/zoom. */
   disengage(): void {
     this.gesture.detach()
     this.gesture.reset()
     this.momentumCancel?.()
     this.momentumCancel = null
+    this.zoomAnimCancel?.()
+    this.zoomAnimCancel = null
   }
 
   /** Reset gesture transform (used between slides). */
@@ -160,8 +164,8 @@ export class MotionController {
 
   zoomReset(): void {
     if (!this.opts.getCurrentImg()) return
-    this.gesture.setTransform(IDENTITY)
-    this.writeImgTransform(IDENTITY)
+    if (this.gesture.current.scale <= 1) return
+    this.animateZoomTo(IDENTITY, 250)
   }
 
   /** Current scale — read by the viewer's keyboard handler for pan branch. */
@@ -169,13 +173,42 @@ export class MotionController {
     return this.gesture.current.scale
   }
 
+  /**
+   * Animate a zoom transition using the van Wijk (2003) optimal
+   * zoom-pan curve (#47). Cancels any in-flight zoom animation.
+   * Skips animation when `prefers-reduced-motion: reduce` is active
+   * or when `requestAnimationFrame` is unavailable (SSR / jsdom).
+   */
+  private animateZoomTo(target: Transform2D, durationMs = 300): void {
+    this.zoomAnimCancel?.()
+    // Skip animation for reduced-motion or non-browser environments.
+    const prefersReduced =
+      typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (prefersReduced || durationMs <= 0) {
+      this.gesture.setTransform(target)
+      this.writeImgTransform(this.gesture.current)
+      return
+    }
+    const from = this.gesture.current
+    this.zoomAnimCancel = animateZoomPan(
+      from,
+      target,
+      durationMs,
+      (t) => {
+        this.gesture.setTransform(t)
+        this.writeImgTransform(this.gesture.current)
+      },
+      () => {
+        this.zoomAnimCancel = null
+      },
+    )
+  }
+
   private handleDoubleTap(): void {
     if (!this.opts.getCurrentImg()) return
-    // With transform-origin:center, a pure scale already pins center.
     const current = this.gesture.current
     const next = current.scale > 1 ? IDENTITY : { x: 0, y: 0, scale: 2 }
-    this.gesture.setTransform(next)
-    this.writeImgTransform(this.gesture.current)
+    this.animateZoomTo(next)
     this.opts.haptics.fire("doubleTap")
   }
 

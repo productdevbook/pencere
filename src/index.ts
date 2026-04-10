@@ -75,6 +75,13 @@ export { ViewTransitionController } from "./dom/view-transition-controller"
 export type { ViewTransitionControllerOptions } from "./dom/view-transition-controller"
 export { MotionController } from "./dom/motion-controller"
 export type { MotionControllerOptions } from "./dom/motion-controller"
+export {
+  animateZoomPan,
+  zoomPanTrajectory,
+  transformToView,
+  viewToTransform,
+} from "./dom/zoom-pan-curve"
+export type { ZoomPanView } from "./dom/zoom-pan-curve"
 export { renderSlide } from "./dom/render-pipeline"
 export type { ActiveRendererSlot, RenderSlideContext } from "./dom/render-pipeline"
 export type { Renderer, RendererContext } from "./dom/renderers"
