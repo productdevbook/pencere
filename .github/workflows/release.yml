@@ -45,6 +45,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Generate changelog
+        run: pnpm dlx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate SRI hashes
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -61,16 +66,9 @@ jobs:
 
       - name: Upload SRI to release
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           gh release upload "${GITHUB_REF_NAME}" sri.md --clobber || true
-          # Append SRI section to release body
           EXISTING=$(gh release view "${GITHUB_REF_NAME}" --json body -q .body)
           SRI_BODY=$(cat sri.md)
           printf '%s\n\n---\n\n%s' "${EXISTING}" "${SRI_BODY}" | gh release edit "${GITHUB_REF_NAME}" --notes-file -
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate changelog
-        run: pnpm dlx changelogithub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
