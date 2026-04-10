@@ -27,7 +27,11 @@ export interface ZoomPanView {
  * @param rho Curvature parameter (ρ). Default √2 per the paper.
  * @returns   Object with `duration` (unitless S) and `at(t)` for t ∈ [0, 1].
  */
-export function zoomPanTrajectory(v0: ZoomPanView, v1: ZoomPanView, rho: number = Math.SQRT2) {
+export function zoomPanTrajectory(
+  v0: ZoomPanView,
+  v1: ZoomPanView,
+  rho: number = Math.SQRT2,
+): { duration: number; at: (t: number) => ZoomPanView } {
   const dx = v1.x - v0.x
   const dy = v1.y - v0.y
   const d2 = dx * dx + dy * dy
