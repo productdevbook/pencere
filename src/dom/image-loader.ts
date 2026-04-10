@@ -115,13 +115,9 @@ export async function loadImage(
     }
   })
 
-  // Try to decode; ignore failures (some browsers reject on cached 0-sized).
+  // Decode for smoother first paint; ignore failures on cached 0-sized.
   if (typeof img.decode === "function") {
-    try {
-      await Promise.race([img.decode(), new Promise((resolve) => setTimeout(resolve, 100))])
-    } catch {
-      // swallow — fallback to load event
-    }
+    await img.decode().catch(() => {})
   }
 
   // When the item declared responsive <source> descriptors, wrap the

@@ -18,7 +18,7 @@ import { MotionController } from "./motion-controller"
 import { HookRegistry } from "./plugin"
 import type { PencereContext, PencerePlugin } from "./plugin"
 import type { ActiveRendererSlot } from "./render-pipeline"
-import { renderSlide } from "./render-pipeline"
+import { renderSlide, safeUnmount } from "./render-pipeline"
 import type { Renderer } from "./renderers"
 import { resolveRouting, RoutingController } from "./routing-controller"
 import type { ResolvedRouting, RoutingOptions } from "./routing-controller"
@@ -377,12 +377,7 @@ export class PencereViewer<T extends Item = Item> {
       // audio leaks out behind the closed dialog until the next
       // open / slide change.
       if (this.currentRendererEl) {
-        const { renderer, el, item: previous } = this.currentRendererEl
-        try {
-          renderer.unmount?.(el, previous as never)
-        } catch {
-          /* ignore teardown errors */
-        }
+        safeUnmount(this.currentRendererEl)
         this.currentRendererEl = null
       }
       this.routingController.handleClose()
@@ -618,7 +613,7 @@ export class PencereViewer<T extends Item = Item> {
     // Phase 3: compose the per-slide signal with the viewer-lifetime
     // cleanup signal so `destroy()` cancels in-flight loads without
     // each subsystem having to listen on a second AbortController.
-    const signal = anySignal([this.cleanup.signal, this.loadAbort.signal])
+    const signal = AbortSignal.any([this.cleanup.signal, this.loadAbort.signal])
     const preCtx = {
       index: this.core.state.index,
       item: this.core.item,
@@ -805,43 +800,6 @@ export class PencereViewer<T extends Item = Item> {
  * This keeps the viewer honest with whatever the surrounding app has
  * configured — including mixed LTR docs with an `<article dir="rtl">`.
  */
-/**
- * `AbortSignal.any` polyfill. Combines multiple signals into one
- * that aborts as soon as any input aborts. Used in `renderSlide`
- * to compose the per-slide load signal with the viewer-lifetime
- * cleanup signal (Phase 3 of the refactor) so `destroy()` cancels
- * in-flight image loads without each subsystem having to listen on
- * a second AbortController.
- */
-function anySignal(signals: readonly AbortSignal[]): AbortSignal {
-  const AnyFn = (AbortSignal as unknown as { any?: (s: readonly AbortSignal[]) => AbortSignal }).any
-  if (typeof AnyFn === "function") return AnyFn(signals)
-  const controller = new AbortController()
-  // Keep references to each listener so we can proactively remove
-  // them from the SOURCE signals once the combined signal aborts —
-  // otherwise a long-lived viewer-lifetime signal (cleanup.signal)
-  // accumulates one dangling listener per slide change, since
-  // `once: true` only self-removes on fire.
-  const listeners: Array<{ src: AbortSignal; fn: () => void }> = []
-  const detach = (): void => {
-    for (const { src, fn } of listeners) src.removeEventListener("abort", fn)
-    listeners.length = 0
-  }
-  for (const s of signals) {
-    if (s.aborted) {
-      controller.abort(s.reason)
-      detach()
-      return controller.signal
-    }
-    const fn = (): void => {
-      if (!controller.signal.aborted) controller.abort(s.reason)
-      detach()
-    }
-    s.addEventListener("abort", fn)
-    listeners.push({ src: s, fn })
-  }
-  return controller.signal
-}
 
 function resolveDirection(
   explicit: "ltr" | "rtl" | "auto" | undefined,

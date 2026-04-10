@@ -6,7 +6,6 @@ export type {
   ImageItem,
   Item,
   PencereEvents,
-  PencereItem,
   PencereOptions,
   VideoItem,
 } from "./types"
@@ -82,7 +81,7 @@ export {
   viewToTransform,
 } from "./dom/zoom-pan-curve"
 export type { ZoomPanView } from "./dom/zoom-pan-curve"
-export { renderSlide } from "./dom/render-pipeline"
+export { renderSlide, safeUnmount } from "./dom/render-pipeline"
 export type { ActiveRendererSlot, RenderSlideContext } from "./dom/render-pipeline"
 export type { Renderer, RendererContext } from "./dom/renderers"
 export type {

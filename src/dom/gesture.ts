@@ -10,7 +10,7 @@ interface PointerSample {
   startedAt: number
 }
 
-export type GestureEventType = "start" | "pan" | "pinch" | "end" | "tap" | "doubleTap" | "swipe"
+export type GestureEventType = "start" | "pan" | "pinch" | "end" | "tap" | "doubleTap"
 
 export interface GestureSnapshot {
   type: GestureEventType

@@ -60,9 +60,8 @@ export function resolveKeyAction(
   options: KeyboardMapOptions = {},
 ): KeyboardAction | null {
   // IME composition safety (#60): Japanese/Chinese/Korean users confirm
-  // conversion with Enter / Space and sometimes Escape. `isComposing` is
-  // the spec-mandated flag; `keyCode === 229` is the legacy fallback.
-  if (event.isComposing || event.keyCode === 229) return null
+  // conversion with Enter / Space and sometimes Escape.
+  if (event.isComposing) return null
   // Never hijack keys while the user is typing in a field.
   if (isEditableTarget(event.target)) return null
   // Ignore shortcuts with modifiers to avoid clashing with browser shortcuts.

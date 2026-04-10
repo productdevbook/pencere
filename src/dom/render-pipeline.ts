@@ -13,6 +13,15 @@ export interface ActiveRendererSlot {
   item: Item
 }
 
+/** Safely call renderer.unmount, swallowing errors. */
+export function safeUnmount(slot: ActiveRendererSlot): void {
+  try {
+    slot.renderer.unmount?.(slot.el, slot.item as never)
+  } catch {
+    /* ignore renderer teardown errors */
+  }
+}
+
 export interface RenderSlideContext<T extends Item = Item> {
   core: Pencere<T>
   slot: HTMLElement
@@ -71,12 +80,7 @@ function prepareSlide<T extends Item>(ctx: RenderSlideContext<T>): Item {
   // Tear down the previous renderer-backed slide (video / iframe
   // / custom) so autoplay videos pause, iframe src unloads, etc.
   if (ctx.activeRenderer) {
-    const { renderer, el, item: previous } = ctx.activeRenderer
-    try {
-      renderer.unmount?.(el, previous as never)
-    } catch {
-      /* ignore renderer teardown errors */
-    }
+    safeUnmount(ctx.activeRenderer)
     ctx.setActiveRenderer(null)
   }
   ctx.resetTransform()
@@ -129,7 +133,7 @@ async function loadNonImage<T extends Item>(ctx: RenderSlideContext<T>, item: It
       signal: ctx.signal,
     })
     if (ctx.signal.aborted) {
-      renderer.unmount?.(mounted, item as never)
+      safeUnmount({ renderer, el: mounted, item })
       return
     }
     ctx.slot.appendChild(mounted)

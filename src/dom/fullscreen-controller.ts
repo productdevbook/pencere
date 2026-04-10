@@ -1,12 +1,3 @@
-type FullscreenElementLike = HTMLElement & {
-  webkitRequestFullscreen?: () => void
-}
-
-type FullscreenDocumentLike = Document & {
-  webkitExitFullscreen?: () => void
-  webkitFullscreenElement?: Element | null
-}
-
 export interface FullscreenControllerOptions {
   /** The root element to place into fullscreen. */
   element: HTMLElement
@@ -25,18 +16,18 @@ export interface FullscreenControllerOptions {
 
 /**
  * Fullscreen API wrapper (#14). Handles native
- * `requestFullscreen` / `exitFullscreen`, the WebKit-prefixed
- * fallbacks, and a CSS-class faux-fullscreen for engines that
- * refuse real fullscreen (iOS Safari).
+ * `requestFullscreen` / `exitFullscreen` and a CSS-class
+ * faux-fullscreen for engines that refuse real fullscreen
+ * (iOS Safari).
  */
 export class FullscreenController {
-  private readonly element: FullscreenElementLike
+  private readonly element: HTMLElement
   private readonly enabled: boolean
   private readonly fauxClassName: string
   private readonly onChange: ((isFullscreen: boolean) => void) | undefined
 
   constructor(options: FullscreenControllerOptions) {
-    this.element = options.element as FullscreenElementLike
+    this.element = options.element
     this.enabled = options.enabled
     this.fauxClassName = options.fauxClassName ?? "pc-root--faux-fullscreen"
     this.onChange = options.onChange
@@ -49,26 +40,20 @@ export class FullscreenController {
         this.onChange?.(this.isFullscreen())
       }
       doc.addEventListener("fullscreenchange", handler, { signal: options.signal })
-      doc.addEventListener("webkitfullscreenchange", handler as EventListener, {
-        signal: options.signal,
-      })
     }
   }
 
-  /**
-   * Is the element currently in fullscreen (real or faux)?
-   */
+  /** Is the element currently in fullscreen (real or faux)? */
   isFullscreen(): boolean {
     if (typeof document === "undefined") return false
-    const doc = this.element.ownerDocument as FullscreenDocumentLike | null
+    const doc = this.element.ownerDocument
     if (!doc) return false
     if (doc.fullscreenElement === this.element) return true
-    if (doc.webkitFullscreenElement === this.element) return true
     return this.element.classList.contains(this.fauxClassName)
   }
 
   /**
-   * Enter fullscreen. Prefers native, falls back to WebKit, then
+   * Enter fullscreen. Prefers native requestFullscreen, falls back
    * to a CSS faux-fullscreen class. No-op when disabled.
    */
   async enter(): Promise<void> {
@@ -81,13 +66,6 @@ export class FullscreenController {
       } catch {
         // Fall through to faux-fullscreen.
       }
-    } else if (typeof this.element.webkitRequestFullscreen === "function") {
-      try {
-        this.element.webkitRequestFullscreen()
-        return
-      } catch {
-        /* ignore */
-      }
     }
     this.element.classList.add(this.fauxClassName)
   }
@@ -95,7 +73,7 @@ export class FullscreenController {
   /** Exit fullscreen (real or faux). */
   async exit(): Promise<void> {
     if (typeof document === "undefined") return
-    const doc = this.element.ownerDocument as FullscreenDocumentLike | null
+    const doc = this.element.ownerDocument
     if (!doc) {
       this.element.classList.remove(this.fauxClassName)
       return
@@ -103,12 +81,6 @@ export class FullscreenController {
     if (doc.fullscreenElement === this.element) {
       try {
         await doc.exitFullscreen()
-      } catch {
-        /* ignore */
-      }
-    } else if (typeof doc.webkitExitFullscreen === "function") {
-      try {
-        doc.webkitExitFullscreen()
       } catch {
         /* ignore */
       }

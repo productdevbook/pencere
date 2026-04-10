@@ -117,6 +117,3 @@ export interface PencereOptions<T extends Item = Item> {
    */
   controlled?: boolean
 }
-
-// Legacy alias kept for the initial scaffolding tests.
-export type PencereItem = ImageItem
