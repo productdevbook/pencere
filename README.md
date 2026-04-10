@@ -663,8 +663,10 @@ interface PencereViewerOptions<T extends Item = Item> {
 
 - [ ] Virtualized thumbnail strip
 - [ ] Angular + Qwik adapters (#72)
-- [ ] Plugin architecture (#4)
-- [ ] Controlled-mode contract (#6)
+- [x] Plugin architecture (#4)
+- [x] Controlled-mode contract (#6)
+- [x] ImageLoader DI (#9)
+- [x] SRI hashes in release artifacts (#56)
 - [ ] van Wijk zoom-pan curve (#47)
 
 ## Acknowledgments
