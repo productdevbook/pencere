@@ -241,6 +241,42 @@ describe("GestureEngine", () => {
     expect(img.y * g.current.scale + g.current.y).toBeCloseTo(100)
   })
 
+  it("pinch: zooms around finger midpoint with non-zero element rect", () => {
+    // Regression: when getBoundingClientRect returns a realistic rect
+    // (i.e. the element center is NOT at viewport (0,0)), the pinch
+    // must still keep the finger midpoint visually stationary.
+    // Previously scaleAround received raw client coords, causing a
+    // drift toward bottom-right on real devices.
+    const stageRect = { left: 0, top: 80, width: 390, height: 680, right: 390, bottom: 760, x: 0, y: 80 }
+    el.getBoundingClientRect = () => stageRect as DOMRect
+
+    const g = new GestureEngine(el, { minScale: 0.1, maxScale: 100 })
+    // Two fingers at (100, 350) and (300, 350) → distance 200, midpoint (200, 350)
+    g.handleDown(ptr(1, 100, 350, "pointerdown"))
+    g.handleDown(ptr(2, 300, 350, "pointerdown"))
+    // Move only p2 to (500, 350) → distance 400 → k=2, midpoint (300, 350)
+    g.handleMove(move(2, 500, 350, 0, 0))
+    g.flushPendingEmit()
+
+    const { x: tx, y: ty, scale } = g.current
+    expect(scale).toBeCloseTo(2, 1)
+
+    // The midpoint of THIS move — (300, 350) — should stay fixed in
+    // viewport space. With transform-origin:center the viewport pos
+    // of element-local (lx, ly) is:
+    //   rect.left + cxLocal + tx + scale * (lx - cxLocal)
+    const mx = 300
+    const my = 350
+    const lx = mx - stageRect.left
+    const ly = my - stageRect.top
+    const cxLocal = stageRect.width / 2
+    const cyLocal = stageRect.height / 2
+    const renderedX = stageRect.left + cxLocal + tx + scale * (lx - cxLocal)
+    const renderedY = stageRect.top + cyLocal + ty + scale * (ly - cyLocal)
+    expect(renderedX).toBeCloseTo(mx, 0)
+    expect(renderedY).toBeCloseTo(my, 0)
+  })
+
   it("pinch respects minScale / maxScale", () => {
     const g = new GestureEngine(el, { minScale: 1, maxScale: 1.5 })
     g.handleDown(ptr(1, 100, 100, "pointerdown"))

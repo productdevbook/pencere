@@ -190,8 +190,17 @@ export class GestureEngine {
       if (this.lastPinchDistance > 0) {
         const k = dist / this.lastPinchDistance
         const mid = midpoint(a!, b!)
+        // Convert the pinch midpoint from viewport coordinates to an
+        // offset relative to the element's center.  The image uses
+        // `transform-origin: center center`, so scaleAround must
+        // receive coordinates in the same frame — otherwise each
+        // pinch frame drifts toward (0, 0) and the zoom appears to
+        // pull toward the bottom-right on iOS (#pinch-origin).
+        const rect = this.el.getBoundingClientRect()
+        const ox = mid.x - (rect.left + rect.width / 2)
+        const oy = mid.y - (rect.top + rect.height / 2)
         this.transform = clampScale(
-          scaleAround(this.transform, k, mid.x, mid.y),
+          scaleAround(this.transform, k, ox, oy),
           this.opts.minScale,
           this.opts.maxScale,
         )
