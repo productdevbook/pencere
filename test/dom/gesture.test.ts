@@ -247,7 +247,16 @@ describe("GestureEngine", () => {
     // must still keep the finger midpoint visually stationary.
     // Previously scaleAround received raw client coords, causing a
     // drift toward bottom-right on real devices.
-    const stageRect = { left: 0, top: 80, width: 390, height: 680, right: 390, bottom: 760, x: 0, y: 80 }
+    const stageRect = {
+      left: 0,
+      top: 80,
+      width: 390,
+      height: 680,
+      right: 390,
+      bottom: 760,
+      x: 0,
+      y: 80,
+    }
     el.getBoundingClientRect = () => stageRect as DOMRect
 
     const g = new GestureEngine(el, { minScale: 0.1, maxScale: 100 })
