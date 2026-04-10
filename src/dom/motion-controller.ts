@@ -105,6 +105,10 @@ export class MotionController {
     this.zoomAnimCancel = null
   }
 
+  [Symbol.dispose](): void {
+    this.disengage()
+  }
+
   /** Reset gesture transform (used between slides). */
   reset(): void {
     this.gesture.reset()

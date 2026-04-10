@@ -109,6 +109,10 @@ export class GestureEngine {
     this.pointers.clear()
   }
 
+  [Symbol.dispose](): void {
+    this.detach()
+  }
+
   reset(): void {
     this.cancelPendingEmit()
     this.transform = IDENTITY

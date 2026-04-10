@@ -113,6 +113,10 @@ export class DialogController {
     this.root.removeAttribute("aria-modal")
   }
 
+  [Symbol.dispose](): void {
+    this.destroy()
+  }
+
   private installCloseWatcher(): void {
     const view = this.root.ownerDocument.defaultView as
       | (Window & {

@@ -51,6 +51,10 @@ export class LiveRegion {
     this.node.remove()
   }
 
+  [Symbol.dispose](): void {
+    this.destroy()
+  }
+
   get element(): HTMLDivElement {
     return this.node
   }

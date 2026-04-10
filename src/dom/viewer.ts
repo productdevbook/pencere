@@ -198,7 +198,8 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   private readonly pluginHooks = new HookRegistry<T>()
-  private readonly pluginUninstalls: Array<() => void> = []
+  private readonly pluginDisposables = new DisposableStack()
+  private readonly disposables = new DisposableStack()
   private readonly runtimeRenderers: Renderer[] = []
   private readonly cleanup = new AbortController()
   private readonly onKeyDown: (e: KeyboardEvent) => void
@@ -439,7 +440,8 @@ export class PencereViewer<T extends Item = Item> {
       }
       for (const plugin of options.plugins) {
         try {
-          this.pluginUninstalls.push(plugin.install(ctx))
+          const uninstall = plugin.install(ctx)
+          this.pluginDisposables.defer(uninstall)
         } catch (err) {
           console.warn(`pencere: plugin "${plugin.name}" install failed`, err)
         }
@@ -569,20 +571,14 @@ export class PencereViewer<T extends Item = Item> {
   }
 
   destroy(): void {
-    // Uninstall plugins in reverse install order so teardown
-    // mirrors a LIFO stack — later plugins that depend on earlier
-    // ones get cleaned up first.
-    for (let i = this.pluginUninstalls.length - 1; i >= 0; i--) {
-      try {
-        this.pluginUninstalls[i]?.()
-      } catch (err) {
-        console.warn("pencere: plugin uninstall failed", err)
-      }
+    // Plugins uninstall in reverse install order (LIFO).
+    try {
+      this.pluginDisposables.dispose()
+    } catch (err) {
+      console.warn("pencere: plugin uninstall failed", err)
     }
-    this.pluginUninstalls.length = 0
     this.pluginHooks.clear()
     this.cleanup.abort()
-    this.motion.cancelMomentum()
     this.loadAbort?.abort()
     this.motion.disengage()
     this.dialog.destroy()
@@ -590,6 +586,10 @@ export class PencereViewer<T extends Item = Item> {
     this.reducedMotion.dispose()
     this.core.destroy()
     this.root.remove()
+  }
+
+  [Symbol.dispose](): void {
+    this.destroy()
   }
 
   private makeButton(
