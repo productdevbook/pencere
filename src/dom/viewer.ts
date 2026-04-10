@@ -4,6 +4,7 @@ import type { PencereStrings, Translator } from "../i18n"
 import type { CloseReason, Item, PencereOptions } from "../types"
 import { DialogController } from "./dialog"
 import type { DialogControllerOptions } from "./dialog"
+import { resolveDirection } from "./direction"
 import { FullscreenController } from "./fullscreen-controller"
 import { Haptics } from "./haptics"
 import type { HapticsOptions } from "./haptics"
@@ -789,34 +790,4 @@ export class PencereViewer<T extends Item = Item> {
   async toggleFullscreen(): Promise<void> {
     await this.fullscreenController.toggle()
   }
-}
-
-/**
- * Resolve the viewer's effective writing direction.
- *
- * Explicit `ltr`/`rtl` always win. `auto` (or `undefined`) walks up
- * from the container looking for a `dir` attribute and, failing that,
- * reads the computed direction of the host document's root element.
- * This keeps the viewer honest with whatever the surrounding app has
- * configured — including mixed LTR docs with an `<article dir="rtl">`.
- */
-
-function resolveDirection(
-  explicit: "ltr" | "rtl" | "auto" | undefined,
-  container: HTMLElement,
-): "ltr" | "rtl" {
-  if (explicit === "ltr" || explicit === "rtl") return explicit
-  let node: Element | null = container
-  while (node) {
-    const d = node.getAttribute("dir")
-    if (d === "ltr" || d === "rtl") return d
-    node = node.parentElement
-  }
-  const doc = container.ownerDocument
-  const view = doc.defaultView
-  if (view) {
-    const computed = view.getComputedStyle(doc.documentElement).direction
-    if (computed === "rtl") return "rtl"
-  }
-  return "ltr"
 }
