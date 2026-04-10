@@ -31,6 +31,12 @@
 npm install pencere
 ```
 
+Or use the CDN (SRI hash is published with every [release](https://github.com/productdevbook/pencere/releases)):
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/pencere/dist/index.mjs" crossorigin="anonymous"></script>
+```
+
 ```ts
 import { PencereViewer } from "pencere"
 

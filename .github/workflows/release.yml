@@ -45,6 +45,31 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Generate SRI hashes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          HASH=$(shasum -b -a 384 dist/index.mjs | awk '{ print $1 }' | xxd -r -p | base64)
+          SRI="sha384-${HASH}"
+          echo "### SRI integrity" >> sri.md
+          echo "" >> sri.md
+          echo '```html' >> sri.md
+          echo "<script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/pencere@${VERSION}/dist/index.mjs\" integrity=\"${SRI}\" crossorigin=\"anonymous\"></script>" >> sri.md
+          echo '```' >> sri.md
+          echo "" >> sri.md
+          echo "**\`dist/index.mjs\`:** \`${SRI}\`" >> sri.md
+          cat sri.md
+
+      - name: Upload SRI to release
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release upload "${GITHUB_REF_NAME}" sri.md --clobber || true
+          # Append SRI section to release body
+          EXISTING=$(gh release view "${GITHUB_REF_NAME}" --json body -q .body)
+          SRI_BODY=$(cat sri.md)
+          printf '%s\n\n---\n\n%s' "${EXISTING}" "${SRI_BODY}" | gh release edit "${GITHUB_REF_NAME}" --notes-file -
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate changelog
         run: pnpm dlx changelogithub
         env:
