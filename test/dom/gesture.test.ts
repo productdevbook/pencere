@@ -332,11 +332,15 @@ describe("GestureEngine", () => {
 
   it("attach / detach add and remove listeners", () => {
     const add = vi.spyOn(el, "addEventListener")
-    const remove = vi.spyOn(el, "removeEventListener")
     const g = new GestureEngine(el)
     g.attach()
     expect(add).toHaveBeenCalled()
+    // detach uses AbortController.abort() internally — verify
+    // idempotency: a second attach after detach must work.
     g.detach()
-    expect(remove).toHaveBeenCalled()
+    add.mockClear()
+    g.attach()
+    expect(add).toHaveBeenCalled()
+    g.detach()
   })
 })

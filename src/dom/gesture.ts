@@ -83,6 +83,7 @@ export class GestureEngine {
   }
 
   private attached = false
+  private detachController: AbortController | null = null
 
   attach(): void {
     // Idempotent: a second `attach()` without an intervening
@@ -90,21 +91,20 @@ export class GestureEngine {
     // the stage element across repeated open() calls.
     if (this.attached) return
     this.attached = true
-    this.el.addEventListener("pointerdown", this.onPointerDown)
-    this.el.addEventListener("pointermove", this.onPointerMove)
-    this.el.addEventListener("pointerup", this.onPointerUp)
-    this.el.addEventListener("pointercancel", this.onPointerCancel)
-    this.el.addEventListener("pointerleave", this.onPointerCancel)
+    this.detachController = new AbortController()
+    const { signal } = this.detachController
+    this.el.addEventListener("pointerdown", this.onPointerDown, { signal })
+    this.el.addEventListener("pointermove", this.onPointerMove, { signal })
+    this.el.addEventListener("pointerup", this.onPointerUp, { signal })
+    this.el.addEventListener("pointercancel", this.onPointerCancel, { signal })
+    this.el.addEventListener("pointerleave", this.onPointerCancel, { signal })
   }
 
   detach(): void {
     if (!this.attached) return
     this.attached = false
-    this.el.removeEventListener("pointerdown", this.onPointerDown)
-    this.el.removeEventListener("pointermove", this.onPointerMove)
-    this.el.removeEventListener("pointerup", this.onPointerUp)
-    this.el.removeEventListener("pointercancel", this.onPointerCancel)
-    this.el.removeEventListener("pointerleave", this.onPointerCancel)
+    this.detachController?.abort()
+    this.detachController = null
     this.cancelPendingEmit()
     this.pointers.clear()
   }
