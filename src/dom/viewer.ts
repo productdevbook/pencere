@@ -385,7 +385,6 @@ export class PencereViewer<T extends Item = Item> {
       this.routingController.handleClose()
       this.motion.disengage()
       const finish = (): void => {
-        this.root.classList.remove("pc-root--closing")
         this.dialog.hide()
         this.root.classList.remove("pc-root--open")
       }
@@ -393,33 +392,25 @@ export class PencereViewer<T extends Item = Item> {
         finish()
         return
       }
-      this.root.classList.add("pc-root--closing")
-      // Probe the resolved animation-duration: if the host engine
-      // has no CSS animations (jsdom, strict CSP, user disabled
-      // animations via an extension), the computed value is "0s"
-      // and we skip the wait entirely. Real browsers return
-      // "0.18s" for the pc-root-out keyframe and we time out
-      // slightly after that as a belt-and-braces fallback.
-      const view = this.root.ownerDocument.defaultView
-      const animDurationSec = view
-        ? Number.parseFloat(view.getComputedStyle(this.root).animationDuration) || 0
-        : 0
-      if (animDurationSec === 0) {
-        finish()
-        return
-      }
-      const fallbackMs = Math.ceil(animDurationSec * 1000) + 50
-      this.closeAnimation = new Promise<void>((resolve) => {
-        const done = (): void => {
-          this.root.removeEventListener("animationend", done)
-          clearTimeout(fb)
+      // WAAPI close animation — runs on the compositor, returns a
+      // promise that resolves when done. Replaces the CSS keyframe +
+      // animationend + timeout fallback pattern.
+      if (typeof this.root.animate === "function") {
+        this.closeAnimation = (async () => {
+          const anim = this.root.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: 180,
+            easing: "ease-in",
+            fill: "forwards",
+          })
+          await anim.finished
+          anim.cancel()
           finish()
           this.closeAnimation = null
-          resolve()
-        }
-        const fb = setTimeout(done, fallbackMs)
-        this.root.addEventListener("animationend", done, { once: true })
-      })
+        })()
+      } else {
+        // Fallback for environments without WAAPI (jsdom).
+        finish()
+      }
     })
 
     // Plugin install. Each plugin receives a narrow context and

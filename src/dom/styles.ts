@@ -64,9 +64,11 @@ export const PC_STYLES = `
   display: flex;
   animation: pc-root-in 200ms ease-out;
 }
+/* Close animation is driven by WAAPI (element.animate) — no CSS
+ * keyframe needed. The class is kept for backwards compatibility
+ * with any consumer CSS that targets it. */
 .pc-root.pc-root--closing {
   display: flex;
-  animation: pc-root-out 180ms ease-in forwards;
 }
 /* Native <dialog>'s ::backdrop defaults to transparent, so the
  * 0.92 root background would leak page content through. Force
@@ -82,20 +84,16 @@ export const PC_STYLES = `
   animation: pc-root-in 200ms ease-out;
 }
 .pc-root.pc-root--closing::backdrop {
-  animation: pc-root-out 180ms ease-in forwards;
+  opacity: 0;
 }
 @keyframes pc-root-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes pc-root-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
+/* pc-root-out removed — close animation is WAAPI-driven. */
 @media (prefers-reduced-motion: reduce) {
   .pc-root[open],
-  .pc-root.pc-root--open,
-  .pc-root.pc-root--closing {
+  .pc-root.pc-root--open {
     animation: none !important;
   }
 }
