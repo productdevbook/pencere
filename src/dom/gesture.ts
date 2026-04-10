@@ -1,3 +1,4 @@
+import { caf, raf } from "./raf"
 import { clampScale, distance, IDENTITY, midpoint, scaleAround, translate } from "./transform"
 import type { Transform2D } from "./transform"
 
@@ -128,12 +129,6 @@ export class GestureEngine {
     // Clear scheduling state first so the flushed emit cannot loop
     // back into queueEmit via a listener.
     if (this.rafId !== null) {
-      const caf: typeof cancelAnimationFrame =
-        typeof cancelAnimationFrame === "function"
-          ? cancelAnimationFrame
-          : (id: number): void => {
-              clearTimeout(id as unknown as ReturnType<typeof setTimeout>)
-            }
       caf(this.rafId)
       this.rafId = null
     }
@@ -234,11 +229,6 @@ export class GestureEngine {
   private queueEmit(type: "pan" | "pinch", delta?: { dx: number; dy: number }): void {
     this.pendingEmit = { type, delta }
     if (this.rafId !== null) return
-    const raf: typeof requestAnimationFrame =
-      typeof requestAnimationFrame === "function"
-        ? requestAnimationFrame
-        : (cb: FrameRequestCallback): number =>
-            setTimeout(() => cb(performance.now()), 16) as unknown as number
     this.rafId = raf(() => {
       this.rafId = null
       const pending = this.pendingEmit
@@ -249,12 +239,6 @@ export class GestureEngine {
 
   private cancelPendingEmit(): void {
     if (this.rafId === null) return
-    const caf: typeof cancelAnimationFrame =
-      typeof cancelAnimationFrame === "function"
-        ? cancelAnimationFrame
-        : (id: number): void => {
-            clearTimeout(id as unknown as ReturnType<typeof setTimeout>)
-          }
     caf(this.rafId)
     this.rafId = null
     this.pendingEmit = null

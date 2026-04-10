@@ -1,3 +1,5 @@
+import { isBrowser } from "../env"
+
 export interface FullscreenControllerOptions {
   /** The root element to place into fullscreen. */
   element: HTMLElement
@@ -32,7 +34,7 @@ export class FullscreenController {
     this.fauxClassName = options.fauxClassName ?? "pc-root--faux-fullscreen"
     this.onChange = options.onChange
 
-    if (typeof document === "undefined") return
+    if (!isBrowser) return
     const doc = this.element.ownerDocument
     if (!doc) return
     if (this.onChange) {
@@ -45,7 +47,7 @@ export class FullscreenController {
 
   /** Is the element currently in fullscreen (real or faux)? */
   isFullscreen(): boolean {
-    if (typeof document === "undefined") return false
+    if (!isBrowser) return false
     const doc = this.element.ownerDocument
     if (!doc) return false
     if (doc.fullscreenElement === this.element) return true
@@ -58,7 +60,7 @@ export class FullscreenController {
    */
   async enter(): Promise<void> {
     if (!this.enabled) return
-    if (typeof document === "undefined") return
+    if (!isBrowser) return
     if (typeof this.element.requestFullscreen === "function") {
       try {
         await this.element.requestFullscreen()
@@ -72,7 +74,7 @@ export class FullscreenController {
 
   /** Exit fullscreen (real or faux). */
   async exit(): Promise<void> {
-    if (typeof document === "undefined") return
+    if (!isBrowser) return
     const doc = this.element.ownerDocument
     if (!doc) {
       this.element.classList.remove(this.fauxClassName)

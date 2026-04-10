@@ -1,3 +1,5 @@
+import { isBrowser } from "../env"
+
 interface ViewTransition {
   finished: Promise<void>
   updateCallbackDone: Promise<void>
@@ -28,7 +30,7 @@ export class ViewTransitionController {
 
   constructor(options: ViewTransitionControllerOptions) {
     this.enabled = options.enabled
-    if (typeof document === "undefined") {
+    if (!isBrowser) {
       this.doc = options.document ? (options.document as DocumentWithViewTransitions) : null
     } else {
       this.doc = (options.document ?? document) as DocumentWithViewTransitions
