@@ -1,6 +1,6 @@
 {
   "name": "pencere",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Modern, accessible, framework-agnostic lightbox — pure TypeScript, zero dependencies, ESM, tree-shakeable.",
   "keywords": [
     "a11y",
